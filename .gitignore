@@ -27,3 +27,9 @@
 *.exe
 *.out
 *.app
+
+# Builds
+cmake-build-debug/
+
+# IDE settings
+.idea/
