@@ -3,6 +3,7 @@
 //
 
 #pragma once
+
 #include <exception>
 #include <string>
 #include <iostream>
@@ -15,8 +16,10 @@ namespace simpleCNN {
  **/
     class simple_error : public std::exception {
     public:
-        explicit simple_error(const std::string &msg) : msg_(msg) {}
-        const char *what() const throw() override { return msg_.c_str(); }
+        explicit simple_error(const std::string& msg)
+                :msg_(msg) { }
+
+        const char* what() const throw() override { return msg_.c_str(); }
 
     private:
         std::string msg_;
@@ -27,7 +30,9 @@ namespace simpleCNN {
  **/
     class simple_warn {
     public:
-        explicit simple_warn(const std::string &msg) : msg_(msg) {
+        explicit simple_warn(const std::string& msg)
+                :msg_(msg)
+        {
             coloredPrint(Color::RED, msg_h_);
             std::cout << msg_ << std::endl;
         }
@@ -42,10 +47,13 @@ namespace simpleCNN {
  **/
     class simple_info {
     public:
-        explicit simple_info(const std::string &msg) : msg_(msg) {
+        explicit simple_info(const std::string& msg)
+                :msg_(msg)
+        {
             coloredPrint(Color::GREEN, msg_h);
             std::cout << msg_ << std::endl;
         }
+
     private:
         std::string msg_;
         std::string msg_h = std::string("[INFO] ");
@@ -53,8 +61,7 @@ namespace simpleCNN {
 
     class simple_not_implemented_error : public simple_error {
     public:
-        explicit simple_not_implemented_error(const std::string &msg = "not implemented")
-                : simple_error(msg) {}
+        explicit simple_not_implemented_error(const std::string& msg = "not implemented")
+                :simple_error(msg) { }
     };
-
-}  // namespace simpleCNN
+} // namespace simpleCNN

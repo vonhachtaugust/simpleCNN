@@ -11,20 +11,22 @@
 #include <cmath>
 #include "../../util/aligned_allocator.h"
 
-namespace simpleCNN
-{
-    template <typename Container>
-    static inline size_t product(Container &c) {
+namespace simpleCNN {
+    template<typename Container>
+    static inline size_t product(Container& c)
+    {
         return std::accumulate(std::begin(c), std::end(c), size_t(1),
                 std::multiplies<size_t>());
     }
 
-    template <typename C1, typename C2>
-    static inline size_t compute_offset(const C1 &start, const C2 &shape) {
+    template<typename C1, typename C2>
+    static inline size_t compute_offset(const C1& start, const C2& shape)
+    {
         size_t res = 0;
-        for (size_t i = 0; i < shape.size(); ++i) {
+        for (size_t i = 0; i<shape.size(); ++i)
+        {
             res *= shape[i];
-            res += (i < start.size()) ? *(start.begin() + i) : 0;
+            res += (i<start.size()) ? *(start.begin()+i) : 0;
         }
         return res;
     }
@@ -50,15 +52,15 @@ namespace simpleCNN
         ConstDataIter Iterator() const { return host_data_; }
 
 /**
-         * Constructor that assepts a vector of shape and create a TensorStorage
+         * Constructor that accepts a vector of shape and create a TensorStorage
          * with a size equivalent to that shape.
          * @param shape array containing N integers, sizes of dimensions
          * @return
          */
-        explicit TensorStorage(const std::vector<size_t> &shape) { resize(shape); }
+        explicit TensorStorage(const std::vector<size_t>& shape) { resize(shape); }
 
         /**
-         * Constructor that assepts an initializer list  of shape and create a
+         * Constructor that accepts an initializer list  of shape and create a
          * TensorStorage with a size equivalent to that shape.
          * @param shape array containing N integers, sizes of dimensions
          * @return
@@ -69,24 +71,25 @@ namespace simpleCNN
         * @param offset
         * @return iterator to an element at offset position
         */
-        DataIter host_data(size_t offset) { return host_data_.begin() + offset; }
+        DataIter host_data(size_t offset) { return host_data_.begin()+offset; }
 
         /**
          *
          * @param offset
          * @return  constant iterator to an element at offset position
          */
-        ConstDataIter host_data(size_t offset) const { return host_data_.begin() + offset; }
+        ConstDataIter host_data(size_t offset) const { return host_data_.begin()+offset; }
 
-        explicit TensorStorage(std::initializer_list<size_t> const &shape) { resize(shape); }
+        explicit TensorStorage(std::initializer_list<size_t> const& shape) { resize(shape); }
 
-        void resize(const std::vector<size_t> &sz) { host_data_.resize(product(sz)); }
+        void resize(const std::vector<size_t>& sz) { host_data_.resize(product(sz)); }
 
-        void resize(std::initializer_list<size_t> const &sz) { host_data_.resize(product(sz), T(0)); }
+        void resize(std::initializer_list<size_t> const& sz) { host_data_.resize(product(sz), T(0)); }
 
         size_t size() const { return host_data_.size(); }
 
         ~TensorStorage() = default;
+
     private:
         /**
          *
@@ -94,5 +97,4 @@ namespace simpleCNN
          * */
         std::vector<T, Allocator> host_data_;
     };
-
 } // namespace simpleCNN

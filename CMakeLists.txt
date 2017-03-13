@@ -35,7 +35,21 @@ set(SOURCE_FILES
         include/util/simple_error.h
         include/util/colored_print.h
         include/layers/convolutional_layer.h
-        include/util/im2col2im.h)
+        include/util/im2col2im.h
+        include/core/kernels/conv2d_op_openblas.h
+        include/core/kernels/conv2d_op.h
+        include/core/framework/op_kernel.h
+        include/util/util.h
+        include/core/framework/device.h
+        include/core/params/params.h
+        include/core/backend.h
+        include/layers/layer.h
+        include/node.h
+        include/layers/feedforward_layer.h
+        include/activations/activation_function.h
+        include/core/params/conv_params.h
+        include/core/framework/tensor_subtypes/3d_tensor.h
+        include/core/framework/tensor_subtypes/2d_tensor.h)
 
 add_executable(simpleCNN ${SOURCE_FILES})
 target_link_libraries(simpleCNN -lopenblas)
