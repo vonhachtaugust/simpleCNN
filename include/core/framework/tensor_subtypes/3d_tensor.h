@@ -45,6 +45,11 @@ namespace simpleCNN {
     public:
         typedef Tensor<T, 3, kConst, Allocator> Base;
 
+        Tensor_3()
+        {
+            component_ = component_t::UNSPECIFIED;
+        }
+
         explicit Tensor_3(const std::initializer_list<size_t>& shape)
                 :Base(shape)
         {

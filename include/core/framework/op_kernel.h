@@ -96,9 +96,9 @@ namespace simpleCNN {
         class OpKernel {
         public:
             explicit OpKernel(const OpKernelConstruction& context)
-                    :device_(context.device()), params_(context.params()) { }
+                    :device_(context.device()), params_(context.params()) {}
 
-            virtual ~OpKernel() { }
+            virtual ~OpKernel() {}
 
             virtual void compute(const OpKernelContext& context) = 0;
 

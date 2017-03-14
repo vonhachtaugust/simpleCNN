@@ -15,6 +15,11 @@ namespace simpleCNN
 
     /* ------------------------------------------------------------------- //
      * Matrix type used in matrix multiplications
+     *
+     * note: float_t important since it is the supported precision
+     * by the matrix convolution kernel operations
+     * (double precision exists also).
+     *
      */
     template <typename T = float_t,
               bool kConst = false,
@@ -30,6 +35,11 @@ namespace simpleCNN
      * The shape difference of weights, bias, data etc makes
      * it difficult to store all in a 4-d tensor unless one
      * wants to be a subview ninja.
+     *
+     * note: float_t important since it is the supported precision
+     * by the matrix convolution kernel operations
+     * (double precision exists also).
+     *
      */
     template <typename T = float_t,
               bool kConst = false,

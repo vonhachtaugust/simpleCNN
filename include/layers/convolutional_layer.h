@@ -75,10 +75,10 @@ namespace simpleCNN {
                 size_t horizontal_stride,
                 size_t vertical_stride,
                 core::backend_t backend_type = core::default_engine())
-                :Base(std_input_order(has_bias))
+                : Base(std_input_order(has_bias))
         {
             conv_set_params(
-                    tensor_t({in_channels, in_height, in_width}, component_t::IN_DATA),
+                    tensor_t({in_height, in_width, in_channels}, component_t::IN_DATA),
                     filter_width,
                     filter_height,
                     out_channels,
@@ -115,7 +115,7 @@ namespace simpleCNN {
             if (params_.has_bias)
             {
                 return data_t(
-                        {params_.in, params_.weights, tensor_t({params_.out.depth(), 1, 1}, component_t::BIAS)});
+                        {params_.in, params_.weights, tensor_t({1, 1, params_.out.depth()}, component_t::BIAS)});
             }
             else
             {
@@ -150,11 +150,10 @@ namespace simpleCNN {
         )
         {
             params_.in = in;
-            params_.out = tensor_t({out_channels,
-                                    params_.conv_out_length(in.height(), filter_height, padding, vertical_stride),
-                                    params_.conv_out_length(in.width(), filter_width, padding, horizontal_stride)},
-                    component_t::OUT_DATA);
-            params_.weights = tensor_t({in.depth()*out_channels, filter_height, filter_width}, component_t::WEIGHT);
+            params_.out = tensor_t({params_.conv_out_length(in.height(), filter_height, vertical_stride, padding),
+                                    params_.conv_out_length(in.width(), filter_width, horizontal_stride, padding),
+                                    out_channels}, component_t::OUT_DATA);
+            params_.weights = tensor_t({filter_height, filter_width, in.depth()*out_channels}, component_t::WEIGHT);
             params_.has_bias = has_bias;
             params_.padding = padding;
             params_.horizontal_stride = horizontal_stride;

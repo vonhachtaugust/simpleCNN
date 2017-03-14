@@ -133,7 +133,7 @@ namespace simpleCNN {
         int ldb = tB ? k : n;
 #define TRANSPOSE(X) ((X) ? CblasTrans : CblasNoTrans)
         // http://www.netlib.org/lapack/explore-html/d7/d2b/sgemm_8f.html
-        cblas_sgemm(CblasRowMajor, // heey, I know you
+        cblas_sgemm(CblasRowMajor, // I know you
                 TRANSPOSE(tA), TRANSPOSE(tB),
                 m, n, k, 1.0f,
                 A, lda,

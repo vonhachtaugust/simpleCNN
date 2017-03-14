@@ -16,7 +16,21 @@ namespace simpleCNN {
 
         void compute(const core::OpKernelContext& context) override
         {
-            auto params = core::OpKernel::params_->conv();
+            /** Questionable... Current situation: parameters shipped around
+             * as shared_ptr<Params> which accually points to a specific
+             * parameter type. Ideal would be to call params() on the
+             * shared_ptr<Params> and let Params figure out which params
+             * derived class is called. However, no elegant way of telling
+             * params which derived class it is called on exists (usually
+             * made by performing the call on the derived class instead of on
+             * the base class).
+             *
+             * @breif Safely assures complier that I know what I am doing (heh ...),
+             * @details will return nullptr if core::OpKernel::params_.get()
+             * isn't a core::Conv_params*
+             */
+            core::Conv_params* conv_params_ptr = static_cast<core::Conv_params*>(core::OpKernel::params_.get());
+            auto params = conv_params_ptr->conv();
 
             // incoming/outcoming data
             const tensor_t& in_data = context.input(0);

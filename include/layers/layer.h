@@ -173,11 +173,11 @@ namespace simpleCNN {
         * @param in_grad  gradient of input vectors (i-th vector correspond with
         *in_data[i])
         **/
-        virtual void back_propagation(
+        /* virtual void back_propagation(
                 const vec_tensor_ptr_t& in_data,
                 const vec_tensor_ptr_t& out_data,
                 vec_tensor_ptr_t& out_grad,
-                vec_tensor_ptr_t& in_grad) = 0;
+                vec_tensor_ptr_t& in_grad) = 0; */
 
     protected:
         /**

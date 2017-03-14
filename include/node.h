@@ -50,11 +50,11 @@ namespace simpleCNN {
         /*
          * Connection verification
          */
-        virtual void connect(
+        /* virtual void connect(
                 nodeptr_t head,
                 nodeptr_t tail,
                 size_t head_index,
-                size_t tail_index) = 0;
+                size_t tail_index) = 0; */
 
         /*
          * Vector of edges going out and in of this node.

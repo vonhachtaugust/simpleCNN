@@ -6,13 +6,10 @@
 
 namespace simpleCNN {
     namespace core {
-        class Conv_params;
-
         class Params {
         public:
-            Params() { }
+            Params() {}
 
-            virtual Conv_params conv();
         };
-    }
+    } // namespace core
 } // namespace simpleCNN
