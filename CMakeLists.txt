@@ -1,17 +1,52 @@
-cmake_minimum_required(VERSION 3.6)
-project(simpleCNN)
+cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
+project(simpleCNN VERSION 0.0.1 LANGUAGES C CXX)
+# Does not build into a library. Has to build a subdirectory.
+
+# Enables project() command manages VERSION variables.
+if(POLICY CMP0048)
+    cmake_policy(SET CMP0048 NEW)
+endif(POLICY CMP0048)
+
+#####
+# Set the default build type to Debug for now.
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "No build type specified: defaulting to debug.")
+    set(CMAKE_BUILD_TYPE Debug)
+else(NOT CMAKE_BUILD_TYPE)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message("==========================================================================================")
+    message(STATUS "Build type: Debug.")
+    message("==========================================================================================")
+    endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+endif ()
+
+#####
+# OpenBLAS
+find_package( BLAS REQUIRED )
+if(BLAS_FOUND)
+    message(STATUS "Found BLAS: ${BLAS_LIBRARIES}")
+    list(APPEND REQUIRED_LIBRARIES ${BLAS_LIBRARIES})
+else()
+    message(FATAL_ERROR "Cannot find required package OpenBLAS. Please set BLAS_INCLUDE_DIR")
+endif()
+
+#####
+# Define user options (To be implemented when source is build as library)
+# option(BUILD_TESTS      "Set to ON to build tests"      ON)
+
+####
+# Setup the compiler options
+#
+# Compiler currently available
 add_definitions(
         -D_CMAKE_C_COMPILER=gcc-5.4.0
         -D_CMAKE_CXX_COMPILER=g++-5.4.0
         -D_ENABLE_LOG=1
 )
 
-find_package( BLAS REQUIRED )
-message( STATUS BLAS found: ${BLAS_LIBRARIES} )
-
+# set c++ standard to c++11
 set(CMAKE_CXX_STANDARD 11)
-
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -25,32 +60,13 @@ else()
     message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+####
+# Source files
+file(GLOB_RECURSE simpleCNN_headers "${CMAKE_SOURCE_DIR}/simpleCNN/*.h")
 
-set(SOURCE_FILES
-        src/main.cpp
-        include/core/framework/tensor.h
-        include/core/framework/tensor_storage.h
-        include/core/framework/tensor_utils.h
-        include/util/aligned_allocator.h
-        include/util/simple_error.h
-        include/util/colored_print.h
-        include/layers/convolutional_layer.h
-        include/util/im2col2im.h
-        include/core/kernels/conv2d_op_openblas.h
-        include/core/kernels/conv2d_op.h
-        include/core/framework/op_kernel.h
-        include/util/util.h
-        include/core/framework/device.h
-        include/core/params/params.h
-        include/core/backend.h
-        include/layers/layer.h
-        include/node.h
-        include/layers/feedforward_layer.h
-        include/activations/activation_function.h
-        include/core/params/conv_params.h
-        include/core/framework/tensor_subtypes/3d_tensor.h
-        include/core/framework/tensor_subtypes/2d_tensor.h)
+####
+# Build and run tests && build and run an example
+add_subdirectory(test)
+add_subdirectory(examples)
 
-add_executable(simpleCNN ${SOURCE_FILES})
-target_link_libraries(simpleCNN -lopenblas)
 
