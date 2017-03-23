@@ -15,10 +15,7 @@ namespace simpleCNN {
       case device_t::NONE: os << "NONE"; break;
       case device_t::CPU: os << "CPU"; break;
       case device_t::GPU: os << "GPU"; break;
-      default:
-        throw simple_error("Not supported ostream enum: " +
-                           std::to_string(static_cast<int>(type)));
-        break;
+      default: throw simple_error("Not supported ostream enum: " + std::to_string(static_cast<int>(type))); break;
     }
     return os;
   }
@@ -34,9 +31,7 @@ namespace simpleCNN {
     * @param platform_id The platform identification number.
     * @param device_id The device identification number.
     */
-    inline explicit Device(device_t type,
-                           const int platform_id,
-                           const int device_id);
+    inline explicit Device(device_t type, const int platform_id, const int device_id);
 
     // Returns the device type
     device_t type() const { return type_; }
@@ -48,8 +43,7 @@ namespace simpleCNN {
     int deviceId() const { return device_id_; }
 
     bool operator==(const Device& d) const {
-      if (d.type() == this->type() && d.platformId() == this->platformId() &&
-          d.deviceId() == this->deviceId()) {
+      if (d.type() == this->type() && d.platformId() == this->platformId() && d.deviceId() == this->deviceId()) {
         return true;
       }
       return false;

@@ -34,7 +34,5 @@ namespace simpleCNN {
     va_end(args);
   }
 
-  inline void coloredPrint(Color c, const std::string& msg) {
-    coloredPrint(c, msg.c_str());
-  }
+  inline void coloredPrint(Color c, const std::string& msg) { coloredPrint(c, msg.c_str()); }
 }  // namespace simpleCNN

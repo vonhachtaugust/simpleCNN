@@ -31,16 +31,15 @@ namespace simpleCNN {
     *
     **/
     Layer(const data_t& in_type, const data_t& out_type)
-      : Node(static_cast<size_t>(in_type.size()),
-             static_cast<size_t>(out_type.size())),
+      : Node(static_cast<size_t>(in_type.size()), static_cast<size_t>(out_type.size())),
         initialized_(false),
         in_channels_(static_cast<size_t>(in_type.size())),
         out_channels_(static_cast<size_t>(out_type.size())),
         in_type_(in_type),
         out_type_(out_type) {
-      //            weight_init_ = std::make_shared<weight_init::xavier>();
-      //            bias_init_   = std::make_shared<weight_init::constant>();
-      trainable_ = true;
+      weight_init_ = std::make_shared<weight_init::Xavier>();
+      bias_init_   = std::make_shared<weight_init::Constant>();
+      trainable_   = true;
     }
 
     virtual ~Layer() = default;
@@ -75,9 +74,9 @@ namespace simpleCNN {
     size_t out_channels() const { return out_channels_; }
 
     // in_type_[0]: data, in_type_[1]: weights, in_type_[2]: bias
-    tensor_t weights() const { return in_type_[1]; }
+    // tensor_t weights() const { return in_type_[1]; }
 
-    tensor_t weights() { return in_type_[1]; }
+    // tensor_t weights() { return in_type_[1]; }
 
     data_t in_type() const { return in_type_; }
 
@@ -87,12 +86,69 @@ namespace simpleCNN {
 
     bool trainable() const { return trainable_; }
 
+    tensor_t* in_component(component_t t) {
+      for (size_t i = 0; i < in_channels_; ++i) {
+        if (in_type_[i].getComponentType() == t) {
+          return get_component_data(i, t);
+        }
+      }
+      throw simple_error("Error: In component not allocated.");
+    }
+
+    tensor_t* out_component(component_t t) {
+      for (size_t i = 0; i < out_channels_; ++i) {
+        if (out_type_[i].getComponentType() == t) {
+          return ith_out_node(i)->get_data();
+        }
+      }
+      throw simple_error("Error: Out component not allocated.");
+    }
+
     // End: Getters ---------------------------------------- //
 
     // Start: Setters -------------------------------------- //
     Layer& set_device(Device* device) {
       device_ptr_.reset(device);
       return *this;
+    }
+
+    template <typename WeightInit>
+    Layer& weight_init(const WeightInit& f) {
+      weight_init_ = std::make_shared<WeightInit>(f);
+      return *this;
+    }
+
+    template <typename BiasInit>
+    Layer& bias_init(const BiasInit& f) {
+      bias_init_ = std::make_shared<BiasInit>(f);
+      return *this;
+    }
+
+    void set_in_data(const tensor_t& data, component_t ct) { *in_component(ct) = data; }
+
+    void set_out_data(const tensor_t& data, component_t ct) { *out_component(ct) = data; }
+
+    /**
+ * @brief Initalizes the vectors containing the trainable data
+ */
+    void init_weight() {
+      if (!trainable_) {
+        initialized_ = true;
+        return;
+      }
+
+      for (size_t i = 0; i < in_channels_; i++) {
+        component_t type_ = in_type_[i].getComponentType();
+        switch (type_) {
+          case component_t::WEIGHT:
+            weight_init_->fill(get_component_data(i, type_), fan_in_size(), fan_out_size());
+            break;
+          case component_t::BIAS: bias_init_->fill(get_component_data(i, type_), fan_in_size(), fan_out_size()); break;
+          default: break;
+        }
+      }
+
+      initialized_ = true;
     }
 
     // End: Setters ---------------------------------------- //
@@ -103,9 +159,7 @@ namespace simpleCNN {
     * value from label-id in final(output) layer override properly
     * if the layer is intended to be used as output layer
     **/
-    virtual std::pair<float_t, float_t> out_value_range() const {
-      return {float_t{0.0}, float_t{1.0}};
-    }
+    virtual std::pair<float_t, float_t> out_value_range() const { return {float_t{0.0}, float_t{1.0}}; }
 
     virtual void createOp() {}
     // End: Virtuals ---------------------------------------- //
@@ -115,12 +169,12 @@ namespace simpleCNN {
     * array of input shapes (height x width x depth)
     *
     **/
-    virtual data_t in_shape() const = 0;
+    virtual shape_t in_shape() const = 0;
 
     /**
     * array of output shapes (width x height x depth)
     **/
-    virtual data_t out_shape() const = 0;
+    virtual shape_t out_shape() const = 0;
 
     /**
     * name of layer, should be unique for each concrete class
@@ -133,7 +187,7 @@ namespace simpleCNN {
     * size (e.g. xavier) override if the layer has trainable weights, and
     * scale of initialization is important.
     **/
-    virtual size_t fan_in_size() const { return in_shape()[0].shape().at(0); }
+    virtual size_t fan_in_size() const { return *(in_shape()[0].end() - 1); }
 
     /**
     * number of outgoing connections for each input unit
@@ -141,7 +195,7 @@ namespace simpleCNN {
     * size (e.g. xavier) override if the layer has trainable weights, and
     * scale of initialization is important
     **/
-    virtual size_t fan_out_size() const { return out_shape()[0].shape().at(0); }
+    virtual size_t fan_out_size() const { return *(out_shape()[0].end() - 1); }
 
     /////////////////////////////////////////////////////////////////////////
     // fprop/bprop
@@ -150,8 +204,7 @@ namespace simpleCNN {
     * @param in_data  input vectors of this layer (data, weight, bias)
     * @param out_data output vectors
     **/
-    virtual void forward_propagation(const vec_tensor_ptr_t& in_data,
-                                     vec_tensor_ptr_t& out_data) = 0;
+    virtual void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) = 0;
 
     /**
     * return delta of previous layer (delta=\frac{dE}{da}, a=wx in
@@ -214,6 +267,44 @@ namespace simpleCNN {
 
    private:
     /**
+     * @brief Allocates the necessary edge memory in a specific incoming connection.
+     */
+    void alloc_input(size_t i) const { prev_[i] = std::make_shared<Edge>(nullptr, in_shape()[i]); }
+
+    /**
+     * @brief Allocates the necessary edge memory in a specific outcoming connection.
+     */
+    void alloc_output(size_t i) const { next_[i] = std::make_shared<Edge>(const_cast<Layer*>(this), out_shape()[i]); }
+
+    /**
+     * @brief Creates an edge between the current node and one incoming or previous node.
+     */
+    edgeptr_t ith_in_node(size_t i) {
+      if (!prev_[i]) {
+        alloc_input(i);
+      }
+      return prev()[i];
+    }
+
+    /**
+     * @brief Creates an edge between the current node and one outcoming or next node.
+     */
+    edgeptr_t ith_out_node(size_t i) {
+      if (!next_[i]) {
+        alloc_output(i);
+      }
+      return next()[i];
+    }
+
+    /**
+     * @brief Retrieves weight tensor from incoming edge
+     */
+    tensor_t* get_component_data(size_t i, component_t t) {
+      assert(in_type_[i].getComponentType() == t);
+      return ith_in_node(i)->get_data();
+    }
+
+    /**
      * Flag indicating whether the layer/node parameters are trainable
      */
     bool trainable_;
@@ -221,11 +312,11 @@ namespace simpleCNN {
     /**
      * Pointer to the function for weights initialization
      */
-    //        std::shared_ptr<weight_init::function> weight_init_;
+    std::shared_ptr<weight_init::Function> weight_init_;
 
     /**
      * Pointer to the function for biases initialization
      */
-    //        std::shared_ptr<weight_init::function> bias_init_;
+    std::shared_ptr<weight_init::Function> bias_init_;
   };
 }  // namespace simpleCNN

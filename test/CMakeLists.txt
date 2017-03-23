@@ -25,12 +25,15 @@ enable_testing()
 
 #####
 # Create test executable and link gtest
-add_executable(simpleCNN_test test.cpp ${simpleCNN_headers})
+add_executable(simpleCNN_test
+        test.cpp
+        test_convolutional_layer.h
+        ${simpleCNN_headers})
 target_link_libraries(simpleCNN_test ${REQUIRED_LIBRARIES} gtest gmock)
 
 #####
 # Add executable to all tests to be performed
-add_test(NAME all_tests COMMAND simpleCNN_test)
+# add_test(NAME all_tests COMMAND simpleCNN_test)
 add_custom_target(run_tests COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS simpleCNN_test)
 
 # Clang format check

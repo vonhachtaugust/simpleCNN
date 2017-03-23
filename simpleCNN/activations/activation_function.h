@@ -31,10 +31,7 @@ namespace simpleCNN {
         }
       }
 
-      void itedf(vec_t& cur,
-                 const vec_t& prev,
-                 const vec_t& out,
-                 size_t cnt) const {
+      void itedf(vec_t& cur, const vec_t& prev, const vec_t& out, size_t cnt) const {
         for (size_t i = 0; i < cnt; ++i) {
           cur[i] = prev[i] * df(out[i]);
         }
@@ -57,15 +54,11 @@ namespace simpleCNN {
     template <typename T = float_t>
     class ReLU : public Function<T> {
      public:
-      T f(const vec_t& v, size_t i) const override {
-        return std::max(T{0}, v[i]);
-      }
+      T f(const vec_t& v, size_t i) const override { return std::max(T{0}, v[i]); }
 
       T df(T y) const override { return y > T{0} ? T{1} : T{0}; }
 
-      std::pair<T, T> scale() const override {
-        return std::make_pair(float_t(0.1), float_t(0.9));
-      }
+      std::pair<T, T> scale() const override { return std::make_pair(float_t(0.1), float_t(0.9)); }
     };
 
   }  // namespace activation

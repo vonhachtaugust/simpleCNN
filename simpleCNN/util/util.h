@@ -10,7 +10,13 @@
 namespace simpleCNN {
   template <typename T = float_t, typename Allocator = aligned_allocator<T, 64>>
   using default_vec_t = std::vector<T, Allocator>;
-  using vec_t         = default_vec_t<>;
+
+  using vec_t      = default_vec_t<>;
+  using vec_iter_t = vec_t::iterator;
+
+  template <typename T = float_t, bool kConst = false, typename Allocator = aligned_allocator<T, 64>>
+  using default_array_t = Tensor<T, 1, kConst, Allocator>;
+  using array_t         = default_array_t<>;
 
   /* ------------------------------------------------------------------- //
    * Matrix type used in matrix multiplications
@@ -20,56 +26,48 @@ namespace simpleCNN {
    * (double precision exists also).
    *
    */
-  template <typename T         = float_t,
-            bool kConst        = false,
-            typename Allocator = aligned_allocator<T, 64>>
-  using default_matrix_t       = Tensor_2<T, kConst, Allocator>;
-  using matrix_t               = default_matrix_t<>;  // no more <> yey
-  using matrix_data_t          = std::vector<matrix_t>;
-  using vec_matrix_ptr_t       = std::vector<matrix_t *>;
+  template <typename T = float_t, bool kConst = false, typename Allocator = aligned_allocator<T, 64>>
+  using default_matrix_t = Tensor_2<T, kConst, Allocator>;
+  using matrix_t         = default_matrix_t<>;  // no more <> yey
+  using matrix_data_t    = std::vector<matrix_t>;
+  using vec_matrix_ptr_t = std::vector<matrix_t *>;
 
   /* ------------------------------------------------------------------- //
-   * Use vector<tensor_t> instead of tensor_t<4>
-   * The shape difference of weights, bias, data etc makes
-   * it difficult to store all in a 4-d tensor unless one
-   * wants to be a subview ninja.
    *
    * note: float_t important since it is the supported precision
    * by the matrix convolution kernel operations
    * (double precision exists also).
    *
    */
-  template <typename T         = float_t,
-            bool kConst        = false,
-            typename Allocator = aligned_allocator<T, 64>>
-  using default_tensor_t       = Tensor_3<T, kConst, Allocator>;
+  template <typename T = float_t, bool kConst = false, typename Allocator = aligned_allocator<T, 64>>
+  using default_tensor_t = Tensor<T, 4, kConst, Allocator>;
 
-  using tensor_t         = default_tensor_t<>;  // removed <>  yey
-  using tensor_ptr_t     = std::shared_ptr<tensor_t>;
-  using vec_tensor_ptr_t = std::vector<tensor_t *>;
+  using tensor_t     = default_tensor_t<>;  // removed <>  yey
+  using tensor_ptr_t = std::shared_ptr<tensor_t>;
+  // using vec_tensor_ptr_t = std::vector<tensor_t *>;
 
-  using data_t     = std::vector<tensor_t>;
-  using data_ptr_t = std::shared_ptr<tensor_t>;
+  using data_t      = std::vector<tensor_t>;
+  using data_ptrs_t = std::vector<tensor_t *>;
   // ------------------------------------------------------------------- //
 
+  using shape4d = std::vector<size_t>;
+  using shape_t = std::vector<shape4d>;
+
   /* ------------------------------------------------------------------- //
-   * Constructor arguments require data type composition for initialization
+   * Constructor arguments require data type composition for initialization.
+   * Component type important and used frequently.
    */
   inline data_t std_input_order(bool has_bias) {
     if (has_bias) {
-      return data_t({tensor_t(component_t::IN_DATA),
-                     tensor_t(component_t::WEIGHT),
-                     tensor_t(component_t::BIAS)});
+      return data_t({tensor_t(component_t::IN_DATA), tensor_t(component_t::WEIGHT), tensor_t(component_t::BIAS)});
     } else {
-      return data_t(
-        {tensor_t(component_t::IN_DATA), tensor_t(component_t::WEIGHT)});
+      return data_t({tensor_t(component_t::IN_DATA), tensor_t(component_t::WEIGHT)});
     }
   }
 
   inline data_t std_output_order(bool has_activation) {
     if (has_activation) {
-      return data_t(
-        {tensor_t(component_t::OUT_DATA), tensor_t(component_t::AUX)});
+      return data_t({tensor_t(component_t::OUT_DATA), tensor_t(component_t::AUX)});
     } else {
       return data_t({tensor_t(component_t::OUT_DATA)});
     }

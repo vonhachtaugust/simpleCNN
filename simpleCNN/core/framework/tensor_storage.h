@@ -14,8 +14,7 @@
 namespace simpleCNN {
   template <typename Container>
   static inline size_t product(Container& c) {
-    return std::accumulate(std::begin(c), std::end(c), size_t(1),
-                           std::multiplies<size_t>());
+    return std::accumulate(std::begin(c), std::end(c), size_t(1), std::multiplies<size_t>());
   }
 
   template <typename C1, typename C2>
@@ -76,21 +75,15 @@ namespace simpleCNN {
      * @param offset
      * @return  constant iterator to an element at offset position
      */
-    ConstDataIter host_data(size_t offset) const {
-      return host_data_.begin() + offset;
-    }
+    ConstDataIter host_data(size_t offset) const { return host_data_.begin() + offset; }
 
-    explicit TensorStorage(std::initializer_list<size_t> const& shape) {
-      resize(shape);
-    }
+    ConstDataIter host_data_end() const { return host_data_.end(); }
 
-    void resize(const std::vector<size_t>& sz) {
-      host_data_.resize(product(sz));
-    }
+    explicit TensorStorage(std::initializer_list<size_t> const& shape) { resize(shape); }
 
-    void resize(std::initializer_list<size_t> const& sz) {
-      host_data_.resize(product(sz), T(0));
-    }
+    void resize(const std::vector<size_t>& sz) { host_data_.resize(product(sz)); }
+
+    void resize(std::initializer_list<size_t> const& sz) { host_data_.resize(product(sz), T(0)); }
 
     size_t size() const { return host_data_.size(); }
 

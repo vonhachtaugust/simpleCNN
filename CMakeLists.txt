@@ -1,12 +1,19 @@
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
-project(simpleCNN VERSION 0.0.1 LANGUAGES C CXX)
+project(simpleCNN VERSION 0.0.1)
 # Does not build into a library. Has to build a subdirectory.
 
 # Enables project() command manages VERSION variables.
 if(POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif(POLICY CMP0048)
+
+#add_definitions(
+#        -D_CMAKE_C_COMPILER=gcc-5.4.0
+#        -D_CMAKE_CXX_COMPILER=g++-5.4.0
+#        -D_ENABLE_LOG=1
+#)
+
 
 #####
 # Set the default build type to Debug for now.
@@ -33,17 +40,12 @@ endif()
 
 #####
 # Define user options (To be implemented when source is build as library)
-# option(BUILD_TESTS      "Set to ON to build tests"      ON)
+option(BUILDS_TEST      "Set to ON to build tests"      ON)
 
 ####
 # Setup the compiler options
 #
 # Compiler currently available
-add_definitions(
-        -D_CMAKE_C_COMPILER=gcc-5.4.0
-        -D_CMAKE_CXX_COMPILER=g++-5.4.0
-        -D_ENABLE_LOG=1
-)
 
 # set c++ standard to c++11
 set(CMAKE_CXX_STANDARD 11)
@@ -54,10 +56,10 @@ if(COMPILER_SUPPORTS_CXX11)
     message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++11 support.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++98 support.")
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has C++98 support.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 ####
@@ -66,7 +68,11 @@ file(GLOB_RECURSE simpleCNN_headers "${CMAKE_SOURCE_DIR}/simpleCNN/*.h")
 
 ####
 # Build and run tests && build and run an example
-add_subdirectory(test)
-add_subdirectory(examples)
+if(BUILDS_TEST)
+    add_subdirectory(test)
+endif()
 
+#if(NOT BUILDS_TEST)
+add_subdirectory(examples)
+#endif()
 

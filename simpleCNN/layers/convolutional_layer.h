@@ -23,61 +23,60 @@ namespace simpleCNN {
    public:
     typedef Feedforward_layer<T, Activation> Base;
 
-    Convolutional_layer(size_t in_width,
-                        size_t in_height,
-                        size_t filter_size,
+    Convolutional_layer(size_t input_width,
+                        size_t input_height,
                         size_t in_channels,
+                        size_t batch_size,
+                        size_t filter_size,
                         size_t out_channels,
-                        size_t padding               = 0,
-                        bool has_bias                = true,
-                        size_t horizontal_stride     = 1,
-                        size_t vertical_stride       = 1,
-                        core::backend_t backend_type = core::default_engine())
-      : Convolutional_layer(in_width,
-                            in_height,
-                            filter_size,
-                            filter_size,
+                        size_t stride  = 1,
+                        size_t padding = 0,
+                        bool has_bias  = true)
+      : Convolutional_layer(input_width,
+                            input_height,
                             in_channels,
+                            batch_size,
+                            filter_size,
+                            filter_size,
                             out_channels,
+                            stride,
+                            stride,
                             padding,
-                            has_bias,
-                            horizontal_stride,
-                            vertical_stride) {}
+                            has_bias) {}
 
     /**
     * Constructing convolutional layer.
     *
-    * @param in_width           [in] input image width
-    * @param in_height          [in] input image height
-    * @param filter_width       [in] window_width(kernel) size of convolution
-    * @param filter_height      [in] window_height(kernel) size of convolution
-    * @param in_channels        [in] input image channels (grayscale=1, rgb=3)
-    * @param out_channels       [in] output image channels
-    * @param padding            [in] number of paddings applied around the image
-    * @param has_bias           [in] whether to add a bias vector to the filter
-    *outputs
+    * @param input_width            [in] input image width
+    * @param input_height           [in] input image height
+    * @param in_channels            [in] input image channels (grayscale=1, rgb=3)
+    * @param batch_size             [in] number of input images to processes in a forward pass
+    * @param filter_width           [in] window_width(kernel) size of convolution
+    * @param filter_height          [in] window_height(kernel) size of convolution
+    * @param out_channels           [in] output image channels
     * @param horizontal_stride  [in] specify the horizontal interval at which to
     *apply the filters to the input
     * @param vertical_stride    [in] specify the vertical interval at which to
     *apply the filters to the input
-    * @param backend_type       [in] specify backend engine you use
+    * @param padding                [in] number of paddings applied around the image
+    * @param has_bias               [in] whether to add a bias vector to the filter outputs
+     * @param backend_type       [in] specify backend engine you use
     **/
-    Convolutional_layer(size_t in_width,
-                        size_t in_height,
+    Convolutional_layer(size_t input_width,
+                        size_t input_height,
+                        size_t in_channels,
+                        size_t batch_size,
                         size_t filter_width,
                         size_t filter_height,
-                        size_t in_channels,
                         size_t out_channels,
-                        size_t padding,
-                        bool has_bias,
                         size_t horizontal_stride,
                         size_t vertical_stride,
+                        size_t padding,
+                        bool has_bias,
                         core::backend_t backend_type = core::default_engine())
       : Base(std_input_order(has_bias)) {
-      conv_set_params(
-        tensor_t({in_height, in_width, in_channels}, component_t::IN_DATA),
-        filter_width, filter_height, out_channels, padding, has_bias,
-        horizontal_stride, vertical_stride);
+      conv_set_params(input_width, input_height, in_channels, batch_size, filter_width, filter_height, out_channels,
+                      horizontal_stride, vertical_stride, padding, has_bias);
       init_backend(backend_type);
       Base::set_backend_type(backend_type);
     }
@@ -86,9 +85,8 @@ namespace simpleCNN {
      * @param in_data       input vector of this layer (data, weight, bias)
      * @param out_data      output vectors
      */
-    void forward_propagation(const vec_tensor_ptr_t& in_data,
-                             vec_tensor_ptr_t& out_data) override {
-      vec_tensor_ptr_t in_data_(in_data);
+    void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
+      data_ptrs_t in_data_(in_data);
 
       // forward convolution op context
       auto ctx = core::OpKernelContext(in_data_, out_data);
@@ -100,17 +98,20 @@ namespace simpleCNN {
       // this->forward_activation(*out_data[0],*out_data[1]);
     }
 
-    data_t in_shape() const override {
+    shape_t in_shape() const override {
       if (params_.has_bias) {
-        return data_t(
-          {params_.in, params_.weights,
-           tensor_t({1, 1, params_.out.depth()}, component_t::BIAS)});
+        return {{params_.batch_size, params_.in_channels, params_.input_height, params_.input_width},
+                {params_.out_channels, params_.in_channels, params_.filter_height, params_.filter_width},
+                {params_.out_channels, 1, 1, 1}};
       } else {
-        return data_t({params_.in, params_.weights});
+        return {{params_.batch_size, params_.in_channels, params_.input_height, params_.input_width},
+                {params_.out_channels, params_.in_channels, params_.filter_height, params_.filter_width}};
       }
     }
 
-    data_t out_shape() const override { return data_t({params_.out}); }
+    shape_t out_shape() const override {
+      return {{params_.batch_size, params_.out_channels, params_.output_height, params_.output_width}};
+    }
 
     std::string layer_type() const override { return std::string("conv"); }
 
@@ -118,32 +119,35 @@ namespace simpleCNN {
 
    private:
     /*
-     * Default tensor_t has 3 dimensions where tensor_t(height, width, depth)
+     * Default tensor_t has 4 dimensions where tensor_t(stack, depth, height, width)
      * according to row-major order: rightmost index varies fastest
      */
-    void conv_set_params(const tensor_t& in,
+    void conv_set_params(size_t input_width,
+                         size_t input_height,
+                         size_t in_channels,
+                         size_t batch_size,
                          size_t filter_width,
                          size_t filter_height,
                          size_t out_channels,
-                         size_t padding,
-                         bool has_bias,
                          size_t horizontal_stride,
-                         size_t vertical_stride) {
-      params_.in = in;
-      params_.out =
-        tensor_t({params_.conv_out_length(in.height(), filter_height,
-                                          vertical_stride, padding),
-                  params_.conv_out_length(in.width(), filter_width,
-                                          horizontal_stride, padding),
-                  out_channels},
-                 component_t::OUT_DATA);
-      params_.weights =
-        tensor_t({filter_height, filter_width, in.depth() * out_channels},
-                 component_t::WEIGHT);
-      params_.has_bias          = has_bias;
-      params_.padding           = padding;
+                         size_t vertical_stride,
+                         size_t padding,
+                         bool has_bias) {
+      params_.input_width  = input_width;
+      params_.input_height = input_height;
+      params_.in_channels  = in_channels;
+      params_.batch_size   = batch_size;
+
+      params_.filter_width      = filter_width;
+      params_.filter_height     = filter_height;
       params_.horizontal_stride = horizontal_stride;
       params_.vertical_stride   = vertical_stride;
+      params_.padding           = padding;
+      params_.has_bias          = has_bias;
+
+      params_.output_width  = params_.conv_out_length(input_width, filter_width, vertical_stride, padding);
+      params_.output_height = params_.conv_out_length(input_height, filter_height, horizontal_stride, padding);
+      params_.out_channels  = out_channels;
     }
 
     void init_backend(const core::backend_t backend_type) {

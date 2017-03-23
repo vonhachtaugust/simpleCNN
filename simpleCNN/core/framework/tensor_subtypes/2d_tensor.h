@@ -19,23 +19,16 @@ namespace simpleCNN {
    * Allows for easier handling of matrix operations.
    *
    */
-  template <typename T         = float_t,
-            bool kConst        = false,
-            typename Allocator = aligned_allocator<T, 64>>
+  template <typename T = float_t, bool kConst = false, typename Allocator = aligned_allocator<T, 64>>
   class Tensor_2 : public Tensor<T, 2, kConst, Allocator> {
    public:
     typedef Tensor<T, 2, kConst, Allocator> Base;
 
-    explicit Tensor_2(const std::initializer_list<size_t>& shape)
-      : Base(shape) {}
+    explicit Tensor_2(const std::initializer_list<size_t>& shape) : Base(shape) {}
 
-    inline size_t rows() const {
-      return this->shape()[matrix_dimension_t::row];
-    }
+    inline size_t rows() const { return this->shape()[matrix_dimension_t::row]; }
 
-    inline size_t cols() const {
-      return this->shape()[matrix_dimension_t::col];
-    }
+    inline size_t cols() const { return this->shape()[matrix_dimension_t::col]; }
 
    private:
   };

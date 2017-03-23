@@ -10,6 +10,24 @@
 
 namespace simpleCNN {
 
+  /**
+  * Characteristic component type used in order to distinguish between
+  * multiple tensors stored in a vector. Different use-cases constitutes
+  * of various multiples of this labeling.
+  *
+  * Here, these vectors typically consists of one
+  * DATA tensor, one WEIGHT tensor and a BIAS tensor.
+  */
+  enum class component_t { UNSPECIFIED, IN_DATA, OUT_DATA, WEIGHT, BIAS, AUX };
+
+  /**
+  * In case of three dimensional tensor, use these
+  * when fetching height / width / depth values. Also
+  * found using shape, but kept like this for keep track
+  * of the common definition.
+  */
+  enum dim_t { stack = 0, depth = 1, height = 2, width = 3 };
+
   template <typename T         = float_t,
             size_t kDimensions = 4,
             bool kConst        = false,
@@ -17,20 +35,23 @@ namespace simpleCNN {
   class Tensor {
     // Define constant types for constant Tensor,
     // and mutable ones for mutable Tensor
-    typedef typename std::conditional<kConst,
-                                      const TensorStorage<T, Allocator>,
-                                      TensorStorage<T, Allocator>>::type
+    typedef typename std::conditional<kConst, const TensorStorage<T, Allocator>, TensorStorage<T, Allocator>>::type
       TensorStorageType;
-    typedef typename std::conditional<kConst, const T*, T*>::type UPtr;
+    typedef typename std::conditional<kConst, const T*, T*>::type TPtr;
     typedef typename std::shared_ptr<TensorStorageType> TensorStoragePointer;
-    typedef typename std::conditional<
-      kConst,
-      typename std::vector<T, Allocator>::const_iterator,
-      typename std::vector<T, Allocator>::iterator>::type StorageIterator;
+    typedef typename std::conditional<kConst,
+                                      typename std::vector<T, Allocator>::const_iterator,
+                                      typename std::vector<T, Allocator>::iterator>::type StorageIterator;
 
    public:
     Tensor() {
       offset_      = size_t(0);
+      storage_ptr_ = std::make_shared<TensorStorageType>();
+    }
+
+    Tensor(component_t ct) {
+      offset_      = size_t(0);
+      component_   = ct;
       storage_ptr_ = std::make_shared<TensorStorageType>();
     }
 
@@ -130,8 +151,7 @@ namespace simpleCNN {
      */
     template <typename... Args>
     size_t host_pos(const size_t d, const Args... args) const {
-      static_assert(sizeof...(args) < kDimensions,
-                    "Wrong number of dimensions");
+      static_assert(sizeof...(args) < kDimensions, "Wrong number of dimensions");
       size_t dim = kDimensions - sizeof...(args)-1;
       if (d >= shape_[dim]) {
         throw simple_error("Access tensor out of range.");
@@ -143,28 +163,26 @@ namespace simpleCNN {
     }
 
     template <typename... Args>
-    UPtr host_ptr(const Args... args) const {
+    TPtr host_ptr(const Args... args) const {
       return &(*host_iter(args...));
     }
 
     template <typename... Args>
     StorageIterator host_iter(const Args... args) const {
       static_assert(!kConst, "Non-constant operation on constant Tensor");
-      static_assert(sizeof...(args) == kDimensions,
-                    "Wrong number of dimensions");
+      static_assert(sizeof...(args) == kDimensions, "Wrong number of dimensions");
       return storage_ptr_->host_data(offset_) + host_pos(args...);
     }
 
-    StorageIterator host_begin() const {
-      return storage_ptr_->host_data(offset_);
-    }
+    StorageIterator host_begin() const { return storage_ptr_->host_data(offset_); }
+
+    StorageIterator host_end() const { return storage_ptr_->host_data(size() - 1); }
 
     Tensor& fill(T value) {
       static_assert(!kConst, "Non-constant operation on constant Tensor");
       // data_is_on_host_ = true;
       // data_dirty_ = true;
-      std::fill(storage_ptr_->host_data(offset_),
-                storage_ptr_->host_data(offset_) + size_, value);
+      std::fill(storage_ptr_->host_data(offset_), storage_ptr_->host_data(offset_) + size_, value);
       return *this;
     }
 
@@ -190,9 +208,8 @@ namespace simpleCNN {
     Tensor operator[](size_t index) {
       std::array<size_t, kDimensions - 1> new_tensor;
       std::copy(shape_.begin() + 1, shape_.end(), new_tensor.begin());
-      return Tensor(
-        storage_ptr_, offset_ + index * size_ / shape_[0],
-        /*std::array<size_t, kDimensions - 1>(shape_.begin() + 1, shape_.end())*/ new_tensor);
+      return Tensor(storage_ptr_, offset_ + index * size_ / shape_[0],
+                    /*std::array<size_t, kDimensions - 1>(shape_.begin() + 1, shape_.end())*/ new_tensor);
     }
 
     /**
@@ -214,9 +231,7 @@ namespace simpleCNN {
     * with offset zero
     *
     */
-    Tensor subView(std::initializer_list<size_t> const& new_shape) {
-      return subview_impl({}, new_shape);
-    }
+    Tensor subView(std::initializer_list<size_t> const& new_shape) { return subview_impl({}, new_shape); }
 
     /**
      * @brief Returns a sub view from the current tensor with a given size.
@@ -237,8 +252,7 @@ namespace simpleCNN {
      * matrix view from
      *                                                     // offset 4.
      */
-    Tensor subView(std::initializer_list<size_t> const& start,
-                   std::initializer_list<size_t> const& new_shape) {
+    Tensor subView(std::initializer_list<size_t> const& start, std::initializer_list<size_t> const& new_shape) {
       return subview_impl(start, new_shape);
     }
 
@@ -249,6 +263,12 @@ namespace simpleCNN {
     bool isSubView() const { return size_ != storage_ptr_->size(); }
 
     size_t calcSize() const { return product(shape_); }
+
+    component_t getComponentType() const { return component_; }
+
+    void setComponentType(component_t t) { component_ = t; }
+
+    size_t dimension(dim_t t) const { return shape()[t]; };
 
    private:
     /**
@@ -283,8 +303,7 @@ namespace simpleCNN {
      * are bigger than the current dimensions number. Also raises an exception
      * when the requested view size is not feasible.
      */
-    Tensor subview_impl(std::initializer_list<size_t> const& start,
-                        std::initializer_list<size_t> const& new_shape) {
+    Tensor subview_impl(std::initializer_list<size_t> const& start, std::initializer_list<size_t> const& new_shape) {
       if (start.size() > kDimensions || new_shape.size() > kDimensions) {
         throw simple_error("Overpassed number of existing dimensions.");
       }
@@ -308,6 +327,9 @@ namespace simpleCNN {
     /* Offset from the beginning of TensorStorage */
     size_t offset_;
     size_t size_;
+
+    /* Component type */
+    component_t component_;
 
     /* pointer to TensorStorage */
     TensorStoragePointer storage_ptr_;

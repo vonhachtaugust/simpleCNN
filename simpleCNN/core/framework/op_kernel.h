@@ -17,8 +17,7 @@ namespace simpleCNN {
 
     class OpKernelConstruction {
      public:
-      explicit OpKernelConstruction(Device* device, Params* params)
-        : device_(device), params_(params) {}
+      explicit OpKernelConstruction(Device* device, Params* params) : device_(device), params_(params) {}
 
       // Returns the device raw pointer
       Device* device() const { return device_; }
@@ -49,20 +48,16 @@ namespace simpleCNN {
         backend_t engine = default_engine();
       };
 
-      explicit OpKernelContext(const vec_tensor_ptr_t& in_data,
-                               vec_tensor_ptr_t& out_data)
+      explicit OpKernelContext(const data_ptrs_t& in_data, data_ptrs_t& out_data)
         : in_data_(in_data), out_data_(out_data) {
         op_params_ = std::unique_ptr<OpParams>(new OpParams());
       }
 
-      explicit OpKernelContext(const vec_tensor_ptr_t& in_data,
-                               const vec_tensor_ptr_t& out_data,
-                               vec_tensor_ptr_t& out_grad,
-                               vec_tensor_ptr_t& in_grad)
-        : in_data_(in_data),
-          out_data_(out_data),
-          out_grad_(out_grad),
-          in_grad_(in_grad) {
+      explicit OpKernelContext(const data_ptrs_t& in_data,
+                               const data_ptrs_t& out_data,
+                               data_ptrs_t& out_grad,
+                               data_ptrs_t& in_grad)
+        : in_data_(in_data), out_data_(out_data), out_grad_(out_grad), in_grad_(in_grad) {
         op_params_ = std::unique_ptr<OpParams>(new OpParams());
       }
 
@@ -81,18 +76,17 @@ namespace simpleCNN {
       backend_t engine() const { return op_params_->engine; }
 
      private:
-      vec_tensor_ptr_t in_data_;
-      vec_tensor_ptr_t out_data_;
-      vec_tensor_ptr_t out_grad_;
-      vec_tensor_ptr_t in_grad_;
+      data_ptrs_t in_data_;
+      data_ptrs_t out_data_;
+      data_ptrs_t out_grad_;
+      data_ptrs_t in_grad_;
 
       std::unique_ptr<OpParams> op_params_;
     };
 
     class OpKernel {
      public:
-      explicit OpKernel(const OpKernelConstruction& context)
-        : device_(context.device()), params_(context.params()) {}
+      explicit OpKernel(const OpKernelConstruction& context) : device_(context.device()), params_(context.params()) {}
 
       virtual ~OpKernel() {}
 

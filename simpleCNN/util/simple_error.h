@@ -56,8 +56,6 @@ namespace simpleCNN {
 
   class simple_not_implemented_error : public simple_error {
    public:
-    explicit simple_not_implemented_error(
-      const std::string& msg = "not implemented")
-      : simple_error(msg) {}
+    explicit simple_not_implemented_error(const std::string& msg = "not implemented") : simple_error(msg) {}
   };
 }  // namespace simpleCNN

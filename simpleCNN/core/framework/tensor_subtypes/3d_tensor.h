@@ -6,16 +6,7 @@
 #include "../tensor.h"
 
 namespace simpleCNN {
-
-  /**
-   * Characteristic component type used in order to distinguish between
-   * multiple tensors stored in a vector. Different use-cases constitutes
-   * of various multiples of this labeling.
-   *
-   * Here, these vectors typically consists of one
-   * DATA tensor, one WEIGHT tensor and a BIAS tensor.
-   */
-  enum class component_t { UNSPECIFIED, IN_DATA, OUT_DATA, WEIGHT, BIAS, AUX };
+  /*
 
   /**
   * In case of three dimensional tensor, use these
@@ -23,7 +14,8 @@ namespace simpleCNN {
   * found using shape, but kept like this for keep track
   * of the common definition.
   */
-  enum dimension_t { height = 0, width = 1, depth = 2 };
+  // enum dimension_t { height = 0, width = 1, depth = 2 };
+  // enum dimension_t { depth = 0, height = 1, width = 2 };
 
   /**
    * @breif Tensor subclass implementation to handle the
@@ -32,27 +24,20 @@ namespace simpleCNN {
    * currently in operation.
    *
    */
-  template <typename T         = float_t,
-            bool kConst        = false,
-            typename Allocator = aligned_allocator<T, 64>>
+  template <typename T = float_t, bool kConst = false, typename Allocator = aligned_allocator<T, 64>>
   class Tensor_3 : public Tensor<T, 3, kConst, Allocator> {
    public:
     typedef Tensor<T, 3, kConst, Allocator> Base;
 
     Tensor_3() { component_ = component_t::UNSPECIFIED; }
 
-    explicit Tensor_3(const std::initializer_list<size_t>& shape)
-      : Base(shape) {
+    explicit Tensor_3(const std::initializer_list<size_t>& shape) : Base(shape) {
       component_ = component_t::UNSPECIFIED;
     }
 
-    explicit Tensor_3(component_t component) : Base() {
-      component_ = component;
-    }
+    explicit Tensor_3(component_t component) : Base() { component_ = component; }
 
-    explicit Tensor_3(const std::initializer_list<size_t>& shape,
-                      component_t component)
-      : Base(shape) {
+    explicit Tensor_3(const std::initializer_list<size_t>& shape, component_t component) : Base(shape) {
       component_ = component;
     }
 
@@ -66,15 +51,15 @@ namespace simpleCNN {
      * @return itself, for making multiple 'set' function calls at once
      */
     Tensor_3& set_component_type(component_t comp) {
-      component_ = comp;
+      // component_ = comp;
       return *this;
     }
 
-    inline size_t height() const { return this->shape()[dimension_t::height]; }
+    // inline size_t height() const { return this->shape()[dimension_t::height]; }
 
-    inline size_t width() const { return this->shape()[dimension_t::width]; }
+    // inline size_t width() const { return this->shape()[dimension_t::width]; }
 
-    inline size_t depth() const { return this->shape()[dimension_t::depth]; }
+    // inline size_t depth() const { return this->shape()[dimension_t::depth]; }
 
    private:
     /**

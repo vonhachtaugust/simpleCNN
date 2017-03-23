@@ -30,9 +30,7 @@ namespace simpleCNN {
     template <typename U>
     aligned_allocator(const aligned_allocator<U, alignment>&) {}
 
-    const_pointer address(const_reference value) const {
-      return std::addressof(value);
-    }
+    const_pointer address(const_reference value) const { return std::addressof(value); }
 
     pointer address(reference value) const { return std::addressof(value); }
 
@@ -42,9 +40,7 @@ namespace simpleCNN {
       return static_cast<pointer>(p);
     }
 
-    size_type max_size() const {
-      return ~static_cast<std::size_t>(0) / sizeof(T);
-    }
+    size_type max_size() const { return ~static_cast<std::size_t>(0) / sizeof(T); }
 
     void deallocate(pointer ptr, size_type) { aligned_free(ptr); }
 
@@ -84,14 +80,12 @@ namespace simpleCNN {
   };
 
   template <typename T1, typename T2, std::size_t alignment>
-  inline bool operator==(const aligned_allocator<T1, alignment>&,
-                         const aligned_allocator<T2, alignment>&) {
+  inline bool operator==(const aligned_allocator<T1, alignment>&, const aligned_allocator<T2, alignment>&) {
     return true;
   }
 
   template <typename T1, typename T2, std::size_t alignment>
-  inline bool operator!=(const aligned_allocator<T1, alignment>&,
-                         const aligned_allocator<T2, alignment>&) {
+  inline bool operator!=(const aligned_allocator<T1, alignment>&, const aligned_allocator<T2, alignment>&) {
     return false;
   }
 }  // namespace simpleCNN

@@ -5,8 +5,11 @@
 #include "../simpleCNN/simpleCNN.h"
 #include "gtest/gtest.h"
 
+#include "test_convolutional_layer.h"
+
+using namespace std;
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
-  std::cout << "Running all tests!" << std::endl;
   return RUN_ALL_TESTS();
 }

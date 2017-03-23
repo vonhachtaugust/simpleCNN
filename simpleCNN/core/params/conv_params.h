@@ -4,8 +4,7 @@
 #include "params.h"
 namespace simpleCNN {
   namespace core { /**
-         * @breif Convolution settings (in an messy way
-                      ...)
+         * @breif Convolution settings
          *
          * currently only supports 2D
                       convolution by s(tr/l)iding
@@ -14,14 +13,26 @@ namespace simpleCNN {
          */
     class Conv_params : public Params {
      public:
-      tensor_t in;
-      tensor_t out;
-      tensor_t weights;
-      bool has_bias;
-      size_t padding;
-      size_t vertical_stride;
+      // Input parameters
+      size_t input_width;
+      size_t input_height;
+      size_t in_channels;
+      size_t batch_size;
+
+      // Filter parameters (num filters = out_channels)
+      size_t filter_width;
+      size_t filter_height;
       size_t horizontal_stride;
-      inline Conv_params conv() {
+      size_t vertical_stride;
+      size_t padding;
+      bool has_bias;
+
+      // Output parameters
+      size_t output_width;
+      size_t output_height;
+      size_t out_channels;
+
+      const Conv_params& conv() const {
         return *this;
       } /**
                * @breif common case of symmetric striding
@@ -31,24 +42,24 @@ namespace simpleCNN {
         if (vertical_stride == horizontal_stride) {
           return vertical_stride;
         }
-        throw simple_error(
-          "Error: Stride sizes are different, stride is undefined");
+        std::cout << vertical_stride << "\t" << horizontal_stride << std::endl;
+        throw simple_error("Error: Stride sizes are different, stride is undefined");
       } /**
                * @brief common case that filter size is symmetric
            *
                */
       inline size_t filter_size() const {
-        if (weights.height() == weights.width()) {
-          return weights.height();
+        if (filter_width == filter_height) {
+          return filter_width;
         }
-        throw simple_error(
-          "Error: Filter sizes are different, filter size is undefined");
+        std::cout << filter_width << "\t" << filter_height << std::endl;
+        throw simple_error("Error: Filter sizes are different, filter size is undefined");
       } /**
                * @breif equivalent definition in computer vision terms
            *
                */
       inline size_t channels() const {
-        return weights.depth();
+        return in_channels;
       } /**
            ----------------------------------------------------------------------
            //
@@ -63,8 +74,7 @@ namespace simpleCNN {
                                     size_t filter_side_length,
                                     size_t stride,
                                     size_t padding) const {
-        return (image_side_length - filter_side_length + 2 * padding) / stride +
-               1;
+        return (image_side_length - filter_side_length + 2 * padding) / stride + 1;
       }
 
      private:
