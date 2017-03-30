@@ -8,13 +8,10 @@
 #include <string>
 #include <vector>
 
-#include "../activations/activation_function.h"
-#include "../core/framework/op_kernel.h"
-#include "../core/kernels/conv2d_op.h"
-#include "../core/params/conv_params.h"
-#include "../util/util.h"
-
 #include "feedforward_layer.h"
+
+#include "../core/kernels/conv2d_op.h"
+#include "../core/kernels/conv2d_grad_op.h"
 
 namespace simpleCNN {
 
@@ -159,7 +156,7 @@ namespace simpleCNN {
          * will be called, even if an exception is thrown.
          */
         kernel_fwd_.reset(new simpleCNN::Conv2Op(ctx));
-        //                kernel_bwd_.reset(new Conv2dGradOp(ctx));
+        kernel_bwd_.reset(new simpleCNN::Conv2dGradOp(ctx));
       } else {
         throw simple_error("No supported engine: ");
       }

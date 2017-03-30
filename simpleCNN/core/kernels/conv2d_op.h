@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "../../util/simple_error.h"
-#include "../framework/op_kernel.h"
 #include "../params/conv_params.h"
 #include "conv2d_op_openblas.h"
 

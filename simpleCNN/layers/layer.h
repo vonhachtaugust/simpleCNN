@@ -8,6 +8,7 @@
 #include "../core/framework/device.h"
 #include "../node.h"
 #include "../util/util.h"
+#include "../util/weight_init.h"
 
 namespace simpleCNN {
   /**

@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include "device.h"
+#include "tensor.h"
 #include "../../layers/layer.h"
 #include "../../util/util.h"
 #include "../backend.h"
 #include "../params/params.h"
-#include "device.h"
-#include "tensor.h"
 
 namespace simpleCNN {
   namespace core {

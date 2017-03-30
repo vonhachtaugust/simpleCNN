@@ -110,11 +110,11 @@ namespace simpleCNN {
   }
 
   template <typename T, size_t kDim, typename... Args>
-  inline void fill_last_two_dimensions(vec_iter_t& dataIter, Tensor<T, kDim>& tensor, const Args... args) {
+  inline void fill_last_two_dimensions(vec_iter_t& curr, Tensor<T, kDim>& tensor, const vec_iter_t& end, const Args... args) {
     const std::array<size_t, kDim>& shape = tensor.shape();
     for (size_t k = 0; k < shape[kDim - 2]; ++k) {
-      for (size_t l = 0; l < shape[kDim - 1]; ++l) {
-        *tensor.host_iter(args..., k, l) = *dataIter++;
+      for (size_t l = 0; l < shape[kDim - 1] && curr != end; ++l) {
+        *tensor.host_iter(args..., k, l) = *curr++;
       }
     }
   };
@@ -123,40 +123,46 @@ namespace simpleCNN {
             size_t kDim,
             typename... Args,
             typename std::enable_if<(sizeof...(Args) == kDim - 3), int>::type = 0>
-  inline void fill_last_n_dimensions(vec_iter_t& dataIter, Tensor<T, kDim>& tensor, const int d, const Args... args) {
-    fill_last_two_dimensions(dataIter, tensor, d, args...);
+  inline void fill_last_n_dimensions(vec_iter_t& curr, Tensor<T, kDim>& tensor, const vec_iter_t& end, const int d, const Args... args) {
+    fill_last_two_dimensions(curr, tensor, end, d, args...);
   };
 
   template <typename T,
             size_t kDim,
             typename... Args,
             typename std::enable_if<(sizeof...(Args) < kDim - 3), int>::type = 0>
-  inline void fill_last_n_dimensions(vec_iter_t& dataIter, Tensor<T, kDim>& tensor, const int d, const Args... args) {
+  inline void fill_last_n_dimensions(vec_iter_t& curr, Tensor<T, kDim>& tensor, const vec_iter_t& end, const int d, const Args... args) {
     const std::array<size_t, kDim>& shape = tensor.shape();
     const size_t n_dim = sizeof...(args);
     for (size_t k = 0; k < shape[n_dim + 1]; ++k) {
-      fill_last_n_dimensions(dataIter, tensor, d, args..., k);
+      fill_last_n_dimensions(curr, tensor, end, d, args..., k);
     }
   };
 
   template <typename T, size_t kDim>
-  inline void fill_with(vec_iter_t& dataIter, Tensor<T, kDim>& tensor) {
+  inline void fill_with(vec_t& data, Tensor<T, kDim>& tensor) {
+    vec_iter_t curr = data.begin();
+    const vec_iter_t end = data.end();
     const std::array<size_t, kDim>& shape = tensor.shape();
     for (size_t i = 0; i < shape[0]; ++i) {
-      fill_last_n_dimensions(dataIter, tensor, i);
+      fill_last_n_dimensions(curr, tensor, end, i);
     }
   }
 
   template <typename T>
-  inline void fill(vec_iter_t& dataIter, Tensor<T, 2>& tensor) {
-    fill_last_two_dimensions(dataIter, tensor);
+  inline void fill_with(vec_t& data, Tensor<T, 2>& tensor) {
+    vec_iter_t curr = data.begin();
+    const vec_iter_t end = data.end();
+    fill_last_two_dimensions(curr, tensor, end);
   }
 
   template <typename T>
-  inline void fill(vec_iter_t& dataIter, Tensor<T, 1>& tensor) {
+  inline void fill_with(vec_t& data, Tensor<T, 1>& tensor) {
+    vec_iter_t curr = data.begin();
+    const vec_iter_t end = data.end();
     const std::array<size_t, 1>& shape = tensor.shape();
-    for (size_t i = 0; i < shape[0]; ++i) {
-      *tensor.host_iter(i) = *dataIter++;
+    for (size_t i = 0; i < shape[0] && curr != end; ++i) {
+      *tensor.host_iter(i) = *curr++;
     }
   }
 
