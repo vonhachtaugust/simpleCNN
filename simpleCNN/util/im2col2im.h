@@ -91,70 +91,6 @@ namespace simpleCNN {
   }
 
   template <typename T = float_t>
-  void delta2matrix_cpu(const tensor_t& image,
-                        int batch_number,
-                        matrix_t& output,
-                        int channels,  // number of deltas channel
-                        int image_height,
-                        int image_width,  // side length of deltas
-                        int filter_size,  // side length of weights
-                        int stride = 1,
-                        int pad    = 0) {
-    // Number of weight indices times the number of weights.
-    int height_col = channels * (filter_size * filter_size);
-    // Number of locations in which a number participates in an element-wise multiplication.
-    // int width_col =  (filter_size + pad ) * (filter_size + pad);
-
-    int vertical_locations   = image_height + pad;
-    int horizontal_locations = image_width + pad;
-
-    for (int c = 0; c < height_col; ++c) {
-      int image_width_offset  = c % filter_size;
-      int image_height_offset = (c / filter_size) % filter_size;
-      int image_channel       = c / (filter_size * filter_size);
-      for (int h = 0; h < vertical_locations; ++h) {
-        int image_row = image_height_offset + h * stride;
-        for (int w = 0; w < horizontal_locations; ++w) {
-          int image_col = image_width_offset + w * stride;
-          int col_index = w + horizontal_locations * h;
-          output.host_at(c, col_index) =
-            im2col_get_pixel(image, batch_number, image_width, image_height, image_channel, image_row, image_col, pad);
-        }
-      }
-    }
-  }
-
-  template <typename T = float_t>
-  void weight2matrix_cpu(const tensor_t& image,
-                         matrix_t& output,
-                         int out_channels,  // number of weights/fillters
-                         int channels,      // number of deltas channel
-                         int image_height,
-                         int image_width,  // side length of deltas
-                         int filter_size,  // side length of weights
-                         int stride = 1,
-                         int pad    = 0) {
-    int height_col           = channels;
-    int vertical_locations   = filter_size + pad;
-    int horizontal_locations = filter_size + pad;
-
-    for (int oc = 0; oc < out_channels; ++oc) {
-      for (int c = 0; c < height_col; ++c) {
-        int image_channel = c % channels;
-        for (int h = 0; h < vertical_locations; ++h) {
-          int image_row = h * stride;
-          for (int w = 0; w < horizontal_locations; ++w) {
-            int image_col = w * stride;
-            int col_index = (oc * vertical_locations + h) * horizontal_locations + w;
-            output.host_at(c, col_index) =
-              im2col_get_pixel(image, oc, image_width, image_height, image_channel, image_row, image_col, pad);
-          }
-        }
-      }
-    }
-  }
-
-  template <typename T = float_t>
   void im2row_flipped_cpu(const tensor_t& image,
                           matrix_t& output,
                           int out_channels,
@@ -182,8 +118,8 @@ namespace simpleCNN {
           int image_row = image_height_offset + h * stride;
           for (w = 0; w < width_col; ++w) {
             int image_col = image_width_offset + w * stride;
-            int col_index = (c * height_col + h) * width_col + w;
-            output.host_at(oc, col_index) =
+            int col_index = (oc * height_col + h) * width_col + w;
+            output.host_at(c, col_index) =
               im2col_get_pixel(image, oc, image_width, image_height, image_channel, max_height_index - image_row,
                                max_width_index - image_col, pad);
           }

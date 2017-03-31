@@ -13,7 +13,9 @@ namespace simpleCNN {
     return (image_side_length - filter_side_length + 2 * padding) / stride + 1;
   }
 
+  /*
   TEST(Convolution, flip_filters) {
+  // TODO: Flip implicitly made during tensor to matrix conversion. This tests is deprecated ...
     tensor_t weights({2, 3, 3, 3});
 
     vec_t weight_data = {-1, -1, 0,  1, -1, 0,  -1, -1, 0, -1, -1, -1, 0, -1, -1, 1,  0,  -1,
@@ -27,6 +29,8 @@ namespace simpleCNN {
 
     matrix_t mRows(
       {2, weights.dimension(dim_t::depth) * weights.dimension(dim_t::height) * weights.dimension(dim_t::width)});
+
+    // TODO: Deprecated function call ...
     im2row_flipped_cpu(weights, mRows, weights.dimension(dim_t::stack), weights.dimension(dim_t::depth),
                        weights.dimension(dim_t::height), weights.dimension(dim_t::width));
     //auto mIter = mRows.host_begin();
@@ -35,7 +39,7 @@ namespace simpleCNN {
     // std::cout << weights << std::endl;
 
     // TODO: Implement flipped assertion test
-  }
+  }*/
 
   TEST(Convolution, forward_propagation) {
     // http://cs231n.github.io/convolutional-networks/ - Convolution Demo /
@@ -137,7 +141,7 @@ namespace simpleCNN {
   // 25 locations for each index to participate => 25 rows.
   matrix_t delta_as_matrix({18, 25});
 
-  delta2matrix_cpu(delta, 0, delta_as_matrix, out_channels, imageHeight, imageWidth, filterSize, stride, padding);
+  im2col_cpu(delta, 0, delta_as_matrix, out_channels, imageHeight, imageWidth, filterSize, stride, padding);
   //simple_info("Deltas as matrix: ");
   //std::cout << delta_as_matrix << std::endl;
 
@@ -149,9 +153,9 @@ namespace simpleCNN {
 
   matrix_t weight_as_matrix({3, 18});
 
-  weight2matrix_cpu(weight, weight_as_matrix, out_channels, in_channels, filterSize, filterSize, filterSize);
-  //simple_info("Weights as matrix: ");
-  //std::cout << weight_as_matrix << std::endl;
+  im2row_flipped_cpu(weight, weight_as_matrix, out_channels, in_channels, filterSize, filterSize);
+  simple_info("Weights as matrix: ");
+  std::cout << weight_as_matrix << std::endl;
 
   matrix_t result({3, 25});
   multiply_2_dim_tensors_float(weight_as_matrix, delta_as_matrix, result, false, false);
@@ -160,7 +164,7 @@ namespace simpleCNN {
 
   tensor_t tensor({1, 3, 5, 5});
   col2im_cpu(result, 0, tensor, tensor.dimension(dim_t::depth), tensor.dimension(dim_t::height), tensor.dimension(dim_t::width));
-  simple_info("Result as tensor: ");
-  std::cout << tensor << std::endl;
+  //simple_info("Result as tensor: ");
+  //std::cout << tensor << std::endl;
   }
 }  // namespace simpleCNN
