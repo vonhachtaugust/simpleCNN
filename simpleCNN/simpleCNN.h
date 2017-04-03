@@ -21,9 +21,8 @@
 #include "layers/convolutional_layer.h" /* Don't move this guy. */
 
 #include "core/kernels/conv2d_op.h"
-#include "core/kernels/conv2d_op_openblas.h"
 #include "core/kernels/conv2d_grad_op.h"
-#include "core/kernels/conv2d_grad_op_openblas.h"
+#include "core/kernels/conv2d_op_openblas.h"
 
 
 #include "core/params/conv_params.h"

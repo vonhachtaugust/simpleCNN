@@ -83,17 +83,38 @@ namespace simpleCNN {
      * @param out_data      output vectors
      */
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
-      data_ptrs_t in_data_(in_data);
+      //data_ptrs_t in_data_(in_data);
 
       // forward convolution op context
-      auto ctx = core::OpKernelContext(in_data_, out_data);
+      auto ctx = core::OpKernelContext(in_data, out_data);
       ctx.setEngine(Layer::engine());
+      ctx.setParams(&params_);
 
       // launch convolutional kernel
       kernel_fwd_->compute(ctx);
 
       // this->forward_activation(*out_data[0],*out_data[1]);
     }
+
+    void back_propagation(const data_ptrs_t & in_data,
+        const data_ptrs_t & out_data,
+                          data_ptrs_t & in_grad,
+                          data_ptrs_t & out_grad) override {
+
+      // backward convolution op context
+      auto ctx = core::OpKernelContext(in_data, out_data, in_grad, out_grad);
+      ctx.setEngine(Layer::engine());
+      ctx.setParams(&params_);
+
+      /*for (const auto& i : in_grad)
+      {
+        std::cout << *i << std::endl;
+      }*/
+
+      // launch convolutional kernel
+      kernel_bwd_->compute(ctx);
+    }
+
 
     shape_t in_shape() const override {
       if (params_.has_bias) {
@@ -107,7 +128,8 @@ namespace simpleCNN {
     }
 
     shape_t out_shape() const override {
-      return {{params_.batch_size, params_.out_channels, params_.output_height, params_.output_width}};
+      return {{params_.batch_size, params_.out_channels, params_.output_height, params_.output_width},
+              {params_.batch_size, params_.out_channels, params_.output_height, params_.output_width}};
     }
 
     std::string layer_type() const override { return std::string("conv"); }

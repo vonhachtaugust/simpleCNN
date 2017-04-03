@@ -33,7 +33,7 @@ namespace simpleCNN {
       const tensor_t& in_data = context.input(0);
       const tensor_t& weight  = context.input(1);
       const tensor_t& bias    = context.input(2);
-      tensor_t& out_data      = context.output(0);
+      tensor_t& out_data      = context.output(1);
 
       const core::backend_t engine = context.engine();
 

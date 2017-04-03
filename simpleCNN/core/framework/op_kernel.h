@@ -34,16 +34,16 @@ namespace simpleCNN {
      public:
       struct OpParams {
         // the operation kernel being computed
-        OpKernel* op_kernel_ptr = nullptr;
+        OpKernel* op_kernel_ptr_ = nullptr;
 
         // the device on which the kernel is running
-        Device* device_ptr = nullptr;
+        Device* device_ptr_ = nullptr;
 
         // the layer on which the kernel is running
         Layer* layer_ptr_ = nullptr;
 
         // the operation parameters
-        Params* params_ptr = nullptr;
+        Params* params_ptr_ = nullptr;
 
         backend_t engine = default_engine();
       };
@@ -55,8 +55,8 @@ namespace simpleCNN {
 
       explicit OpKernelContext(const data_ptrs_t& in_data,
                                const data_ptrs_t& out_data,
-                               data_ptrs_t& out_grad,
-                               data_ptrs_t& in_grad)
+                               data_ptrs_t& in_grad,
+                               data_ptrs_t& out_grad)
         : in_data_(in_data), out_data_(out_data), out_grad_(out_grad), in_grad_(in_grad) {
         op_params_ = std::unique_ptr<OpParams>(new OpParams());
       }
@@ -69,6 +69,8 @@ namespace simpleCNN {
       tensor_t& input_grad(const int idx) const { return *in_grad_[idx]; }
 
       tensor_t& output_grad(const int idx) const { return *out_grad_[idx]; }
+
+      void setParams(Params* params) { op_params_->params_ptr_ = std::move(params); }
 
       // Backend
       void setEngine(const backend_t engine) { op_params_->engine = engine; }

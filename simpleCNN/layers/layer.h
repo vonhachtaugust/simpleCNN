@@ -201,27 +201,13 @@ namespace simpleCNN {
     /////////////////////////////////////////////////////////////////////////
     // fprop/bprop
 
-    /**
-    * @param in_data  input vectors of this layer (data, weight, bias)
-    * @param out_data output vectors
-    **/
     virtual void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) = 0;
 
-    /**
-    * return delta of previous layer (delta=\frac{dE}{da}, a=wx in
-    *fully-connected layer)
-    * @param in_data  input vectors (same vectors as forward_propagation)
-    * @param out_data output vectors (same vectors as forward_propagation)
-    * @param out_grad gradient of output vectors (i-th vector correspond with
-    *out_data[i])
-    * @param in_grad  gradient of input vectors (i-th vector correspond with
-    *in_data[i])
-    **/
-    /* virtual void back_propagation(
-            const vec_tensor_ptr_t& in_data,
-            const vec_tensor_ptr_t& out_data,
-            vec_tensor_ptr_t& out_grad,
-            vec_tensor_ptr_t& in_grad) = 0; */
+    virtual void back_propagation(
+            const data_ptrs_t & in_data,
+            const data_ptrs_t & out_data,
+            data_ptrs_t & in_grad,
+            data_ptrs_t & out_grad) = 0;
 
     // End: Pure virtuals ----------------------------------- //
 

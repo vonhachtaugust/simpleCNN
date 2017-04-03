@@ -219,4 +219,37 @@ namespace simpleCNN {
       }
     }
   }
+  template <typename T = float_t>
+  void row2im_cpu(const matrix_t& result,
+                  tensor_t& image,
+                  int out_channels,
+                  int channels,
+                  int image_height,
+                  int image_width,
+                  int filter_size = 1,
+                  int stride      = 1,
+                  int pad         = 0) {
+    int c, h, w, oc;
+    int height_col = (image_height + 2 * pad - filter_size) / stride + 1;
+    int width_col  = (image_width + 2 * pad - filter_size) / stride + 1;
+
+    for (oc = 0; oc < out_channels; ++oc) {
+      int result_num_rows = channels * filter_size * filter_size;
+      for (c = 0; c < result_num_rows; ++c) {
+        int image_width_offset  = c % filter_size;  // fastest index
+        int image_height_offset = (c / filter_size) % filter_size;
+        int image_channel       = (c / filter_size / filter_size) /* % filter_size */;
+        for (h = 0; h < height_col; ++h) {
+          int image_row = image_height_offset + h * stride;
+          for (w = 0; w < width_col; ++w) {
+            int image_col = image_width_offset + w * stride;
+            int col_index = (c * height_col + h) * width_col + w;
+            T val         = result.host_at(col_index, oc);
+            col2im_add_pixel(result, oc, image, image_width, image_height, image_channel, image_row,
+                             image_col, pad, val);
+          }
+        }
+      }
+    }
+  }
 }  // namespace simpleCNN
