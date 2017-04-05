@@ -128,7 +128,7 @@ namespace simpleCNN {
     }
   }
 
-  TEST(Convolution, backpropagation_deltas) {
+  TEST(Convolution, backpropagation_deltas_raw) {
     size_t imageWidth   = 5;
     size_t imageHeight  = 5;
     size_t in_channels  = 3;  // 3 color channel

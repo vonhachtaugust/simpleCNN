@@ -18,7 +18,7 @@ namespace simpleCNN {
   * Here, these vectors typically consists of one
   * DATA tensor, one WEIGHT tensor and a BIAS tensor.
   */
-  enum class component_t { UNSPECIFIED, IN_DATA, OUT_DATA, WEIGHT, BIAS, AUX };
+  enum class component_t { UNSPECIFIED, IN_DATA, OUT_DATA, WEIGHT, BIAS, AUX , MAX_INDEX};
 
   /**
   * In case of three dimensional tensor, use these

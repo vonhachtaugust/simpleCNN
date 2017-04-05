@@ -19,14 +19,19 @@
 #include "core/framework/tensor_utils.h"
 
 #include "layers/convolutional_layer.h" /* Don't move this guy. */
+#include "layers/maxpooling_layer.h"
+
+#include "core/params/params.h"
+#include "core/params/conv_params.h"
+#include "core/params/maxpooling_params.h"
 
 #include "core/kernels/conv2d_op.h"
 #include "core/kernels/conv2d_grad_op.h"
 #include "core/kernels/conv2d_op_openblas.h"
+#include "core/kernels/maxpooling_op.h"
+#include "core/kernels/maxpooling_grad_op.h"
+#include "core/kernels/maxpooling_op_internal.h"
 
-
-#include "core/params/conv_params.h"
-#include "core/params/params.h"
 
 #include "core/backend.h"
 

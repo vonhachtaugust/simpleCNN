@@ -6,6 +6,7 @@
 #include "gtest/gtest.h"
 
 #include "test_convolutional_layer.h"
+#include "test_maxpooling_layer.h"
 
 using namespace std;
 

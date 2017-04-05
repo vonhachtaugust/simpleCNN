@@ -10,6 +10,7 @@
 
 #include "feedforward_layer.h"
 
+#include "../core/framework/op_kernel.h"
 #include "../core/kernels/conv2d_op.h"
 #include "../core/kernels/conv2d_grad_op.h"
 
@@ -44,20 +45,20 @@ namespace simpleCNN {
     /**
     * Constructing convolutional layer.
     *
-    * @param input_width            [in] input image width
-    * @param input_height           [in] input image height
-    * @param in_channels            [in] input image channels (grayscale=1, rgb=3)
-    * @param batch_size             [in] number of input images to processes in a forward pass
-    * @param filter_width           [in] window_width(kernel) size of convolution
-    * @param filter_height          [in] window_height(kernel) size of convolution
-    * @param out_channels           [in] output image channels
-    * @param horizontal_stride  [in] specify the horizontal interval at which to
+    * @param input_width             input image width
+    * @param input_height            input image height
+    * @param in_channels             input image channels (grayscale=1, rgb=3)
+    * @param batch_size              number of input images to processes in a forward pass
+    * @param filter_width            window width(kernel)
+    * @param filter_height           window height(kernel)
+    * @param out_channels            output image channels
+    * @param horizontal_stride   specify the horizontal interval at which to
     *apply the filters to the input
-    * @param vertical_stride    [in] specify the vertical interval at which to
+    * @param vertical_stride     specify the vertical interval at which to
     *apply the filters to the input
-    * @param padding                [in] number of paddings applied around the image
-    * @param has_bias               [in] whether to add a bias vector to the filter outputs
-     * @param backend_type       [in] specify backend engine you use
+    * @param padding                 number of paddings applied around the image
+    * @param has_bias                whether to add a bias vector to the filter outputs
+     * @param backend_type        specify backend engine to use
     **/
     Convolutional_layer(size_t input_width,
                         size_t input_height,
@@ -105,11 +106,6 @@ namespace simpleCNN {
       auto ctx = core::OpKernelContext(in_data, out_data, in_grad, out_grad);
       ctx.setEngine(Layer::engine());
       ctx.setParams(&params_);
-
-      /*for (const auto& i : in_grad)
-      {
-        std::cout << *i << std::endl;
-      }*/
 
       // launch convolutional kernel
       kernel_bwd_->compute(ctx);
@@ -184,7 +180,7 @@ namespace simpleCNN {
       }
     }
 
-    /*
+    /**
      * Set of convolutional parameters
      */
     core::Conv_params params_;

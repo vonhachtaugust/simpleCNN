@@ -27,6 +27,7 @@ enable_testing()
 # Create test executable and link gtest
 add_executable(simpleCNN_test
         test.cpp
+        test_maxpooling_layer.h
         test_convolutional_layer.h
         ${simpleCNN_headers})
 target_link_libraries(simpleCNN_test ${REQUIRED_LIBRARIES} gtest gmock)

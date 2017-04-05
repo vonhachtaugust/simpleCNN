@@ -61,5 +61,15 @@ namespace simpleCNN {
       std::pair<T, T> scale() const override { return std::make_pair(float_t(0.1), float_t(0.9)); }
     };
 
+    template<typename T = float_t>
+    class Identity : public Function<T>
+    {
+     public:
+      T f(const vec_t& v, size_t i) const override { return v[i]; }
+
+      T df(T y) const override { return T(1); }
+
+      std::pair<T, T> scale() const override { return std::make_pair(float_t(0.1), float_t(0.9)); }
+    };
   }  // namespace activation
 }  // namespace simpleCNN

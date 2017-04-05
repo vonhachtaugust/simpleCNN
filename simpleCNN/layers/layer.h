@@ -198,9 +198,6 @@ namespace simpleCNN {
     **/
     virtual size_t fan_out_size() const { return *(out_shape()[0].end() - 1); }
 
-    /////////////////////////////////////////////////////////////////////////
-    // fprop/bprop
-
     virtual void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) = 0;
 
     virtual void back_propagation(
