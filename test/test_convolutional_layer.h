@@ -34,7 +34,7 @@ namespace simpleCNN {
     im2row_flipped_cpu(weights, mRows, weights.dimension(dim_t::stack), weights.dimension(dim_t::depth),
                        weights.dimension(dim_t::height), weights.dimension(dim_t::width));
     //auto mIter = mRows.host_begin();
-    //fill_with(mRows, weights);
+    //fill(mRows, weights);
     // simple_info("After flip: ");
     // std::cout << weights << std::endl;
 
@@ -63,7 +63,7 @@ namespace simpleCNN {
                         1, 0, 2, 2, 1, 0, 0, 1, 1, 2, 0, 0, 0, 1, 2, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0,
                         2, 1, 2, 0, 1, 0, 0, 1, 2, 2, 1, 1, 1, 0, 2, 2, 0, 1, 2, 1, 2, 0, 2, 1, 2};
 
-    fill_with(image_data, image);
+  fill(image_data, image);
     // simple_info("Input volume:");
     // std::cout << image << std::endl;
 
@@ -77,10 +77,10 @@ namespace simpleCNN {
     vec_t weight_data = {-1, -1, 0,  1, -1, 0,  -1, -1, 0, -1, -1, -1, 0, -1, -1, 1,  0,  -1,
                          -1, 1,  0,  1, 1,  -1, 1,  -1, 0, 1,  0,  -1, 1, -1, 0,  -1, 1,  -1,
                          1,  1,  -1, 0, 1,  -1, 1,  0,  1, 0,  0,  1,  0, 1,  1,  1,  -1, 1};
-    weight_init::Test wei(weight_data, 1.0f);
+    weight_init::Test wei(weight_data);
 
     vec_t bias_data = {1, 0};
-    weight_init::Test bias(bias_data, 1.0f);
+    weight_init::Test bias(bias_data);
 
     // Weight allocation
     conv.weight_init(wei);
@@ -141,7 +141,7 @@ namespace simpleCNN {
 
     tensor_t delta({1, 2, 3, 3});
     vec_t ddata = {-3, 1, 1, 0, -7, 1, -6, -1, 3, 1, 3, 5, 0, 4, -1, -3, 5, 2};
-    fill_with(ddata, delta);
+  fill(ddata, delta);
 
     int outputWidth  = 3;
     int outputHeight = 3;
@@ -158,7 +158,7 @@ namespace simpleCNN {
     vec_t weight_data = {-1, -1, 0,  1, -1, 0,  -1, -1, 0, -1, -1, -1, 0, -1, -1, 1,  0,  -1,
                          -1, 1,  0,  1, 1,  -1, 1,  -1, 0, 1,  0,  -1, 1, -1, 0,  -1, 1,  -1,
                          1,  1,  -1, 0, 1,  -1, 1,  0,  1, 0,  0,  1,  0, 1,  1,  1,  -1, 1};
-    fill_with(weight_data, weight);
+  fill(weight_data, weight);
 
     matrix_t weight_as_matrix({3, 18});
 
@@ -167,7 +167,7 @@ namespace simpleCNN {
     // std::cout << weight_as_matrix << std::endl;
 
     matrix_t result({3, 25});
-    multiply_2_dim_tensors_float(weight_as_matrix, delta_as_matrix, result, false, false);
+  sgemm(weight_as_matrix, delta_as_matrix, result, false, false);
     // simple_info("Matrix multiplication result: ");
     // std::cout << result << std::endl;
 
@@ -194,13 +194,13 @@ namespace simpleCNN {
 
     tensor_t delta({1, 2, 3, 3});
     vec_t ddata = {-3, 1, 1, 0, -7, 1, -6, -1, 3, 1, 3, 5, 0, 4, -1, -3, 5, 2};
-    fill_with(ddata, delta);
+  fill(ddata, delta);
 
     tensor_t image({1, 3, 5, 5});
     vec_t idata = {0, 1, 1, 2, 1, 1, 1, 2, 2, 0, 2, 0, 1, 1, 1, 2, 1, 1, 2, 0, 0, 1, 2, 2, 2,
                    2, 0, 2, 0, 1, 0, 0, 0, 2, 1, 1, 1, 0, 0, 2, 0, 0, 0, 0, 1, 1, 2, 0, 2, 2,
                    1, 1, 1, 1, 1, 1, 0, 2, 0, 2, 0, 1, 2, 0, 0, 1, 2, 0, 1, 0, 0, 1, 1, 1, 1};
-    fill_with(idata, image);
+  fill(idata, image);
 
     matrix_t mImage({in_channels * filterSize * filterSize, outWidth * outHeight});
     im2col_cpu(image, 0, mImage, in_channels, imageHeight, imageWidth, filterSize, stride, padding);
@@ -211,7 +211,7 @@ namespace simpleCNN {
     //std::cout << mDelta << std::endl;
 
     matrix_t mResult({mImage.rows(), mDelta.rows()});
-    multiply_2_dim_tensors_float(mImage, mDelta, mResult, false, true);
+    sgemm(mImage, mDelta, mResult, false, true);
     //std::cout << mResult << std::endl;
 
     tensor_t result({out_channels, in_channels, filterSize, filterSize});
@@ -252,20 +252,20 @@ namespace simpleCNN {
   vec_t input_data = {0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 2, 1, 0, 1, 1, 1, 1, 2, 2, 1, 0, 2, 0, 1,
                       1, 0, 2, 2, 1, 0, 0, 1, 1, 2, 0, 0, 0, 1, 2, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0,
                       2, 1, 2, 0, 1, 0, 0, 1, 2, 2, 1, 1, 1, 0, 2, 2, 0, 1, 2, 1, 2, 0, 2, 1, 2};
-  fill_with(input_data, input_previous_layer);
+  fill(input_data, input_previous_layer);
 
   tensor_t curr_delta({1, 2, 3, 3});
   vec_t curr_delta_data = {0, -4, 1, -3, -3, -6, 0, -4, -3, 4, 1, 2, -1, 3, 9, 1, 3, 4};
-  fill_with(curr_delta_data, curr_delta);
+  fill(curr_delta_data, curr_delta);
 
   // Setup custom weights and bias
   vec_t weight_data = {-1, -1, 0,  1, -1, 0,  -1, -1, 0, -1, -1, -1, 0, -1, -1, 1,  0,  -1,
                        -1, 1,  0,  1, 1,  -1, 1,  -1, 0, 1,  0,  -1, 1, -1, 0,  -1, 1,  -1,
                        1,  1,  -1, 0, 1,  -1, 1,  0,  1, 0,  0,  1,  0, 1,  1,  1,  -1, 1};
-  weight_init::Test wei(weight_data, 1.0f);
+  weight_init::Test wei(weight_data);
 
   vec_t bias_data = {1, 0};
-  weight_init::Test bias(bias_data, 1.0f);
+  weight_init::Test bias(bias_data);
 
   // Weight allocation (necessary for custom weights)
   conv.weight_init(wei);
@@ -297,7 +297,7 @@ namespace simpleCNN {
 
   simple_info("output gradients: ");
   std::cout << *out_grads[1] << std::endl;
-   */
+  */
 
 }
 

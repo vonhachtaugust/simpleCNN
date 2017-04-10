@@ -24,7 +24,7 @@ namespace simpleCNN {
                      1, 1, 2, 4, 5, 6, 7, 8, 3, 2, 1, 0, 1, 2, 3, 4,
                      1, 1, 2, 4, 5, 6, 7, 8, 3, 2, 1, 0, 1, 2, 3, 4};
     tensor_t img({batch_size, in_channels, in_height, in_width});
-    fill_with(in_data, img);
+  fill(in_data, img);
     //simple_info("In data: ");
     //std::cout << img << std::endl;
 
@@ -64,7 +64,7 @@ namespace simpleCNN {
   // In order to get max index tensor we have to perform a forward pass first.
   vec_t in_data = {1, 1, 2, 4, 5, -1, 7, -1, 3, 5, 1, 0, 1, 2, 3, 4};
   tensor_t img({batch_size, in_channels, in_height, in_width});
-  fill_with(in_data, img);
+  fill(in_data, img);
   //simple_info("In data: ");
   //std::cout << img << std::endl;
 
@@ -78,7 +78,7 @@ namespace simpleCNN {
 
   tensor_t curr_delta({batch_size, out_channels, pooling_size_y, pooling_size_x});
   vec_t curr_delta_data = {1, 2, 3, 4};
-  fill_with(curr_delta_data, curr_delta);
+  fill(curr_delta_data, curr_delta);
   //simple_info("Current delta: ");
   //std::cout << curr_delta << std::endl;
 

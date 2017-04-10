@@ -11,8 +11,8 @@
 #include "feedforward_layer.h"
 
 #include "../core/framework/op_kernel.h"
-#include "../core/kernels/conv2d_op.h"
-#include "../core/kernels/conv2d_grad_op.h"
+#include "../core/kernels/conv_op.h"
+#include "../core/kernels/conv_grad_op.h"
 
 namespace simpleCNN {
 
@@ -109,18 +109,18 @@ namespace simpleCNN {
 
       // launch convolutional kernel
       kernel_bwd_->compute(ctx);
+      kernel_bwd_->update(ctx);
     }
-
 
     shape_t in_shape() const override {
       if (params_.has_bias) {
         return {{params_.batch_size, params_.in_channels, params_.input_height, params_.input_width},
                 {params_.out_channels, params_.in_channels, params_.filter_height, params_.filter_width},
                 {params_.out_channels, 1, 1, 1}};
-      } else {
-        return {{params_.batch_size, params_.in_channels, params_.input_height, params_.input_width},
-                {params_.out_channels, params_.in_channels, params_.filter_height, params_.filter_width}};
       }
+      return {{params_.batch_size, params_.in_channels, params_.input_height, params_.input_width},
+                {params_.out_channels, params_.in_channels, params_.filter_height, params_.filter_width}};
+
     }
 
     shape_t out_shape() const override {
@@ -173,8 +173,8 @@ namespace simpleCNN {
          * RAII: C++ guarantees that the destructors of objects on the stack
          * will be called, even if an exception is thrown.
          */
-        kernel_fwd_.reset(new simpleCNN::Conv2Op(ctx));
-        kernel_bwd_.reset(new simpleCNN::Conv2dGradOp(ctx));
+        kernel_fwd_.reset(new simpleCNN::ConvOp(ctx));
+        kernel_bwd_.reset(new simpleCNN::ConvGradOp(ctx));
       } else {
         throw simple_error("No supported engine: ");
       }
@@ -194,6 +194,6 @@ namespace simpleCNN {
      *
      **/
     std::unique_ptr<core::OpKernel> kernel_fwd_;
-    std::unique_ptr<core::OpKernel> kernel_bwd_;
+    std::unique_ptr<core::GradOpKernel> kernel_bwd_;
   };
 }  // namespace simpleCNN

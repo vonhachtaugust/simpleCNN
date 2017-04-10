@@ -21,12 +21,12 @@ namespace simpleCNN {
 
     virtual ~Node() {}
 
-    /*
+    /**
      * View list of ingoing connections (edges)
      */
     const std::vector<edgeptr_t>& prev() const { return prev_; }
 
-    /*
+    /**
      * View list of outgoing connections (edges)
      */
     const std::vector<edgeptr_t>& next() const { return next_; }
@@ -43,7 +43,7 @@ namespace simpleCNN {
             size_t head_index,
             size_t tail_index) = 0; */
 
-    /*
+    /**
      * Vector of edges going out and in of this node.
      *
      * Edge ex. Weights i.e an edge holds the weights data
@@ -64,28 +64,28 @@ namespace simpleCNN {
 
     const tensor_t* get_data() const { return &data_; }
 
-    /*
+    /**
      * Gradient data for weights
-     */
+     **/
     tensor_t* get_gradient() { return &grad_; }
 
     const tensor_t* get_gradient() const { return &grad_; }
 
-    /*
+    /**
      * Next node to which this edge connect to
-     */
+     **/
     const nodeptr_t next() const { return next_; }
 
-    /*
+    /**
      * Previous node to which this edge connect from
-     */
+     **/
     nodeptr_t prev() { return prev_; }
 
     const nodeptr_t prev() const { return prev_; }
 
-    /*
-     * Width x Height x Depth description of tensor.
-     */
+    /**
+     * Tensor shape
+     **/
     const shape4d& shape() const { return shape_; }
     // ------------------------------------------------------- //
 

@@ -17,8 +17,15 @@ namespace simpleCNN {
 
   template <typename T>
   void print(T t) {
-    coloredPrint(Color::GREEN, std::string("[INFO] "));  // fancy
+    //coloredPrint(Color::GREEN, std::string("[INFO] "));  // fancy
     std::cout << t << std::endl;
+  }
+
+  template<typename T>
+  void print(T t, const std::string& name)
+  {
+    simple_info(name.c_str());
+    print(t);
   }
 
   template <typename T>
@@ -140,7 +147,7 @@ namespace simpleCNN {
   };
 
   template <typename T, size_t kDim>
-  inline void fill_with(vec_t& data, Tensor<T, kDim>& tensor) {
+  inline void fill(vec_t &data, Tensor <T, kDim> &tensor) {
     vec_iter_t curr = data.begin();
     const vec_iter_t end = data.end();
     const std::array<size_t, kDim>& shape = tensor.shape();
@@ -149,15 +156,22 @@ namespace simpleCNN {
     }
   }
 
+  template<typename T, size_t kDim>
+  inline void fill(vec_t& data, Tensor<T, kDim>& tensor, const std::string& name)
+  {
+    fill(data, tensor);
+    print(tensor, name.c_str());
+  };
+
   template <typename T>
-  inline void fill_with(vec_t& data, Tensor<T, 2>& tensor) {
+  inline void fill(vec_t &data, Tensor<T, 2> &tensor) {
     vec_iter_t curr = data.begin();
     const vec_iter_t end = data.end();
     fill_last_two_dimensions(curr, tensor, end);
   }
 
   template <typename T>
-  inline void fill_with(vec_t& data, Tensor<T, 1>& tensor) {
+  inline void fill(vec_t &data, Tensor<T, 1> &tensor) {
     vec_iter_t curr = data.begin();
     const vec_iter_t end = data.end();
     const std::array<size_t, 1>& shape = tensor.shape();
@@ -199,7 +213,7 @@ namespace simpleCNN {
   }
 
   // Use this for matrix_t (float_t) multiplication
-  static void multiply_2_dim_tensors_float(matrix_t& A, matrix_t& B, matrix_t& AB, bool transpose_A, bool transpose_B) {
+  static void sgemm(matrix_t &A, matrix_t &B, matrix_t &AB, bool transpose_A, bool transpose_B) {
     matrix_multiplcation(&A.host_at(0, 0), A.cols(), A.rows(), &B.host_at(0, 0), B.cols(), B.rows(),
                          &AB.host_at(0, 0),  // A * B
                          transpose_A, transpose_B, 0);

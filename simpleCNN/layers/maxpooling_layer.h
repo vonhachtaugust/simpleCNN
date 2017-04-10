@@ -7,8 +7,8 @@
 #include "../activations/activation_function.h"
 #include "../core/backend.h"
 #include "../core/framework/op_kernel.h"
-#include "../core/kernels/maxpooling_grad_op.h"
-#include "../core/kernels/maxpooling_op.h"
+#include "../core/kernels/max_grad_op.h"
+#include "../core/kernels/max_op.h"
 #include "feedforward_layer.h"
 
 namespace simpleCNN {
@@ -88,6 +88,7 @@ namespace simpleCNN {
       ctx.setParams(&params_);
 
       kernel_bwd_->compute(ctx);
+      // Nothing to update.
     }
 
     shape_t in_shape() const override {

@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "../params/maxpooling_params.h"
-#include "maxpooling_op_internal.h"
+#include "../params/max_params.h"
+#include "max_op_internal.h"
 
 namespace simpleCNN {
   class MaxpoolingGradOp : public core::OpKernel {

@@ -7,6 +7,9 @@
 
 #include "test_convolutional_layer.h"
 #include "test_maxpooling_layer.h"
+#include "test_connected_layer.h"
+#include "test_tensor.h"
+#include "test_feedforward_layer.h"
 
 using namespace std;
 

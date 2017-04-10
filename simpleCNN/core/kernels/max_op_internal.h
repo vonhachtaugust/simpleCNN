@@ -12,8 +12,7 @@ namespace simpleCNN {
   namespace kernels {
 
     /**
-     * @breif  Performs the max pooling operations onto the input image
-     * @note Beautiful.
+     * Forward pass
      *
      * @param in_data
      * @param out_data
@@ -46,6 +45,14 @@ namespace simpleCNN {
       }
     }
 
+    /**
+     * Backpropagation
+     *
+     * @param curr_delta
+     * @param prev_delta
+     * @param max_index
+     * @param params
+     */
     inline void maxpooling_op_internal(const tensor_t& curr_delta,
                                        tensor_t& prev_delta,
                                        tensor_t& max_index,

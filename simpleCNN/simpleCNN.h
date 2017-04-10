@@ -20,18 +20,22 @@
 
 #include "layers/convolutional_layer.h" /* Don't move this guy. */
 #include "layers/maxpooling_layer.h"
+#include "layers/connected_layer.h"
 
 #include "core/params/params.h"
 #include "core/params/conv_params.h"
-#include "core/params/maxpooling_params.h"
+#include "core/params/max_params.h"
+#include "core/params/con_params.h"
 
-#include "core/kernels/conv2d_op.h"
-#include "core/kernels/conv2d_grad_op.h"
-#include "core/kernels/conv2d_op_openblas.h"
-#include "core/kernels/maxpooling_op.h"
-#include "core/kernels/maxpooling_grad_op.h"
-#include "core/kernels/maxpooling_op_internal.h"
-
+#include "core/kernels/conv_op.h"
+#include "core/kernels/conv_grad_op.h"
+#include "core/kernels/conv_op_openblas.h"
+#include "core/kernels/max_op.h"
+#include "core/kernels/max_grad_op.h"
+#include "core/kernels/max_op_internal.h"
+#include "core/kernels/con_op.h"
+#include "core/kernels/con_grad_op.h"
+#include "core/kernels/con_op_openblas.h"
 
 #include "core/backend.h"
 

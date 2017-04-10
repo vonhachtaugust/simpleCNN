@@ -5,12 +5,12 @@
 #pragma once
 
 #include "../params/conv_params.h"
-#include "conv2d_op_openblas.h"
+#include "conv_op_openblas.h"
 
 namespace simpleCNN {
-  class Conv2Op : public core::OpKernel {
+  class ConvOp : public core::OpKernel {
    public:
-    explicit Conv2Op(const core::OpKernelConstruction& context) : core::OpKernel(context) {}
+    explicit ConvOp(const core::OpKernelConstruction& context) : core::OpKernel(context) {}
 
     void compute(const core::OpKernelContext& context) override {
       /** Questionable... Current situation: parameters shipped around
@@ -38,7 +38,7 @@ namespace simpleCNN {
       const core::backend_t engine = context.engine();
 
       if (engine == core::backend_t::internal) {
-        kernels::conv2d_op_openblas(in_data, weight, bias, out_data, params);
+        kernels::conv_op_openblas(in_data, weight, bias, out_data, params);
       } else {
         throw simple_error("No supported engine: ");
       }

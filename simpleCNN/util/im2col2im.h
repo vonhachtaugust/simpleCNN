@@ -21,7 +21,7 @@ namespace simpleCNN {
     height -= pad;
     width -= pad;
 
-    // std::cout << "[" << batch_number << ", " <<  depth << ", " << height << ", " << width << "]" << std::endl;
+    //std::cout << "[" << batch_number << ", " <<  depth << ", " << height << ", " << width << "]" << std::endl;
 
     if (height < 0 || width < 0 || height >= image_height || width >= image_width) {
       return T(0);
@@ -161,6 +161,33 @@ namespace simpleCNN {
         }
       }
     }
+  }
+
+  template<typename T = float_t>
+  void im2mat_cpu(const tensor_t& image,
+                  matrix_t& output,
+                  int b,
+                  int image_height,
+                  int image_width) {
+      for (int h = 0; h < image_height; ++h) {
+        for (int w = 0; w < image_width; ++w) {
+          //std::cout << "[" << h << ", " << w << "]" << std::endl;
+          output.host_at(h, w) =
+            im2col_get_pixel(image, b, image_width, image_height, 0, h, w, 0);
+        }
+      }
+
+  }
+
+  template<typename T = float_t>
+  void mat2im_cpu(const matrix_t& mat, tensor_t& output, int b, int image_height, int image_width) {
+      for (int h = 0; h < image_height; ++h) {
+        for (int w = 0; w < image_width; ++w) {
+          //std::cout << "[" << h << ", " << w << "]" << std::endl;
+          output.host_at(b, 0, h, w) = mat.host_at(h, w);
+        }
+      }
+
   }
 
   template <typename T = float_t>

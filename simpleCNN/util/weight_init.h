@@ -51,9 +51,9 @@ namespace simpleCNN {
     class Test : public Scalable {
      public:
       // Test() : Scalable(float_t(6)) {}
-      explicit Test(vec_t& data, float_t value) : Scalable(value), data_(data) {}
+      explicit Test(vec_t& data) : Scalable(1.0f), data_(data) {}
 
-      void fill(tensor_t* weight, size_t fan_in, size_t fan_out) override { fill_with(data_, *weight); }
+      void fill(tensor_t* weight, size_t fan_in, size_t fan_out) override { simpleCNN::fill(data_, *weight); }
 
      private:
       vec_t data_;

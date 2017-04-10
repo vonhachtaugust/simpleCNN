@@ -14,62 +14,62 @@ namespace simpleCNN {
     class Function {
      public:
       Function() = default;
-
       Function(const Function&) = default;
-
       Function& operator=(const Function&) = default;
 
+      /**
+       * Virtuals
+       */
       virtual ~Function() = default;
 
-      virtual T f(const vec_t& v, size_t index) const = 0;
-
+      /**
+       * Pure virtuals
+       */
+      virtual T f(const T& v) const = 0;
       virtual T df(T y) const = 0;
 
-      void itef(vec_t& out, const vec_t& in, size_t cnt) const {
-        for (size_t i = 0; i < cnt; ++i) {
-          out[i] = f(in, i);
-        }
+
+      void a(const tensor_t& affine, tensor_t& activated, const size_t n) const {
+        auto affine_i = affine.host_begin();
+        auto activated_i = activated.host_begin();
+
+        for (size_t i = 0; i < n; ++i) { *activated_i++ = f(*affine_i++); }
       }
 
-      void itedf(vec_t& cur, const vec_t& prev, const vec_t& out, size_t cnt) const {
-        for (size_t i = 0; i < cnt; ++i) {
-          cur[i] = prev[i] * df(out[i]);
-        }
-      }
+      void da(const tensor_t& affine, const tensor_t& prev_delta, tensor_t& activated, const size_t n) const {
+        auto prev_delta_i = prev_delta.host_begin();
+        auto affine_i = affine.host_begin();
+        auto activated_i = activated.host_begin();
 
-      // dfi/dyk (k=0,1,..n)
-      virtual vec_t df(const vec_t& y, size_t i) const {
-        vec_t v(y.size(), 0);
-        v[i] = df(y[i]);
-        return v;
+        for (size_t i = 0; i < n; ++i) { *activated_i++ = df(*affine_i++) * *prev_delta_i++; }
       }
 
       // return if dfi/dyk is one-hot vector
       virtual bool one_hot() const { return true; }
 
       // target value range for learning
-      virtual std::pair<T, T> scale() const = 0;
+      virtual std::pair<float_t, float_t> scale() const = 0;
     };
 
     template <typename T = float_t>
     class ReLU : public Function<T> {
      public:
-      T f(const vec_t& v, size_t i) const override { return std::max(T{0}, v[i]); }
+      T f(const T& v) const override { return std::max(T{0}, v); }
 
       T df(T y) const override { return y > T{0} ? T{1} : T{0}; }
 
-      std::pair<T, T> scale() const override { return std::make_pair(float_t(0.1), float_t(0.9)); }
+      std::pair<float_t, float_t> scale() const override { return std::make_pair(float_t(0.1), float_t(0.9)); }
     };
 
     template<typename T = float_t>
     class Identity : public Function<T>
     {
      public:
-      T f(const vec_t& v, size_t i) const override { return v[i]; }
+      T f(const T& v) const override { return v; }
 
-      T df(T y) const override { return T(1); }
+      T df(T y) const override { return T(0); }
 
-      std::pair<T, T> scale() const override { return std::make_pair(float_t(0.1), float_t(0.9)); }
+      std::pair<float_t, float_t> scale() const override { return std::make_pair(float_t(0.1), float_t(0.9)); }
     };
   }  // namespace activation
 }  // namespace simpleCNN

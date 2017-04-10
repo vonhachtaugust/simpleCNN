@@ -15,8 +15,8 @@ namespace simpleCNN {
    * base class of all kind of NN layers
   *
   * sub-class should override these methods:
-  * - forward_propagation ... body of forward-pass calculation
-  * - back_propagation    ... body of backward-pass calculation
+  * - forward_propagation ... forward pass calculation
+  * - back_propagation    ... backward pass calculation - deltas
   * - in_shape            ... specify input data shapes
   * - out_shape           ... specify output data shapes
   * - layer_type          ... name of layer
@@ -152,6 +152,20 @@ namespace simpleCNN {
       initialized_ = true;
     }
 
+    void forward() {
+      tensor_t in;
+      tensor_t out;
+      //forward_propagation({}, {});
+      forward_activation(in, out);
+    }
+
+    void backward() {
+      tensor_t in;
+      tensor_t out;
+      //back_propagation({}, {}, {}, {});
+      backward_activation(in, in, out);
+    }
+
     // End: Setters ---------------------------------------- //
 
     // Start: Virtuals ------------------------------------- //
@@ -163,6 +177,7 @@ namespace simpleCNN {
     virtual std::pair<float_t, float_t> out_value_range() const { return {float_t{0.0}, float_t{1.0}}; }
 
     virtual void createOp() {}
+
     // End: Virtuals ---------------------------------------- //
 
     // Start: Pure virtuals --------------------------------- //
@@ -205,6 +220,10 @@ namespace simpleCNN {
             const data_ptrs_t & out_data,
             data_ptrs_t & in_grad,
             data_ptrs_t & out_grad) = 0;
+
+    virtual void forward_activation(const tensor_t& affine, tensor_t& activated) = 0;
+
+    virtual void backward_activation(const tensor_t& prev_delta, const tensor_t& affine, tensor_t& activated) = 0;
 
     // End: Pure virtuals ----------------------------------- //
 
