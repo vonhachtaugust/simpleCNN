@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "device.h"
-#include "tensor.h"
 #include "../../layers/layer.h"
 #include "../../util/util.h"
 #include "../backend.h"
 #include "../params/params.h"
+#include "device.h"
+#include "tensor.h"
 
 namespace simpleCNN {
   namespace core {
@@ -103,31 +103,5 @@ namespace simpleCNN {
       Device* device_ = nullptr;
       Params* params_ = nullptr;
     };
-
-  class GradOpKernel {
-   public:
-    explicit GradOpKernel(const OpKernelConstruction& context) : device_(context.device()), params_(context.params()) {}
-
-    virtual ~GradOpKernel() {}
-
-    /**
-      * Computes the resulting affine transformation of a forward/backward pass.
-      *
-      * @param context : Object holding input data, output data, layer type etc.
-      */
-    virtual void compute(const OpKernelContext& context) = 0;
-
-    /**
-     * Computes dWeight and dBias for later updates via the optimizer class.
-     *
-     * @param context : Object holding input gradients, output gradients, layer type etc.
-     */
-    virtual void update(const OpKernelContext& context) = 0;
-
-   protected:
-    Device* device_ = nullptr;
-    Params* params_ = nullptr;
-  };
-
   }  // namespace core
 }  // namespace simpleCNN

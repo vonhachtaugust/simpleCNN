@@ -11,8 +11,8 @@
 #include "feedforward_layer.h"
 
 #include "../core/framework/op_kernel.h"
-#include "../core/kernels/conv_op.h"
 #include "../core/kernels/conv_grad_op.h"
+#include "../core/kernels/conv_op.h"
 
 namespace simpleCNN {
 
@@ -84,8 +84,6 @@ namespace simpleCNN {
      * @param out_data      output vectors
      */
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
-      //data_ptrs_t in_data_(in_data);
-
       // forward convolution op context
       auto ctx = core::OpKernelContext(in_data, out_data);
       ctx.setEngine(Layer::engine());
@@ -93,15 +91,12 @@ namespace simpleCNN {
 
       // launch convolutional kernel
       kernel_fwd_->compute(ctx);
-
-      // this->forward_activation(*out_data[0],*out_data[1]);
     }
 
-    void back_propagation(const data_ptrs_t & in_data,
-        const data_ptrs_t & out_data,
-                          data_ptrs_t & in_grad,
-                          data_ptrs_t & out_grad) override {
-
+    void back_propagation(const data_ptrs_t& in_data,
+                          const data_ptrs_t& out_data,
+                          data_ptrs_t& in_grad,
+                          data_ptrs_t& out_grad) override {
       // backward convolution op context
       auto ctx = core::OpKernelContext(in_data, out_data, in_grad, out_grad);
       ctx.setEngine(Layer::engine());
@@ -109,7 +104,6 @@ namespace simpleCNN {
 
       // launch convolutional kernel
       kernel_bwd_->compute(ctx);
-      kernel_bwd_->update(ctx);
     }
 
     shape_t in_shape() const override {
@@ -119,8 +113,7 @@ namespace simpleCNN {
                 {params_.out_channels, 1, 1, 1}};
       }
       return {{params_.batch_size, params_.in_channels, params_.input_height, params_.input_width},
-                {params_.out_channels, params_.in_channels, params_.filter_height, params_.filter_width}};
-
+              {params_.out_channels, params_.in_channels, params_.filter_height, params_.filter_width}};
     }
 
     shape_t out_shape() const override {
@@ -194,6 +187,6 @@ namespace simpleCNN {
      *
      **/
     std::unique_ptr<core::OpKernel> kernel_fwd_;
-    std::unique_ptr<core::GradOpKernel> kernel_bwd_;
+    std::unique_ptr<core::OpKernel> kernel_bwd_;
   };
 }  // namespace simpleCNN

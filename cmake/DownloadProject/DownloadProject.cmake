@@ -48,7 +48,7 @@ function(download_project)
     set(${DL_ARGS_PROJ}_SOURCE_DIR "${DL_ARGS_SOURCE_DIR}" PARENT_SCOPE)
     set(${DL_ARGS_PROJ}_BINARY_DIR "${DL_ARGS_BINARY_DIR}" PARENT_SCOPE)
 
-    # Create and build a separate CMake project to carry out the download.
+    # Create and build activate separate CMake project to carry out the download.
     # If we've already previously done these steps, they will not cause
     # anything to be updated, so extra rebuilds of the project won't occur.
     configure_file("${_DownloadProjectDir}/DownloadProject.CMakeLists.cmake.in"

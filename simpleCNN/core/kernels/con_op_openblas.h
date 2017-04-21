@@ -10,7 +10,7 @@ namespace simpleCNN {
   namespace kernels {
 
     /**
-     * Forward pass
+     * Forward pass --
      *
      * @param in_data
      * @param weight
@@ -18,25 +18,20 @@ namespace simpleCNN {
      * @param out_data
      * @param params
      */
-    inline void con_op_openblas(const tensor_t &in_data,
-                                const tensor_t &weight,
-                                const tensor_t &bias,
-                                tensor_t &out_data,
-                                const core::Con_params &params) {
-      matrix_t mRows({params.out_dim, params.in_dim});
-      matrix_t mCols({params.in_dim, 1});
-      matrix_t mResult({params.out_dim, 1});
+    inline void con_op_openblas(const tensor_t& in_data,
+                                const tensor_t& weight,
+                                const tensor_t& bias,
+                                tensor_t& out_data,
+                                const core::Con_params& params) {
+      for (size_t i = 0; i < params.batch_size; ++i) {
+        auto start_weight = weight.host_begin();
+        auto start_in     = in_data.host_ptr(i, 0, 0, 0);
+        auto start_out    = out_data.host_ptr(i, 0, 0, 0);
 
-      im2mat_cpu(weight, mRows, 0, params.out_dim, params.in_dim);
-      for (size_t i = 0; i < params.batch_size; ++i)
-      {
-        im2mat_cpu(in_data, mCols, i, params.in_dim, 1);
-        sgemm(mRows, mCols, mResult, false, false);
-        mat2im_cpu(mResult, out_data, i, params.out_dim, 1);
-
+        multiply(weight, &(*start_weight), in_data, start_in, start_out, false, false);
         if (params.has_bias) {
           for (size_t j = 0; j < params.out_dim; ++j) {
-            out_data.host_at(i, 0, j, 0) += bias.host_at(i, 0, j, 0);
+            out_data.host_at(i, 0, j, 0) += bias.host_at(0, 0, j, 0);
           }
         }
       }
@@ -50,19 +45,16 @@ namespace simpleCNN {
      * @param prev_delta
      * @param params
      */
-    inline void con_op_openblas(const tensor_t &weight,
-                                tensor_t &curr_delta,
-                                tensor_t &prev_delta,
-                                const core::Con_params &params) {
-      matrix_t mRows({params.out_dim, params.in_dim});
-      matrix_t mCols({params.out_dim, 1});
-      matrix_t mResult({params.in_dim, 1});
-
-      im2mat_cpu(weight, mRows, 0, params.out_dim, params.in_dim);
+    inline void backpropagate_deltas(const tensor_t& weight,
+                                     tensor_t& curr_delta,
+                                     tensor_t& prev_delta,
+                                     const core::Con_params& params) {
       for (size_t i = 0; i < params.batch_size; ++i) {
-        im2mat_cpu(curr_delta, mCols, i, params.out_dim, 1);
-        sgemm(mRows, mCols, mResult, true, false);
-        mat2im_cpu(mResult, prev_delta, i, params.in_dim, 1);
+        auto start_weight = weight.host_begin();
+        auto start_curr   = curr_delta.host_ptr(i, 0, 0, 0);
+        auto start_prev   = prev_delta.host_ptr(i, 0, 0, 0);
+
+        multiply(weight, &(*start_weight), curr_delta, start_curr, start_prev, true, false);
       }
     }
 
@@ -76,23 +68,18 @@ namespace simpleCNN {
      * @param curr_delta
      * @param params
      */
-    inline void con_op_openblas(const tensor_t& prev_in,
-                                const tensor_t& weight,
-                                tensor_t& dW,
-                                tensor_t& db,
-                                const tensor_t& curr_delta,
-                                const core::Con_params& params) {
-      matrix_t mRows({params.in_dim, 1});
-      matrix_t mCols({params.out_dim, 1});
-      matrix_t mResult({params.in_dim, params.out_dim});
+    inline void accumulate_deltas(const tensor_t& prev_in,
+                                  const tensor_t& weight,
+                                  tensor_t& dW,
+                                  tensor_t& db,
+                                  tensor_t& curr_delta,
+                                  const core::Con_params& params) {
+      for (size_t i = 0; i < params.batch_size; ++i) {
+        auto start_prev = prev_in.host_ptr(i, 0, 0, 0);
+        auto start_curr = curr_delta.host_ptr(i, 0, 0, 0);
+        auto start_dW   = dW.host_ptr(i, 0, 0, 0);
 
-      for (size_t i = 0; i < params.batch_size; ++i)
-      {
-        im2mat_cpu(prev_in ,mRows, i, params.in_dim, 1);
-        im2mat_cpu(curr_delta, mCols, i, params.out_dim, 1);
-        sgemm(mRows, mCols, mResult, false, true);
-        mat2im_cpu(mResult, dW, i, params.in_dim, params.out_dim);
-
+        multiply(prev_in, start_prev, curr_delta, start_curr, start_dW, false, true);
         if (params.has_bias) {
           for (size_t j = 0; j < params.out_dim; ++j) {
             db.host_at(i, 0, j, 0) = curr_delta.host_at(i, 0, j, 0);
@@ -101,5 +88,27 @@ namespace simpleCNN {
       }
     }
 
-  } // namespace kernels
-} // namespace simpleCNN
+    /**
+     * Backward pass --
+     *
+     * @param prev_in
+     * @param weight
+     * @param dW
+     * @param db
+     * @param curr_delta
+     * @param prev_delta
+     * @param params
+     */
+    inline void con_op_openblas(const tensor_t& prev_in,
+                                const tensor_t& weight,
+                                tensor_t& dW,
+                                tensor_t& db,
+                                tensor_t& curr_delta,
+                                tensor_t& prev_delta,
+                                const core::Con_params& params) {
+      backpropagate_deltas(weight, curr_delta, prev_delta, params);
+      accumulate_deltas(prev_in, weight, dW, db, curr_delta, params);
+    }
+
+  }  // namespace kernels
+}  // namespace simpleCNN

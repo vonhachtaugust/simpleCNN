@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "../core/params/con_params.h"
-#include "../core/kernels/con_op.h"
 #include "../core/kernels/con_grad_op.h"
+#include "../core/kernels/con_op.h"
+#include "../core/params/con_params.h"
 #include "layer.h"
 
 namespace simpleCNN {
@@ -32,12 +32,11 @@ namespace simpleCNN {
 
     shape_t in_shape() const override {
       if (params_.has_bias) {
-      return {{params_.batch_size, 1, params_.in_dim, 1},
-              {params_.batch_size, 1, params_.out_dim, params_.in_dim},
-              {params_.batch_size, 1, params_.out_dim, 1}};
+        return {{params_.batch_size, 1, params_.in_dim, 1},
+                {1, 1, params_.out_dim, params_.in_dim},
+                {1, 1, params_.out_dim, 1}};
       }
-      return {{params_.batch_size, 1, params_.in_dim, 1},
-          {params_.batch_size, 1, params_.out_dim, params_.in_dim}};
+      return {{params_.batch_size, 1, params_.in_dim, 1}, {1, 1, params_.out_dim, params_.in_dim}};
     }
 
     shape_t out_shape() const override {
@@ -52,14 +51,15 @@ namespace simpleCNN {
       kernel_fwd_->compute(ctx);
     }
 
-    void back_propagation(const data_ptrs_t& in_data, const data_ptrs_t& out_data,
-    data_ptrs_t& in_grad, data_ptrs_t& out_grad) override {
+    void back_propagation(const data_ptrs_t& in_data,
+                          const data_ptrs_t& out_data,
+                          data_ptrs_t& in_grad,
+                          data_ptrs_t& out_grad) override {
       auto ctx = core::OpKernelContext(in_data, out_data, in_grad, out_grad);
       ctx.setEngine(Layer::engine());
       ctx.setParams(&params_);
 
       kernel_bwd_->compute(ctx);
-      kernel_bwd_->update(ctx);
     }
 
     std::string layer_type() const override { return std::string("connected"); }
@@ -67,14 +67,11 @@ namespace simpleCNN {
     void createOp() override { init_backend(Layer::engine()); }
 
    private:
-    void con_set_params(size_t in_dim,
-                        size_t out_dim,
-                        size_t batch_size,
-                        bool has_bias) {
-      params_.in_dim   = in_dim;
-      params_.out_dim  = out_dim;
+    void con_set_params(size_t in_dim, size_t out_dim, size_t batch_size, bool has_bias) {
+      params_.in_dim     = in_dim;
+      params_.out_dim    = out_dim;
       params_.batch_size = batch_size;
-      params_.has_bias = has_bias;
+      params_.has_bias   = has_bias;
     }
 
     void init_backend(const core::backend_t backend_type) {
@@ -84,7 +81,7 @@ namespace simpleCNN {
         kernel_fwd_.reset(new simpleCNN::ConOp(ctx));
         kernel_bwd_.reset(new simpleCNN::ConGradOp(ctx));
       } else {
-        throw simple_error("No suppored engine: ");
+        throw simple_error("No supported engine: ");
       }
     }
     /**
@@ -96,6 +93,6 @@ namespace simpleCNN {
      * Forward and backward ops
      */
     std::unique_ptr<core::OpKernel> kernel_fwd_;
-    std::unique_ptr<core::GradOpKernel> kernel_bwd_;
+    std::unique_ptr<core::OpKernel> kernel_bwd_;
   };
 }  // namespace simpleCNN

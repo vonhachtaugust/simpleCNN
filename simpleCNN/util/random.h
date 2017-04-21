@@ -14,33 +14,18 @@ namespace simpleCNN {
       return instance;
     }
 
-    std::mt19937& operator()() { return gen_; }
-
-    void set_seed(unsigned int seed) { gen_.seed(seed); }
+    std::mt19937& generator() { return gen_; }
+    void seed(unsigned int seed) { gen_.seed(seed); }
 
    private:
-    Random_generator() : gen_(1) {}
+    Random_generator() : gen_(time(NULL)) {}
     std::mt19937 gen_;
   };
-
-  /*template <typename T>
-  inline typename std::enable_if<std::is_integral<T>::value, T>::type
-  uniform_rand(T min, T max) {
-    std::uniform_int_distribution<T> dst(min, max);
-    return dst(Random_generator::get_instance()());
-  }
-
-  template <typename T>
-  inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
-  uniform_rand(T min, T max) {
-    std::uniform_real_distribution<T> dst(min, max);
-    return dst(Random_generator::get_instance()());
-  }*/
 
   template <typename T>
   inline T uniform_random(T min, T max) {
     std::uniform_real_distribution<T> dst(min, max);
-    return dst(Random_generator::get_instance());
+    return dst(Random_generator::get_instance().generator());
   }
 
   template <typename Iter>

@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "../core/framework/tensor_subtypes/2d_tensor.h"
-#include "../core/framework/tensor_subtypes/3d_tensor.h"
+#include "../core/framework/tensor.h"
 
 namespace simpleCNN {
   template <typename T = float_t, typename Allocator = aligned_allocator<T, 64>>
@@ -27,7 +26,7 @@ namespace simpleCNN {
    *
    */
   template <typename T = float_t, bool kConst = false, typename Allocator = aligned_allocator<T, 64>>
-  using default_matrix_t = Tensor_2<T, kConst, Allocator>;
+  using default_matrix_t = Tensor<T, 2, kConst, Allocator>;
   using matrix_t         = default_matrix_t<>;  // no more <> yey
   using matrix_data_t    = std::vector<matrix_t>;
   using vec_matrix_ptr_t = std::vector<matrix_t *>;

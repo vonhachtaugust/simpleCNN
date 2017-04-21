@@ -18,8 +18,7 @@ namespace simpleCNN {
   class Node : public std::enable_shared_from_this<Node> {
    public:
     explicit Node(size_t in_size, size_t out_size) : prev_(in_size), next_(out_size) {}
-
-    virtual ~Node() {}
+    virtual ~Node() = default;
 
     /**
      * View list of ingoing connections (edges)
@@ -32,17 +31,6 @@ namespace simpleCNN {
     const std::vector<edgeptr_t>& next() const { return next_; }
 
    protected:
-    Node() = delete;
-
-    /*
-     * Connection verification
-     */
-    /* virtual void connect(
-            nodeptr_t head,
-            nodeptr_t tail,
-            size_t head_index,
-            size_t tail_index) = 0; */
-
     /**
      * Vector of edges going out and in of this node.
      *
@@ -88,6 +76,8 @@ namespace simpleCNN {
      **/
     const shape4d& shape() const { return shape_; }
     // ------------------------------------------------------- //
+
+    void clear_gradients() { grad_.fill(float_t{0}); }
 
     Edge& add_next_node(nodeptr_t next) {
       next_ = next;

@@ -57,13 +57,6 @@ namespace simpleCNN {
     explicit TensorStorage(const std::vector<size_t>& shape) { resize(shape); }
 
     /**
-     * Constructor that accepts an initializer list  of shape and create a
-     * TensorStorage with a size equivalent to that shape.
-     * @param shape array containing N integers, sizes of dimensions
-     * @return
-     */
-
-    /**
     *
     * @param offset
     * @return iterator to an element at offset position

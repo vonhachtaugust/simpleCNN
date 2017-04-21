@@ -32,6 +32,11 @@ add_executable(simpleCNN_test
         test_convolutional_layer.h
         test_connected_layer.h
         test_tensor.h
+        test_tensor_multiplication.h
+        test_loss_functions.h
+        test_activation_function.h
+        test_network.h
+        test_weight_init.h
         ${simpleCNN_headers})
 target_link_libraries(simpleCNN_test ${REQUIRED_LIBRARIES} gtest gmock)
 

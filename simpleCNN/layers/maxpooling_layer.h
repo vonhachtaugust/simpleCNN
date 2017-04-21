@@ -29,15 +29,8 @@ namespace simpleCNN {
                      size_t pooling_size          = 2,
                      size_t stride                = 2,
                      core::backend_t backend_type = core::default_engine())
-      : Maxpooling_layer(in_width,
-                         in_height,
-                         in_channels,
-                         batch_size,
-                         pooling_size,
-                         pooling_size,
-                         stride,
-                         stride,
-                         backend_type) {}
+      : Maxpooling_layer(
+          in_width, in_height, in_channels, batch_size, pooling_size, pooling_size, stride, stride, backend_type) {}
 
     /**
      * Constructing maxpooling layer
@@ -63,15 +56,13 @@ namespace simpleCNN {
                      size_t stride_y,
                      core::backend_t backend_type = core::default_engine())
       : Base({tensor_t(component_t::IN_DATA)}) {
-      set_maxpooling_params(in_width, in_height, in_channels, batch_size,
-                            pooling_size_x, pooling_size_y, stride_x, stride_y,
-                            backend_type);
+      set_maxpooling_params(in_width, in_height, in_channels, batch_size, pooling_size_x, pooling_size_y, stride_x,
+                            stride_y, backend_type);
       init_backend(backend_type);
       Base::set_backend_type(backend_type);
     }
 
-    void forward_propagation(const data_ptrs_t& in_data,
-                             data_ptrs_t& out_data) override {
+    void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
       auto ctx = core::OpKernelContext(in_data, out_data);
       ctx.setEngine(Layer::engine());
       ctx.setParams(&params_);
@@ -88,24 +79,18 @@ namespace simpleCNN {
       ctx.setParams(&params_);
 
       kernel_bwd_->compute(ctx);
-      // Nothing to update.
     }
 
     shape_t in_shape() const override {
-      return {{params_.batch_size, params_.in_channels, params_.input_height,
-               params_.input_width}};
+      return {{params_.batch_size, params_.in_channels, params_.input_height, params_.input_width}};
     }
 
     shape_t out_shape() const override {
-      return {{params_.batch_size, params_.out_channels, params_.output_height,
-               params_.output_width},
-              {params_.batch_size, params_.out_channels, params_.output_height,
-               params_.output_width}};
+      return {{params_.batch_size, params_.out_channels, params_.output_height, params_.output_width},
+              {params_.batch_size, params_.out_channels, params_.output_height, params_.output_width}};
     }
 
-    std::string layer_type() const override {
-      return std::string("maxpooling");
-    }
+    std::string layer_type() const override { return std::string("maxpooling"); }
 
     void createOp() override { init_backend(Layer::engine()); }
 
@@ -129,14 +114,11 @@ namespace simpleCNN {
       params_.stride_x       = stride_x;
       params_.stride_y       = stride_y;
 
-      params_.output_width =
-        params_.conv_out_length(in_width, pooling_size_x, stride_x, 0);
-      params_.output_height =
-        params_.conv_out_length(in_height, pooling_size_y, stride_y, 0);
-      params_.out_channels = in_channels;
+      params_.output_width  = params_.conv_out_length(in_width, pooling_size_x, stride_x, 0);
+      params_.output_height = params_.conv_out_length(in_height, pooling_size_y, stride_y, 0);
+      params_.out_channels  = in_channels;
 
-      params_.max_index = tensor_t(
-        {batch_size, in_channels, params_.output_height, params_.output_width});
+      params_.max_index = tensor_t({batch_size, in_channels, params_.output_height, params_.output_width});
     }
 
     void init_backend(const core::backend_t backend_type) {

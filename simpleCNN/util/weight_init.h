@@ -34,7 +34,7 @@ namespace simpleCNN {
       void fill(tensor_t* weight, size_t fan_in, size_t fan_out) override {
         const float_t weight_base = std::sqrt(scale_ / (fan_in + fan_out));
 
-        // uniform_rand(weight->host_begin(), weight->host_end(), -weight_base, weight_base);
+        uniform_rand(weight->host_begin(), weight->host_end(), -weight_base, weight_base);
       }
     };
 

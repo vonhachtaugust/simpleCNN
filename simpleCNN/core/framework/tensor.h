@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../util/aligned_allocator.h"
+#include "../../util/util.h"
 #include "tensor_storage.h"
 
 namespace simpleCNN {
@@ -18,15 +19,15 @@ namespace simpleCNN {
   * Here, these vectors typically consists of one
   * DATA tensor, one WEIGHT tensor and a BIAS tensor.
   */
-  enum class component_t { UNSPECIFIED, IN_DATA, OUT_DATA, WEIGHT, BIAS, AUX , MAX_INDEX};
+  enum class component_t { UNSPECIFIED, IN_DATA, OUT_DATA, WEIGHT, BIAS, AUX, MAX_INDEX, OUT_GRAD, IN_GRAD };
 
   /**
-  * In case of three dimensional tensor, use these
-  * when fetching height / width / depth values. Also
+  * In case of four dimensional tensor, use these
+  * when fetching batch / height / width / depth values. Also
   * found using shape, but kept like this for keep track
   * of the common definition.
   */
-  enum dim_t { stack = 0, depth = 1, height = 2, width = 3 };
+  enum dim_t { batch = 0, depth = 1, height = 2, width = 3 };
 
   template <typename T         = float_t,
             size_t kDimensions = 4,
@@ -195,6 +196,17 @@ namespace simpleCNN {
       shape_ = sz;
     }
 
+    void reshape(const std::vector<size_t>& sz) {
+      static_assert(!kConst, "Non-constant operation on constant Tensor");
+      if (sz.size() != shape_.size()) {
+        throw simple_error("Reshape to Tensor with different number of dimensions");
+      }
+      if (calcSize() != product(sz)) {
+        throw simple_error("Reshape to Tensor of different size");
+      }
+      std::copy(sz.begin(), sz.end(), shape_.begin());
+    }
+
     void resize(const std::array<size_t, kDimensions>& sz) {
       if (offset_ != 0 || size_ != storage_ptr_->size()) {
         throw simple_error("Resize of partial view is impossible.");
@@ -298,7 +310,7 @@ namespace simpleCNN {
     }
 
     /*
-     * Implementation method to extract a view from a tensor
+     * Implementation method to extract a view from activate tensor
      * Raises an exception when sizes of the starting offset and new_shape
      * are bigger than the current dimensions number. Also raises an exception
      * when the requested view size is not feasible.
@@ -312,7 +324,7 @@ namespace simpleCNN {
       // the new view.
       const size_t new_offset = offset_ + compute_offset(start, shape_);
       if (new_offset + product(new_shape) > size_) {
-        throw simple_error("Cannot create a view from this tensor");
+        throw simple_error("Cannot create activate view from this tensor");
       }
 
       return Tensor(storage_ptr_, new_offset, new_shape);

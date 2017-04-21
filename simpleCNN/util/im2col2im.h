@@ -21,7 +21,7 @@ namespace simpleCNN {
     height -= pad;
     width -= pad;
 
-    //std::cout << "[" << batch_number << ", " <<  depth << ", " << height << ", " << width << "]" << std::endl;
+    // std::cout << "[" << batch_number << ", " <<  depth << ", " << height << ", " << width << "]" << std::endl;
 
     if (height < 0 || width < 0 || height >= image_height || width >= image_width) {
       return T(0);
@@ -30,7 +30,7 @@ namespace simpleCNN {
   }
 
   /**
-   * The core idea is to turn the shape of the data (previously 3-dim tensor)
+   * The core idea is to turn the shape of the data (previously 4-dim tensor)
    *into
    *a matrix which
    * allows for efficient matrix multiplication:
@@ -71,7 +71,7 @@ namespace simpleCNN {
     int height_col = (image_height + 2 * pad - filter_size) / stride + 1;
     int width_col  = (image_width + 2 * pad - filter_size) / stride + 1;
 
-    // image data has to be stretched into a column of size equal to the
+    // image data has to be stretched into activate column of size equal to the
     // size of the weights
     int output_num_rows = channels * filter_size * filter_size;
     for (c = 0; c < output_num_rows; ++c) {
@@ -106,7 +106,7 @@ namespace simpleCNN {
     int max_width_index  = width_col - 1;
     int max_height_index = height_col - 1;
 
-    // image data has to be stretched into a column of size equal to the
+    // image data has to be stretched into activate column of size equal to the
     // size of the weights
     for (oc = 0; oc < out_channels; ++oc) {
       int output_num_rows = channels * filter_size * filter_size;
@@ -142,7 +142,7 @@ namespace simpleCNN {
     int height_col = (image_height + 2 * pad - filter_size) / stride + 1;
     int width_col  = (image_width + 2 * pad - filter_size) / stride + 1;
 
-    // image data has to be stretched into a column of size equal to the
+    // image data has to be stretched into activate column of size equal to the
     // size of the weights
     for (oc = 0; oc < out_channels; ++oc) {
       int output_num_rows = channels * filter_size * filter_size;
@@ -161,33 +161,6 @@ namespace simpleCNN {
         }
       }
     }
-  }
-
-  template<typename T = float_t>
-  void im2mat_cpu(const tensor_t& image,
-                  matrix_t& output,
-                  int b,
-                  int image_height,
-                  int image_width) {
-      for (int h = 0; h < image_height; ++h) {
-        for (int w = 0; w < image_width; ++w) {
-          //std::cout << "[" << h << ", " << w << "]" << std::endl;
-          output.host_at(h, w) =
-            im2col_get_pixel(image, b, image_width, image_height, 0, h, w, 0);
-        }
-      }
-
-  }
-
-  template<typename T = float_t>
-  void mat2im_cpu(const matrix_t& mat, tensor_t& output, int b, int image_height, int image_width) {
-      for (int h = 0; h < image_height; ++h) {
-        for (int w = 0; w < image_width; ++w) {
-          //std::cout << "[" << h << ", " << w << "]" << std::endl;
-          output.host_at(b, 0, h, w) = mat.host_at(h, w);
-        }
-      }
-
   }
 
   template <typename T = float_t>
@@ -272,8 +245,8 @@ namespace simpleCNN {
             int image_col = image_width_offset + w * stride;
             int col_index = (c * height_col + h) * width_col + w;
             T val         = result.host_at(col_index, oc);
-            col2im_add_pixel(result, oc, image, image_width, image_height, image_channel, image_row,
-                             image_col, pad, val);
+            col2im_add_pixel(result, oc, image, image_width, image_height, image_channel, image_row, image_col, pad,
+                             val);
           }
         }
       }

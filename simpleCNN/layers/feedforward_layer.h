@@ -13,16 +13,16 @@ namespace simpleCNN {
    public:
     explicit Feedforward_layer(const data_t& in_data_type) : Layer(in_data_type, std_output_order(true)) {}
 
-    activation::Function<T>& activation_function() { return h_; }
+    activation::Activation_Function<T>& activation_function() { return h_; }
 
-    std::pair<float_t, float_t> out_value_range() const override { return h_.scale(); };
+    // std::pair<float_t, float_t> out_value_range() const override { return h_.scale(); };
 
     void forward_activation(const tensor_t& affine, tensor_t& activated) override {
-      h_.a(affine, activated, affine.size());
+      h_.activate(affine, activated, affine.size());
     }
 
     void backward_activation(const tensor_t& affine, const tensor_t& prev_delta, tensor_t& activated) override {
-      h_.da(affine, prev_delta, activated, affine.size());
+      h_.dactivate(affine, prev_delta, activated, affine.size());
     }
 
    private:

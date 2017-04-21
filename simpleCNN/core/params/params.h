@@ -16,7 +16,6 @@ namespace simpleCNN {
                                     size_t padding) const {
         return (image_side_length - filter_side_lenght + 2 * padding) / stride + 1;
       }
-
     };
   }  // namespace core
 }  // namespace simpleCNN

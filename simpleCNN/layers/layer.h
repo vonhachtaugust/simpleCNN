@@ -4,9 +4,12 @@
 
 #pragma once
 
+#include <iomanip>
+#include <sstream>
 #include "../core/backend.h"
 #include "../core/framework/device.h"
 #include "../node.h"
+#include "../optimizers/optimizer.h"
 #include "../util/util.h"
 #include "../util/weight_init.h"
 
@@ -47,7 +50,7 @@ namespace simpleCNN {
 
     /*
      * The implicitly-defined copy/move constructor for a non-union class X
-     * performs a memberwise copy/move of its bases and members.
+     * performs activate memberwise copy/move of its bases and members.
      */
     Layer(const Layer&) = default;
     Layer& operator=(const Layer&) = default;
@@ -129,6 +132,59 @@ namespace simpleCNN {
 
     void set_out_data(const tensor_t& data, component_t ct) { *out_component(ct) = data; }
 
+    void set_out_grads(const tensor_t& delta, component_t ct) {
+      // Calculate loss, based on output data and target.
+    }
+
+    std::vector<edgeptr_t> inputs() {
+      std::vector<edgeptr_t> nodes(in_channels_);
+      for (size_t i = 0; i < in_channels_; ++i) {
+        nodes[i] = ith_in_node(i);
+      }
+      return nodes;
+    }
+
+    std::vector<edgeptr_t> outputs() {
+      std::vector<edgeptr_t> nodes(out_channels_);
+      for (size_t i = 0; i < out_channels_; ++i) {
+        nodes[i] = ith_out_node(i);
+      }
+      return nodes;
+    }
+
+    tensor_t output() { return *ith_out_node(0)->get_data(); }
+
+    void setup(bool reset_weight) {
+      /**
+       * Verifies that in_shape (called from derived layer class) suits the
+       * required number of input channels. Does the same for out_shape.
+       */
+      if (in_shape().size() != in_channels_ || out_shape().size() != out_channels_) {
+        throw simple_error("Connection mismatch at layer setup");
+      }
+
+      /**
+       * Allocates memory for the output data.
+       */
+      for (size_t i = 0; i < out_channels_; ++i) {
+        if (!next_[i]) {
+          next_[i] = std::make_shared<Edge>(this, out_shape()[i]);
+        }
+      }
+
+      /**
+       * Allocates memory for weight and bias.
+       */
+      if (reset_weight || !initialized_) {
+        init_weight();
+      }
+    }
+
+    void update_weight(Optimizer& opt) {
+      // fetch dW and dB from input_grads
+      // call optimizer with those.
+    }
+
     /**
  * @brief Initalizes the vectors containing the trainable data
  */
@@ -148,22 +204,65 @@ namespace simpleCNN {
           default: break;
         }
       }
-
       initialized_ = true;
     }
 
+    bool need_reshape(const tensor_t& in_data, const shape4d& in_shape) {
+      for (size_t i = 0; i < in_shape.size(); ++i) {
+        if (in_data.shape()[i] != in_shape[i]) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    void reshape(tensor_t& in_data, const shape4d& in_shape) {
+      if (need_reshape(in_data, in_shape)) {
+        in_data.reshape(in_shape);
+      }
+    }
+
     void forward() {
-      tensor_t in;
-      tensor_t out;
-      //forward_propagation({}, {});
-      forward_activation(in, out);
+      data_ptrs_t in_data(in_channels_), out_data(out_channels_);
+
+      for (size_t i = 0; i < in_channels_; ++i) {
+        in_data[i] = ith_in_node(i)->get_data();
+      }
+
+      for (size_t i = 0; i < out_channels_; ++i) {
+        out_data[i] = ith_out_node(i)->get_data();
+        ith_out_node(i)->clear_gradients();
+      }
+
+      // resize input to fit output shape; in_data[0] pointer is shared/connected
+      // with previous layer out_data[0] pointer. So in_data[0] this layer = out_data[0]
+      // previous layer.
+      reshape(*in_data[0], in_shape()[0]);
+
+      forward_propagation(in_data, out_data);
+      forward_activation(*out_data[1], *out_data[0]);
     }
 
     void backward() {
-      tensor_t in;
-      tensor_t out;
-      //back_propagation({}, {}, {}, {});
-      backward_activation(in, in, out);
+      data_ptrs_t in_data(in_channels_), in_grad(in_channels_), out_data(out_channels_), out_grad(out_channels_);
+
+      for (size_t i = 0; i < in_channels_; ++i) {
+        const auto& in = ith_in_node(i);
+        in_data[i]     = in->get_data();
+        in_grad[i]     = in->get_gradient();
+      }
+
+      for (size_t i = 0; i < out_channels_; ++i) {
+        const auto& out = ith_out_node(i);
+        out_data[i]     = out->get_data();
+        out_grad[i]     = out->get_gradient();
+      }
+
+      // resize out grad to fit in grad shape
+      reshape(*in_grad[0], out_shape()[0]);
+
+      back_propagation(in_data, out_data, in_grad, out_grad);
+      backward_activation(*out_data[1], *out_grad[1], *out_data[0]);
     }
 
     // End: Setters ---------------------------------------- //
@@ -177,6 +276,22 @@ namespace simpleCNN {
     virtual std::pair<float_t, float_t> out_value_range() const { return {float_t{0.0}, float_t{1.0}}; }
 
     virtual void createOp() {}
+
+    /**
+* number of incoming connections for each output unit
+* used only for weight/bias initialization methods which require fan-in
+* size (e.g. xavier) override if the layer has trainable weights, and
+* scale of initialization is important.
+**/
+    virtual size_t fan_in_size() const { return *(in_shape()[0].end() - 1); }
+
+    /**
+    * number of outgoing connections for each input unit
+    * used only for weight/bias initialization methods which require fan-out
+    * size (e.g. xavier) override if the layer has trainable weights, and
+    * scale of initialization is important
+    **/
+    virtual size_t fan_out_size() const { return *(out_shape()[0].end() - 1); }
 
     // End: Virtuals ---------------------------------------- //
 
@@ -197,35 +312,41 @@ namespace simpleCNN {
     **/
     virtual std::string layer_type() const = 0;
 
-    /**
-    * number of incoming connections for each output unit
-    * used only for weight/bias initialization methods which require fan-in
-    * size (e.g. xavier) override if the layer has trainable weights, and
-    * scale of initialization is important.
-    **/
-    virtual size_t fan_in_size() const { return *(in_shape()[0].end() - 1); }
-
-    /**
-    * number of outgoing connections for each input unit
-    * used only for weight/bias initialization methods which require fan-out
-    * size (e.g. xavier) override if the layer has trainable weights, and
-    * scale of initialization is important
-    **/
-    virtual size_t fan_out_size() const { return *(out_shape()[0].end() - 1); }
-
     virtual void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) = 0;
 
-    virtual void back_propagation(
-            const data_ptrs_t & in_data,
-            const data_ptrs_t & out_data,
-            data_ptrs_t & in_grad,
-            data_ptrs_t & out_grad) = 0;
+    virtual void back_propagation(const data_ptrs_t& in_data,
+                                  const data_ptrs_t& out_data,
+                                  data_ptrs_t& in_grad,
+                                  data_ptrs_t& out_grad) = 0;
 
     virtual void forward_activation(const tensor_t& affine, tensor_t& activated) = 0;
 
     virtual void backward_activation(const tensor_t& prev_delta, const tensor_t& affine, tensor_t& activated) = 0;
 
     // End: Pure virtuals ----------------------------------- //
+
+    inline void connect(Layer* next) {
+      auto out_shape = this->out_shape()[0];
+      auto in_shape  = next->in_shape()[0];
+
+      this->setup(false);
+
+      if (in_shape.size() == 0) {
+        // in_shape = out_shape;
+        throw simple_error("In shape is zero");
+      }
+
+      if (out_shape.size() != in_shape.size()) {
+        throw simple_error("Connection mismatch");
+      }
+
+      if (!this->next_[0]) {
+        throw simple_error("Output edge must not be null");
+      }
+
+      next->prev_[0] = this->next_[0];
+      next->prev_[0]->add_next_node(next);
+    }
 
    protected:
     /**

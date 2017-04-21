@@ -33,8 +33,8 @@ namespace simpleCNN {
                   size_t x = j * params.stride_x + m;
 
                   float val = in_data.host_at(b, ch, y, x);
-                  max_i = (val > max) ? (m+ n * params.pooling_size_x) : max_i;
-                  max   = (val > max) ? val : max;
+                  max_i     = (val > max) ? (m + n * params.pooling_size_x) : max_i;
+                  max       = (val > max) ? val : max;
                 }
               }
               *params.max_index.host_iter(b, ch, i, j) = max_i;
@@ -50,7 +50,7 @@ namespace simpleCNN {
      *
      * @param curr_delta
      * @param prev_delta
-     * @param max_index
+     * @param max_index     index list from forward pass to quickly backtrack 'THE!' delta.
      * @param params
      */
     inline void maxpooling_op_internal(const tensor_t& curr_delta,
@@ -69,8 +69,7 @@ namespace simpleCNN {
                   size_t index = m + params.stride_x * n;
 
                   *prev_delta.host_iter(b, ch, y, x) =
-                    (max_i == index) ? *curr_delta.host_iter(b, ch, i, j)
-                                     : float_t{0};
+                    (max_i == index) ? *curr_delta.host_iter(b, ch, i, j) : float_t{0};
                 }
               }
             }

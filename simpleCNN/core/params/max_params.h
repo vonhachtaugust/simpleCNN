@@ -49,8 +49,7 @@ namespace simpleCNN {
           return stride_x;
         }
         std::cout << stride_x << "\t" << stride_y << std::endl;
-        throw simple_error(
-          "Error: Stride sizes are different, therefore stride is undefined");
+        throw simple_error("Error: Stride sizes are different, therefore stride is undefined");
       }
 
      private:

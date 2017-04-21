@@ -11,16 +11,14 @@
 namespace simpleCNN {
   class MaxpoolingOp : public core::OpKernel {
    public:
-    explicit MaxpoolingOp(const core::OpKernelConstruction& context)
-      : core::OpKernel(context) {}
+    explicit MaxpoolingOp(const core::OpKernelConstruction& context) : core::OpKernel(context) {}
 
     void compute(const core::OpKernelContext& context) override {
       /**
        *  Have a look at Conv2Op compute comment ...
        */
-      core::Maxpooling_params* maxpooling_params_ptr =
-        static_cast<core::Maxpooling_params*>(core::OpKernel::params_);
-      const auto& params = maxpooling_params_ptr->maxpool();
+      core::Maxpooling_params* maxpooling_params_ptr = static_cast<core::Maxpooling_params*>(core::OpKernel::params_);
+      const auto& params                             = maxpooling_params_ptr->maxpool();
 
       const tensor_t& in_data = context.input(0);
       tensor_t& out_data      = context.output(1);

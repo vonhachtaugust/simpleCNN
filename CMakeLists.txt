@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
 project(simpleCNN VERSION 0.0.1)
-# Does not build into a library. Has to build a subdirectory.
+# Does not build into a library. Has to build activate subdirectory.
 
 # Enables project() command manages VERSION variables.
 if(POLICY CMP0048)
