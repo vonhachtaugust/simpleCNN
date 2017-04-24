@@ -63,14 +63,14 @@ namespace simpleCNN {
     */
     DataIter host_data(size_t offset) { return host_data_.begin() + offset; }
 
+    T& host_value(size_t offset) { return *(host_data_.begin() + offset); }
+
     /**
      *
      * @param offset
      * @return  constant iterator to an element at offset position
      */
     ConstDataIter host_data(size_t offset) const { return host_data_.begin() + offset; }
-
-    ConstDataIter host_data_end() const { return host_data_.end(); }
 
     explicit TensorStorage(std::initializer_list<size_t> const& shape) { resize(shape); }
 

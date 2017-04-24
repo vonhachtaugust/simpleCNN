@@ -18,9 +18,9 @@ namespace simpleCNN {
 
     virtual void backward(const tensor_t& deltas) = 0;
 
-    virtual void update_weights(Optimizer& opt) {
+    virtual void update(Optimizer& opt, const size_t batch_size) {
       for (auto l : nodes_) {
-        l->update_weight(opt);
+        l->update(opt, batch_size);
       }
     }
 

@@ -70,7 +70,7 @@ namespace simpleCNN {
   }
 
   TEST(Multiplication, tensor_multiplication_II) {
-    size_t batch   = 2;  // three images
+    size_t batch   = 2;  // two images
     size_t channel = 3;  // rgb
     size_t height  = 3;
     size_t width   = 3;
@@ -95,6 +95,37 @@ namespace simpleCNN {
       }
     }
     // print(AB, "AB");
+  }
+
+  TEST(Multiplication, diagnoal_matrix) {
+    size_t batch   = 1;  // three images
+    size_t channel = 1;  // rgb
+    size_t height  = 2;
+    size_t width   = 2;
+
+    tensor_t A({batch, channel, height, width});
+
+    float_t a = 1;
+    float_t b = 2;
+    float_t c = 3;
+    float_t d = 4;
+
+    vec_t A_data = {a, b, c, d};
+    fill(A_data, A);
+
+    tensor_t AA({batch, channel, height, width});
+    for (size_t i = 0; i < batch; ++i) {
+      for (size_t j = 0; j < channel; ++j) {
+        auto start_A  = A.host_ptr(i, j, 0, 0);
+        auto start_AA = AA.host_ptr(i, j, 0, 0);
+
+        multiply(A, start_A, A, start_A, start_AA, false, true);
+      }
+    }
+    ASSERT_EQ(AA.host_at(0, 0, 0, 0), a * a + b * b);
+    ASSERT_EQ(AA.host_at(0, 0, 0, 1), a * c + b * d);
+    ASSERT_EQ(AA.host_at(0, 0, 1, 0), c * a + d * b);
+    ASSERT_EQ(AA.host_at(0, 0, 1, 1), c * c + d * d);
   }
 
 }  // namespace simpleCNN

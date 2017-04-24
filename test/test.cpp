@@ -12,6 +12,7 @@
 #include "test_loss_functions.h"
 #include "test_maxpooling_layer.h"
 #include "test_network.h"
+#include "test_optimizer.h"
 #include "test_tensor.h"
 #include "test_tensor_multiplication.h"
 #include "test_weight_init.h"

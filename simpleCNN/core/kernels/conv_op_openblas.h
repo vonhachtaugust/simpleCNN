@@ -106,12 +106,13 @@ namespace simpleCNN {
         im2col_cpu(curr_delta, i, mCurr_delta, params.out_channels, params.output_height, params.output_width);
 
         sgemm(mPrev_in, mCurr_delta, mResult_dW, false, true);
-        row2im_cpu(mResult_dW, dW, params.out_channels, params.in_channels, params.filter_height, params.filter_width);
+        row2im_added_cpu(mResult_dW, dW, params.out_channels, params.in_channels, params.filter_height,
+                         params.filter_width);
 
         if (params.has_bias) {
-          for (size_t j = 0; j < curr_delta.dimension(dim_t::depth); ++j) {
+          for (size_t j = 0; j < params.out_channels; ++j) {
             auto start = curr_delta.host_iter(i, j, 0, 0);
-            auto end   = start + curr_delta.dimension(dim_t::width) * curr_delta.dimension(dim_t::height);
+            auto end   = start + params.output_height * params.output_width;
             db.host_at(j, 0, 0, 0) = std::accumulate(start, end, float_t(0));
           }
         }

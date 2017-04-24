@@ -180,9 +180,34 @@ namespace simpleCNN {
       }
     }
 
-    void update_weight(Optimizer& opt) {
-      // fetch dW and dB from input_grads
-      // call optimizer with those.
+    void clear_gradients() {
+      for (size_t i = 0; i < in_channels_; ++i) {
+        ith_in_node(i)->clear_gradients();
+      }
+    }
+
+    void update(Optimizer& opt, const size_t batch_size) {
+      float_t normalize = float_t(1) / float_t(batch_size);
+
+      for (size_t i = 0; i < in_channels_; ++i) {
+        auto type = in_type_[i].getComponentType();
+        if (type == component_t::WEIGHT) {
+          auto W  = get_component_data(i, type);
+          auto dW = get_component_gradient(i, type);
+          for (auto iter = dW->host_begin(); iter != dW->host_end(); ++iter) {
+            *iter *= normalize;
+          }
+          opt.update(dW, W);
+        }
+        if (type == component_t::BIAS) {
+          auto b  = get_component_data(i, type);
+          auto db = get_component_gradient(i, type);
+          for (auto iter = db->host_begin(); iter != db->host_end(); ++iter) {
+            *iter *= normalize;
+          }
+          opt.update(db, b);
+        }
+      }
     }
 
     /**
@@ -426,6 +451,11 @@ namespace simpleCNN {
     tensor_t* get_component_data(size_t i, component_t t) {
       assert(in_type_[i].getComponentType() == t);
       return ith_in_node(i)->get_data();
+    }
+
+    tensor_t* get_component_gradient(size_t i, component_t t) {
+      assert(in_type_[i].getComponentType() == t);
+      return ith_in_node(i)->get_gradient();
     }
 
     /**

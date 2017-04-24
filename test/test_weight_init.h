@@ -17,6 +17,6 @@ namespace simpleCNN {
 
     uniform_rand(start, end, -1, 1);
 
-    //print(data, "Data");
+    // print(data, "Data");
   }
 }  // namespace simpleCNN

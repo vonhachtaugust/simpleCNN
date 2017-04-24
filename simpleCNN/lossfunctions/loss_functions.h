@@ -42,27 +42,27 @@ namespace simpleCNN {
       static T df(T value) { return value - T(1); }
 
       static T loss(const tensor_t& output, const tensor_t& target, const size_t batch_size) {
-        T loss_i = T{0};
+        T loss_i  = T{0};
+        size_t tn = target.size() / target.shape()[0];
+        size_t n  = output.size() / output.shape()[0];
+
         for (size_t b = 0; b < batch_size; ++b) {
-          size_t target_index = target.host_at(b, 0, 0, 0);
-          loss_i += f(*(output.host_ptr(b, 0, target_index, 0)));
+          size_t t = target.host_index(b * tn);
+          loss_i += f(output.host_index(b * n + t));
         }
         return loss_i;
       }
 
       static void dL(const tensor_t& output, const tensor_t& target, tensor_t& delta, const size_t batch_size) {
+        size_t n = output.size() / output.shape()[0];
         for (size_t b = 0; b < batch_size; ++b) {
-          auto output_b   = output.host_ptr(b, 0, 0, 0);
-          auto delta_b    = delta.host_ptr(b, 0, 0, 0);
-          size_t target_b = target.host_at(b, 0, 0, 0);
-          size_t n        = output.size() / output.shape()[0];
-
+          size_t t = target.host_index(b * n);
           for (size_t i = 0; i < n; ++i) {
-            if (i == target_b) {
-              *delta_b++ = df(*output_b++);
+            if (i == t) {
+              delta.host_index(b * n + i) = df(output.host_index(b * n + i));
               continue;
             }
-            *delta_b++ = *output_b++;
+            delta.host_index(b * n + i) = output.host_index(b * n + i);
           }
         }
       }

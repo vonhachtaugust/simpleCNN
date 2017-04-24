@@ -76,7 +76,7 @@ namespace simpleCNN {
        * @param n
        */
       void activate(const tensor_t& affine, tensor_t& activated, const size_t n) const {
-        T numerical_stabilizer = *std::max_element(affine.host_begin(), affine.host_end() + 1);
+        T numerical_stabilizer = *std::max_element(affine.host_begin(), affine.host_end());
         T denom                = T(0);
 
         auto affine_i = affine.host_begin();

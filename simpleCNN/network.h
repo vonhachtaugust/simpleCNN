@@ -53,7 +53,7 @@ namespace simpleCNN {
       optimizer& opt, const tensor_t& in, const tensor_t& target, tensor_t& output_delta, const size_t batch_size) {
       auto output = forward_pass(in);
       backward_pass<loss>(output, target, output_delta, batch_size);
-      net_.update_weights(opt);
+      net_.update(opt, batch_size);
     }
 
     tensor_t forward_pass(const tensor_t& in) { net_.forward(in); }

@@ -177,7 +177,9 @@ namespace simpleCNN {
 
     StorageIterator host_begin() const { return storage_ptr_->host_data(offset_); }
 
-    StorageIterator host_end() const { return storage_ptr_->host_data(size() - 1); }
+    StorageIterator host_end() const { return storage_ptr_->host_data(size()); }
+
+    T& host_index(size_t index) const { return storage_ptr_->host_value(index); }
 
     Tensor& fill(T value) {
       static_assert(!kConst, "Non-constant operation on constant Tensor");

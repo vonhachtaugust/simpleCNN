@@ -9,6 +9,23 @@
 
 namespace simpleCNN {
 
+  TEST(Tensor, indexing) {
+    size_t w = 3;
+    size_t h = 3;
+    size_t c = 1;
+    size_t b = 3;
+
+    tensor_t tensor({b, c, h, w});
+
+    vec_t data(tensor.size());
+    for (int i = 0; i < b * c * h * w; ++i) {
+      data[i] = i;
+    }
+    fill(data, tensor);
+
+    ASSERT_EQ(tensor.host_at(1, 0, 2, 1), tensor.host_index(16));
+  }
+
   TEST(Tensor, resize) {
     size_t w = 3;
     size_t h = 3;
