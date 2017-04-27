@@ -47,8 +47,8 @@ namespace simpleCNN {
         size_t n  = output.size() / output.shape()[0];
 
         for (size_t b = 0; b < batch_size; ++b) {
-          size_t t = target.host_index(b * tn);
-          loss_i += f(output.host_index(b * n + t));
+          size_t t = target.host_at_index(b * tn);
+          loss_i += f(output.host_at_index(b * n + t));
         }
         return loss_i;
       }
@@ -56,13 +56,13 @@ namespace simpleCNN {
       static void dL(const tensor_t& output, const tensor_t& target, tensor_t& delta, const size_t batch_size) {
         size_t n = output.size() / output.shape()[0];
         for (size_t b = 0; b < batch_size; ++b) {
-          size_t t = target.host_index(b * n);
+          size_t t = target.host_at_index(b * n);
           for (size_t i = 0; i < n; ++i) {
             if (i == t) {
-              delta.host_index(b * n + i) = df(output.host_index(b * n + i));
+              delta.host_at_index(b * n + i) = df(output.host_at_index(b * n + i));
               continue;
             }
-            delta.host_index(b * n + i) = output.host_index(b * n + i);
+            delta.host_at_index(b * n + i) = output.host_at_index(b * n + i);
           }
         }
       }

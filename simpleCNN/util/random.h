@@ -23,6 +23,19 @@ namespace simpleCNN {
   };
 
   template <typename T>
+  inline T normal_dist(T mean, T std) {
+    std::normal_distribution<T> dst(mean, std);
+    return dst(Random_generator::get_instance().generator());
+  }
+
+  template <typename Iter>
+  void normal_dist(Iter begin, Iter end, float_t mean, float_t std) {
+    for (Iter it = begin; it != end; ++it) {
+      *it = normal_dist(mean, std);
+    }
+  }
+
+  template <typename T>
   inline T uniform_random(T min, T max) {
     std::uniform_real_distribution<T> dst(min, max);
     return dst(Random_generator::get_instance().generator());
@@ -34,4 +47,7 @@ namespace simpleCNN {
       *it = uniform_random(min, max);
     }
   }
-}
+
+  inline bool bernoulli(float_t p) { return uniform_random(float_t{0}, float_t{1}) <= p; }
+
+}  // namespace simpleCNN

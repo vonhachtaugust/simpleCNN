@@ -68,8 +68,9 @@ namespace simpleCNN {
    public:
     void backward(const tensor_t& deltas) override {
       nodes_.back()->set_out_grads(deltas, component_t::OUT_GRAD);
+      nodes_.back()->set_as_classifier();
+      
       size_t n = nodes_.size();
-
       for (size_t i = 0; i < n; ++i) {
         nodes_[n - 1 - i]->backward();
       }
@@ -81,6 +82,7 @@ namespace simpleCNN {
       for (size_t i = 0; i < nodes_.size(); ++i) {
         nodes_[i]->forward();
       }
+
       return nodes_.back()->output();
     }
 
@@ -97,7 +99,7 @@ namespace simpleCNN {
     }
 
     void check_connectivity() {
-      for (size_t i = 0; i < size(); ++i) {
+      for (size_t i = 0; i < size() - 1; ++i) {
         auto out = nodes_[i]->outputs();
         auto in  = nodes_[i + 1]->inputs();
 

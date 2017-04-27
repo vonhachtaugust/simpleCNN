@@ -21,6 +21,8 @@
 #include "layers/connected_layer.h"
 #include "layers/convolutional_layer.h" /* Don't move this guy. */
 #include "layers/maxpooling_layer.h"
+#include "layers/batchnorm_layer.h"
+#include "layers/dropout_layer.h"
 
 #include "core/params/con_params.h"
 #include "core/params/conv_params.h"
@@ -52,3 +54,5 @@
 #include "util/weight_init.h"
 
 #include "network.h"
+
+#include "io/parse_mnist.h"

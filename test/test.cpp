@@ -16,6 +16,7 @@
 #include "test_tensor.h"
 #include "test_tensor_multiplication.h"
 #include "test_weight_init.h"
+#include "test_dropout_layer.h"
 
 using namespace std;
 

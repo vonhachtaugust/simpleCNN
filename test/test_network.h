@@ -9,10 +9,20 @@
 
 namespace simpleCNN {
 
+  using conv = Convolutional_layer<>;
+  using maxpool = Maxpooling_layer<>;
+  using fully = Connected_layer<>;
+  using classify = Connected_layer<>;
+
   TEST(Network, Move_semantics) {
-    using Conv = Convolutional_layer<float_t, activation::ReLU<float_t>>;
     Network<Sequential> net;
 
-    net << Conv(32, 32, 1, 1, 5, 6);
-  }
+    net << conv(28, 28, 1, 1, 5, 6, 1, 2, true) << maxpool(28, 28, 6, 1);
+}
+
+  TEST(Network, testing) {
+
+}
+
+
 }

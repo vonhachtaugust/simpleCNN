@@ -97,7 +97,7 @@ namespace simpleCNN {
     // print(AB, "AB");
   }
 
-  TEST(Multiplication, diagnoal_matrix) {
+  TEST(Multiplication, simple_matrix_multiplcation) {
     size_t batch   = 1;  // three images
     size_t channel = 1;  // rgb
     size_t height  = 2;

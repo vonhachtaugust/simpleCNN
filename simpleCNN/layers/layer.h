@@ -41,9 +41,10 @@ namespace simpleCNN {
         out_channels_(static_cast<size_t>(out_type.size())),
         in_type_(in_type),
         out_type_(out_type) {
-      weight_init_ = std::make_shared<weight_init::Xavier>();
+      weight_init_ = std::make_shared<weight_init::Gaussian>();
       bias_init_   = std::make_shared<weight_init::Constant>();
       trainable_   = true;
+      classifier_  = false;
     }
 
     virtual ~Layer() = default;
@@ -185,26 +186,42 @@ namespace simpleCNN {
         ith_in_node(i)->clear_gradients();
       }
     }
+    
+    void mean(const tensor_t& x, tensor_t& dx, const size_t batch_size) {
+      float_t norm = float_t(1) / float_t(batch_size);
+      
+      for (auto iter = dx.host_begin(); iter != dx.host_end(); ++iter) {
+        *iter *= norm;
+      }
+    }
+    
+    void mean_and_regularize(const tensor_t& x, tensor_t& dx, const size_t batch_size) {
+      float_t norm = float_t(1) / float_t(batch_size);
+      float_t reg = float_t(0.001);
+      
+      size_t n = dx.size();
+      
+      for(size_t i = 0; i < n; ++i) {
+       dx.host_at_index(i) = (dx.host_at_index(i) + reg * x.host_at_index(i)) * norm; 
+      }
+    }
 
     void update(Optimizer& opt, const size_t batch_size) {
-      float_t normalize = float_t(1) / float_t(batch_size);
-
       for (size_t i = 0; i < in_channels_; ++i) {
         auto type = in_type_[i].getComponentType();
         if (type == component_t::WEIGHT) {
           auto W  = get_component_data(i, type);
           auto dW = get_component_gradient(i, type);
-          for (auto iter = dW->host_begin(); iter != dW->host_end(); ++iter) {
-            *iter *= normalize;
-          }
+          // dW is the sum of errors over the batch, divide by batch size to get average.
+          // If classifier layer also add the regularization term to prefer smaller weight values.
+          classifier_ ? mean_and_regularize(*W, *dW, batch_size) : mean(*W, *dW, batch_size);
           opt.update(dW, W);
         }
         if (type == component_t::BIAS) {
           auto b  = get_component_data(i, type);
           auto db = get_component_gradient(i, type);
-          for (auto iter = db->host_begin(); iter != db->host_end(); ++iter) {
-            *iter *= normalize;
-          }
+          // db is the sum of errors over the batch, divide by batch size to get average.
+          mean(*b, *db, batch_size);
           opt.update(db, b);
         }
       }
@@ -303,11 +320,11 @@ namespace simpleCNN {
     virtual void createOp() {}
 
     /**
-* number of incoming connections for each output unit
-* used only for weight/bias initialization methods which require fan-in
-* size (e.g. xavier) override if the layer has trainable weights, and
-* scale of initialization is important.
-**/
+    * number of incoming connections for each output unit
+    * used only for weight/bias initialization methods which require fan-in
+    * size (e.g. xavier) override if the layer has trainable weights, and
+    * scale of initialization is important.
+    **/
     virtual size_t fan_in_size() const { return *(in_shape()[0].end() - 1); }
 
     /**
@@ -372,8 +389,15 @@ namespace simpleCNN {
       next->prev_[0] = this->next_[0];
       next->prev_[0]->add_next_node(next);
     }
+    
+    const void set_as_classifier() { classifier_ = true; }
 
    protected:
+    /**
+     * Flag to indicate whether the layer is a classifier layer.
+     */
+    bool classifier_;
+    
     /**
      * Flag indication whether the layer/node is initialized
      */
@@ -414,7 +438,7 @@ namespace simpleCNN {
      */
     vec_t weights_diff_;
 
-   private:
+    private:
     /**
      * @brief Allocates the necessary edge memory in a specific incoming connection.
      */

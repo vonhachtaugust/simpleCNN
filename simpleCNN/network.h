@@ -10,11 +10,17 @@
 namespace simpleCNN {
 
   typedef int label_t;
+  enum class net_phase { train, test };
 
   template <typename NetType>
   class Network {
    public:
     explicit Network() : stop_training_(false) {}
+
+    tensor_t test(const tensor_t& input) {
+      net_.setup(true);
+      return net_.forward(input);
+    };
 
     template <typename loss, typename optimizer>
     bool train(Optimizer& opt,

@@ -26,6 +26,20 @@ namespace simpleCNN {
       float_t scale_;
     };
 
+    class Gaussian : public Scalable {
+     public:
+      Gaussian() : Scalable(float_t(2)) {}
+      explicit Gaussian(float_t value) : Scalable(value) {}
+
+      void fill(tensor_t* weight, size_t fan_in, size_t fan_out) override {
+        const float_t std = std::sqrt(scale_ / (fan_in));
+        const float_t mean = float_t{0};
+
+        normal_dist(weight->host_begin(), weight->host_end(), mean, std);
+      }
+    };
+
+    // Horrible for ReLU
     class Xavier : public Scalable {
      public:
       Xavier() : Scalable(float_t(6)) {}

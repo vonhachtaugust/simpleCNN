@@ -40,7 +40,6 @@ namespace simpleCNN {
         keys.push_back(std::make_shared<tensor_t>(shape));
         state[index][key] = keys.back().get();
       }
-
       return state[index][key];
     }
     std::unordered_map<const tensor_t*, tensor_t*> state[N];
@@ -67,10 +66,10 @@ namespace simpleCNN {
       b2_t *= b2;
 
       for (size_t i = 0; i < dp->size(); ++i) {
-        auto& mt_i = mt->host_index(i);
-        auto& vt_i = vt->host_index(i);
-        auto& dp_i = dp->host_index(i);
-        auto& p_i  = p->host_index(i);
+        auto& mt_i = mt->host_at_index(i);
+        auto& vt_i = vt->host_at_index(i);
+        auto& dp_i = dp->host_at_index(i);
+        auto& p_i  = p->host_at_index(i);
 
         mt_i = b1 * mt_i + (float_t(1) - b1) * dp_i;
         vt_i = b2 * vt_i + (float_t(1) - b2) * dp_i * dp_i;

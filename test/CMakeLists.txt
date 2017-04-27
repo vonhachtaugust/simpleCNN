@@ -38,6 +38,7 @@ add_executable(simpleCNN_test
         test_network.h
         test_weight_init.h
         test_optimizer.h
+        test_dropout_layer.h
         ${simpleCNN_headers})
 target_link_libraries(simpleCNN_test ${REQUIRED_LIBRARIES} gtest gmock)
 

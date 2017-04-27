@@ -72,4 +72,20 @@ namespace simpleCNN {
     }
   }
   // ------------------------------------------------------------------- //
+
+  inline bool is_high_endian() {
+      union {
+        uint32_t i;
+        char c[4];
+      } test_endian = { 0x01020304 };
+
+    return test_endian.c[0] == 1;
+  }
+
+  uint32_t swap_uint32( uint32_t val )
+  {
+  val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
+  return (val << 16) | (val >> 16);
+  }
+
 }  // namespace simpleCNN

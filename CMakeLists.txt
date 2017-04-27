@@ -35,17 +35,18 @@ else()
 endif()
 
 #####
-# Set the default build type to Debug for now.
+# Set the default build type to Release.
 if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "No build type specified: defaulting to debug.")
-    set(CMAKE_BUILD_TYPE Debug)
+    message(STATUS "No build type specified: defaulting to release.")
+    set(CMAKE_BUILD_TYPE Release)
 else(NOT CMAKE_BUILD_TYPE)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message("==========================================================================================")
-    message(STATUS "Build type: Debug.")
-    message("==========================================================================================")
+        set(CMAKE_BUILD_TYPE Release)
+        message("==========================================================================================")
+        message(STATUS "Build type: ${CMAKE_BUILD_TYPE}.")
+        message("==========================================================================================")
     endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-endif ()
+endif (NOT CMAKE_BUILD_TYPE)
 
 #####
 # OpenBLAS
@@ -56,6 +57,41 @@ if(BLAS_FOUND)
 else()
     message(FATAL_ERROR "Cannot find required package OpenBLAS. Please set BLAS_INCLUDE_DIR")
 endif()
+
+#####
+# OpenCV
+find_package( OpenCV REQUIRED)
+if(OpenCV_FOUND)
+    message(STATUS "Found OpenCV: ${OpenCV_LIBRARIES}")
+    list(APPEND REQUIRED_LIBRARIES ${OpenCV_LIBRARIES})
+else()
+    message(STATUS "Cannot find required package OpenCV. Please set OPENCV_INCLUDE_DIR")
+endif()
+
+#opencv_core;
+#opencv_cudaarithm;
+#opencv_cudabgsegm;
+#opencv_cudacodec;
+#opencv_cudafeatures2d;
+#opencv_cudafilters;
+#opencv_cudaimgproc;
+#opencv_cudalegacy;
+#opencv_cudaobjdetect;
+#opencv_cudaoptflow;
+#opencv_cudawarping;
+#opencv_cudev;
+#opencv_features2d;
+#opencv_flann;
+#opencv_highgui;
+#opencv_imgcodecs;
+#opencv_imgproc;
+#opencv_ml;
+#opencv_objdetect;
+#opencv_photo;
+#opencv_shape;
+#opencv_superres;
+#opencv_video;
+#opencv_videoio
 
 #####
 # Define user options (To be implemented when source is build as library)

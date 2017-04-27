@@ -23,7 +23,7 @@ namespace simpleCNN {
     }
     fill(data, tensor);
 
-    ASSERT_EQ(tensor.host_at(1, 0, 2, 1), tensor.host_index(16));
+    ASSERT_EQ(tensor.host_at(1, 0, 2, 1), tensor.host_at_index(16));
   }
 
   TEST(Tensor, resize) {

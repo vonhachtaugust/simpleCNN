@@ -12,11 +12,20 @@ namespace simpleCNN {
   TEST(Connected, forward_prop_raw) {
     size_t in_dim     = 5;
     size_t out_dim    = 3;
-    size_t batch_size = 1;
+    size_t batch_size = 10;
 
     // INPUT
     tensor_t in({batch_size, 1, in_dim, 1});
-    vec_t in_data = {1, 2, 3, 4, 5};
+    vec_t in_data = {1, 2, 3, 4, 5,
+                      1, 2, 3, 4, 5,
+                     1, 2, 3, 4, 5,
+                    1, 2, 3, 4, 5,
+                     1, 2, 3, 4, 5,
+                     1, 2, 3, 4, 5,
+                     1, 2, 3, 4, 5,
+                     1, 2, 3, 4, 5,
+                     1, 2, 3, 4, 5,
+                     1, 2, 3, 4, 5};
     fill(in_data, in);
 
     // WEIGHT
@@ -42,7 +51,7 @@ namespace simpleCNN {
         out.host_at(i, 0, j, 0) += bias.host_at(0, 0, j, 0);
       }
     }
-    // print(out, "Output");
+    //print(out, "Output");
 
     auto iter           = out.host_begin();
     vec_t correctOutput = {14, -16, 14};
