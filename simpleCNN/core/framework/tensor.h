@@ -189,6 +189,11 @@ namespace simpleCNN {
       return *this;
     }
 
+    Tensor& add(T value) {
+      static_assert(!kConst, "Non-constant operation on constant Tensor");
+      for (auto iter = host_begin(); iter != host_end(); ++iter) { *iter += value; }
+    }
+
     void reshape(const std::array<size_t, kDimensions>& sz) {
       static_assert(!kConst, "Non-constant operation on constant Tensor");
       // No size change for reshape
@@ -202,9 +207,6 @@ namespace simpleCNN {
       static_assert(!kConst, "Non-constant operation on constant Tensor");
       if (sz.size() != shape_.size()) {
         throw simple_error("Reshape to Tensor with different number of dimensions");
-      }
-      if (calcSize() != product(sz)) {
-        throw simple_error("Reshape to Tensor of different size");
       }
       std::copy(sz.begin(), sz.end(), shape_.begin());
     }

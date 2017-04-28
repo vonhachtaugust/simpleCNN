@@ -41,14 +41,15 @@ namespace simpleCNN {
        */
       static T df(T value) { return value - T(1); }
 
-      static T loss(const tensor_t& output, const tensor_t& target, const size_t batch_size) {
-        T loss_i  = T{0};
-        size_t tn = target.size() / target.shape()[0];
+      static T L(const tensor_t& output, const tensor_t& target, const size_t batch_size) {
+        T loss_i  = T(0);
         size_t n  = output.size() / output.shape()[0];
 
         for (size_t b = 0; b < batch_size; ++b) {
-          size_t t = target.host_at_index(b * tn);
-          loss_i += f(output.host_at_index(b * n + t));
+          size_t target_index = target.host_at_index(b);
+          auto val = f(output.host_at_index(b * n + target_index));
+          // print(val, "Value");
+          loss_i += val;
         }
         return loss_i;
       }
@@ -85,7 +86,7 @@ namespace simpleCNN {
 
       static T df(T value) { simple_not_implemented_error(); }
 
-      static T loss(const tensor_t& output, const size_t target_index) {
+      static T L(const tensor_t& output, const size_t target_index) {
         /*T loss_i = T(0);
 
         auto activated_i = activated.host_begin();
@@ -118,4 +119,10 @@ namespace simpleCNN {
   void gradient(const tensor_t& output, const tensor_t& target, tensor_t& output_delta, const size_t batch_size) {
     Loss::dL(output, target, output_delta, batch_size);
   }
+
+  template<typename Loss>
+  float_t error(const tensor_t& output, const tensor_t& target, const size_t batch_size) {
+    return Loss::L(output, target, batch_size);
+  }
+
 }  // namespace simpleCNN

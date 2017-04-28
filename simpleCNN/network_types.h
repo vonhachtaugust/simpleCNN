@@ -72,7 +72,8 @@ namespace simpleCNN {
       
       size_t n = nodes_.size();
       for (size_t i = 0; i < n; ++i) {
-        nodes_[n - 1 - i]->backward();
+        size_t index = n - 1 - i;
+        nodes_[index]->backward();
       }
     }
 

@@ -18,11 +18,11 @@ namespace simpleCNN {
     // std::pair<float_t, float_t> out_value_range() const override { return h_.scale(); };
 
     void forward_activation(const tensor_t& affine, tensor_t& activated) override {
-      h_.activate(affine, activated, affine.size());
+      h_.activate(affine, activated);
     }
 
     void backward_activation(const tensor_t& affine, const tensor_t& prev_delta, tensor_t& activated) override {
-      h_.dactivate(affine, prev_delta, activated, affine.size());
+      h_.dactivate(affine, prev_delta, activated);
     }
 
    private:

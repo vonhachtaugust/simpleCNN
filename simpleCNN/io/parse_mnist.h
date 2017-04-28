@@ -84,7 +84,6 @@ namespace simpleCNN {
         }
       }
     }
-
   }  // namespace parser_details
 
   inline void parse_mnist_labels(const std::string& file, std::vector<label_t>* labels) {

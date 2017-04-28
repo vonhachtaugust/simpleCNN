@@ -12,6 +12,8 @@
 #include "../optimizers/optimizer.h"
 #include "../util/util.h"
 #include "../util/weight_init.h"
+#include "../util/math_functions.h"
+#include "../simpleCNN.h"
 
 namespace simpleCNN {
   /**
@@ -186,25 +188,6 @@ namespace simpleCNN {
         ith_in_node(i)->clear_gradients();
       }
     }
-    
-    void mean(const tensor_t& x, tensor_t& dx, const size_t batch_size) {
-      float_t norm = float_t(1) / float_t(batch_size);
-      
-      for (auto iter = dx.host_begin(); iter != dx.host_end(); ++iter) {
-        *iter *= norm;
-      }
-    }
-    
-    void mean_and_regularize(const tensor_t& x, tensor_t& dx, const size_t batch_size) {
-      float_t norm = float_t(1) / float_t(batch_size);
-      float_t reg = float_t(0.001);
-      
-      size_t n = dx.size();
-      
-      for(size_t i = 0; i < n; ++i) {
-       dx.host_at_index(i) = (dx.host_at_index(i) + reg * x.host_at_index(i)) * norm; 
-      }
-    }
 
     void update(Optimizer& opt, const size_t batch_size) {
       for (size_t i = 0; i < in_channels_; ++i) {
@@ -214,14 +197,14 @@ namespace simpleCNN {
           auto dW = get_component_gradient(i, type);
           // dW is the sum of errors over the batch, divide by batch size to get average.
           // If classifier layer also add the regularization term to prefer smaller weight values.
-          classifier_ ? mean_and_regularize(*W, *dW, batch_size) : mean(*W, *dW, batch_size);
+          classifier_ ? mean_and_regularize(*W, *dW, batch_size) : mean(*dW, batch_size);
           opt.update(dW, W);
         }
         if (type == component_t::BIAS) {
           auto b  = get_component_data(i, type);
           auto db = get_component_gradient(i, type);
           // db is the sum of errors over the batch, divide by batch size to get average.
-          mean(*b, *db, batch_size);
+          mean(*db, batch_size);
           opt.update(db, b);
         }
       }
@@ -251,6 +234,16 @@ namespace simpleCNN {
 
     bool need_reshape(const tensor_t& in_data, const shape4d& in_shape) {
       for (size_t i = 0; i < in_shape.size(); ++i) {
+        std::cout << in_data.shape()[in_shape.size() - 1 - i] << "\t";
+      }
+      std::cout << "\t";
+
+      for (size_t i = 0; i < in_shape.size(); ++i) {
+        std::cout << in_shape[in_shape.size() - 1 - i] << "\t";
+      }
+      std::cout << std::endl;
+
+      for (size_t i = 0; i < in_shape.size(); ++i) {
         if (in_data.shape()[i] != in_shape[i]) {
           return true;
         }
@@ -260,6 +253,7 @@ namespace simpleCNN {
 
     void reshape(tensor_t& in_data, const shape4d& in_shape) {
       if (need_reshape(in_data, in_shape)) {
+        print(layer_type(), "Needed reshape; ");
         in_data.reshape(in_shape);
       }
     }

@@ -17,9 +17,62 @@ namespace simpleCNN {
    public:
     explicit Network() : stop_training_(false) {}
 
+    /**
+     * Test a forward pass and check the result.
+     * Used to check if weight init was appropriate (i.e. no saturation)
+     *
+     * @param input : test batch
+     * @return network output
+     */
     tensor_t test(const tensor_t& input) {
       net_.setup(true);
       return net_.forward(input);
+    };
+
+
+    /**
+     * Test a forward pass and check the result
+     * Used to check if weight init was appropriate (i.e. loss is not infinity)
+     *
+     * @tparam Loss : Loss function
+     * @param input : test batch
+     * @param target : list of correct labels
+     * @param batch_size
+     */
+    template<typename Loss>
+    void test_loss(const tensor_t& input, const tensor_t& target, const size_t batch_size) {
+      net_.setup(true);
+      tensor_t output = net_.forward(input);
+      float_t er = error<Loss>(output, target, batch_size);
+      print(er, "Error: ");
+    }
+
+    /**
+     * Test a forward pass, backward pass and finally a forward pass.
+     * Used to check if loss seems to reduce.
+     *
+     * @tparam Loss : Loss function
+     * @tparam optimizer : optimizer function
+     * @param opt : optimizer instance
+     * @param in : test batch image
+     * @param target : list of correct labels
+     * @param output_delta : store delta results to check gradient values
+     * @param batch_size
+     */
+    template<typename Loss, typename optimizer>
+    void test_onbatch(optimizer& opt,
+                      const tensor_t& in,
+                      const tensor_t& target,
+                      tensor_t& output_delta,
+                      const size_t batch_size) {
+      net_.setup(true);
+      tensor_t output = net_.forward(in);
+      print(error<Loss>(output, target, batch_size), "Error: ");
+      gradient<Loss>(output, target, output_delta, batch_size);
+      net_.backward(output_delta);
+      net_.update(opt, batch_size);
+      net_.forward(in);
+      print(error<Loss>(output, target, batch_size), "Error: ");
     };
 
     template <typename loss, typename optimizer>
@@ -40,6 +93,7 @@ namespace simpleCNN {
       tensor_t output_delta({batch_size, 1, target.dimension(dim_t::height), 0});
 
       train_onebatch<loss, optimizer>(opt, input, target, output_delta, batch_size);
+
 
       return true;
     }

@@ -52,6 +52,7 @@
 #include "util/simple_error.h"
 #include "util/util.h"
 #include "util/weight_init.h"
+#include "util/math_functions.h"
 
 #include "network.h"
 

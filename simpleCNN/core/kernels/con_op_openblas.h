@@ -77,12 +77,15 @@ namespace simpleCNN {
       for (size_t i = 0; i < params.batch_size; ++i) {
         auto start_prev = prev_in.host_ptr(i, 0, 0, 0);
         auto start_curr = curr_delta.host_ptr(i, 0, 0, 0);
-        auto start_dW   = dW.host_ptr(i, 0, 0, 0);
+        //auto start_dW   = dW.host_ptr(i, 0, 0, 0);
+        auto start_dW = dW.host_begin();
 
-        multiply(prev_in, start_prev, curr_delta, start_curr, start_dW, false, true);
+        multiply(prev_in, start_prev, curr_delta, start_curr, &(*start_dW), false, true);
         if (params.has_bias) {
           for (size_t j = 0; j < params.out_dim; ++j) {
-            db.host_at(i, 0, j, 0) = curr_delta.host_at(i, 0, j, 0);
+            //db.host_at(i, 0, j, 0) += curr_delta.host_at(i, 0, j, 0);
+            size_t index = i * params.out_dim + j;
+            db.host_at_index(index) += curr_delta.host_at_index(index);
           }
         }
       }

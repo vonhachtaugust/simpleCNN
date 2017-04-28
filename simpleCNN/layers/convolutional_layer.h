@@ -79,6 +79,10 @@ namespace simpleCNN {
       Base::set_backend_type(backend_type);
     }
 
+    size_t fan_in_size() const override {
+      return params_.filter_width * params_.filter_height * params_.in_channels;
+    }
+
     /**
      * @param in_data       input vector of this layer (data, weight, bias)
      * @param out_data      output vectors

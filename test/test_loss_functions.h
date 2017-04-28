@@ -28,7 +28,7 @@ namespace simpleCNN {
     fill(non_act_data, non_activ);
 
     tensor_t activated({1, 1, n, 1});
-    s.activate(non_activ, activated, non_activ.size());
+    s.activate(non_activ, activated);
 
     tensor_t target_I({1, 1, 1, 1});
     vec_t target_data_I = {0};
@@ -42,9 +42,9 @@ namespace simpleCNN {
     vec_t target_data_III = {2};
     fill(target_data_III, target_III);
 
-    ASSERT_NEAR(Loss::loss(activated, target_I, 1), 1.7917594, 1E-7);
-    ASSERT_NEAR(Loss::loss(activated, target_II, 1), 1.0986122, 2E-7);  // 1.08 E-7 ...
-    ASSERT_NEAR(Loss::loss(activated, target_III, 1), 0.6931471, 1E-7);
+    ASSERT_NEAR(Loss::L(activated, target_I, 1), 1.7917594, 1E-7);
+    ASSERT_NEAR(Loss::L(activated, target_II, 1), 1.0986122, 2E-7);  // 1.08 E-7 ...
+    ASSERT_NEAR(Loss::L(activated, target_III, 1), 0.6931471, 1E-7);
   }
 
   TEST(Loss, delta_log_likelihood) {
@@ -58,7 +58,7 @@ namespace simpleCNN {
     fill(non_act_data, non_activ);
 
     tensor_t activated({1, 1, n, 1});
-    s.activate(non_activ, activated, non_activ.size());
+    s.activate(non_activ, activated);
 
     tensor_t target({1, 1, 1, 1});
     target.host_at(0, 0, 0, 0) = 0;
