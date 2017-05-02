@@ -68,6 +68,16 @@ else()
     message(STATUS "Cannot find required package OpenCV. Please set OPENCV_INCLUDE_DIR")
 endif()
 
+#####
+# CUDA
+find_package(CUDA REQUIRED)
+if(CUDA_FOUND)
+    message(STATUS "Found CUDA: ${CUDA_LIBRARIES}")
+    list(APPEND REQUIRED_LIBRARIES ${CUDA_LIBRARIES})
+else()
+    message(STATUS "Cannot find required package CUDA. Please set CUDA_INCLUDE_DIR")
+endif()
+
 #opencv_core;
 #opencv_cudaarithm;
 #opencv_cudabgsegm;

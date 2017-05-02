@@ -60,7 +60,7 @@ namespace simpleCNN {
       }
     }
 
-    void set_net_phase(net_phase phase) { phase_ = phase; }
+    void set_netphase(net_phase phase) override { phase_ = phase; }
 
     std::string layer_type() const override { return "dropout"; }
 

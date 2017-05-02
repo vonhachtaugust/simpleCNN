@@ -92,8 +92,6 @@ namespace simpleCNN {
 
     std::string layer_type() const override { return std::string("maxpooling"); }
 
-    void createOp() override { init_backend(Layer::engine()); }
-
    private:
     void set_maxpooling_params(size_t in_width,
                                size_t in_height,

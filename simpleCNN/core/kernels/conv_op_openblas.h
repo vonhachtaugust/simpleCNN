@@ -37,7 +37,7 @@ namespace simpleCNN {
         im2col_cpu(in_data, i, mCols, params.in_channels, params.input_height, params.input_width, params.filter_size(),
                    params.stride(), params.padding);
         sgemm(mRows, mCols, mResult, false, false);
-        col2im_cpu(mResult, i, out_data, params.out_channels, params.output_height, params.output_width);
+        col2im_insert_cpu(mResult, i, out_data, params.out_channels, params.output_height, params.output_width);
 
         if (params.has_bias) {
           for (size_t j = 0; j < out_data.dimension(dim_t::depth); ++j) {
@@ -66,16 +66,15 @@ namespace simpleCNN {
                                      const core::Conv_params& params) {
       matrix_t mWeights({params.in_channels, params.filter_height * params.filter_width * params.out_channels});
       matrix_t mCurr_delta(
-        {params.out_channels * params.output_width * params.output_height, params.input_width * params.input_height});
+        {params.out_channels * params.filter_height * params.filter_width, params.input_width * params.input_height});
       matrix_t mResult_delta({mWeights.shape()[0], mCurr_delta.shape()[1]});
 
       im2row_flipped_cpu(weights, mWeights, params.out_channels, params.in_channels, params.filter_height,
                          params.filter_width);
       for (size_t i = 0; i < params.batch_size; ++i) {
-        im2col_cpu(curr_delta, i, mCurr_delta, params.out_channels, params.output_height, params.output_width,
-                   params.filter_size(), 1, params.filter_size() - 1);
+        im2col_cpu(curr_delta, i, mCurr_delta, params.out_channels, params.output_height, params.output_width, params.filter_size(), 1, params.filter_size() - 1);
         sgemm(mWeights, mCurr_delta, mResult_delta, false, false);
-        col2im_cpu(mResult_delta, i, prev_delta, params.in_channels, params.input_height, params.input_width);
+        col2im_insert_cpu(mResult_delta, i, prev_delta, params.in_channels, params.input_height, params.input_width);
       }
     }
 
@@ -106,14 +105,16 @@ namespace simpleCNN {
         im2col_cpu(curr_delta, i, mCurr_delta, params.out_channels, params.output_height, params.output_width);
 
         sgemm(mPrev_in, mCurr_delta, mResult_dW, false, true);
-        row2im_added_cpu(mResult_dW, dW, params.out_channels, params.in_channels, params.filter_height,
-                         params.filter_width);
 
+        // Add up dW instead of merge later. Average value is used later and the division is performed at that point.
+        row2im_add_cpu(mResult_dW, dW, params.out_channels, params.in_channels, params.filter_height,
+                         params.filter_width);
         if (params.has_bias) {
           for (size_t j = 0; j < params.out_channels; ++j) {
             auto start = curr_delta.host_iter(i, j, 0, 0);
             auto end   = start + params.output_height * params.output_width;
-            db.host_at(j, 0, 0, 0) = std::accumulate(start, end, float_t(0));
+
+            db.host_at(j, 0, 0, 0) = std::accumulate(start, end, float_t{0});
           }
         }
       }

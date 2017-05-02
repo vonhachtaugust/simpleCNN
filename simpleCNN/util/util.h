@@ -7,6 +7,9 @@
 #include "../core/framework/tensor.h"
 
 namespace simpleCNN {
+
+  enum class net_phase { train, test };
+
   template <typename T = float_t, typename Allocator = aligned_allocator<T, 64>>
   using default_vec_t = std::vector<T, Allocator>;
 
@@ -87,5 +90,4 @@ namespace simpleCNN {
   val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
   return (val << 16) | (val >> 16);
   }
-
 }  // namespace simpleCNN

@@ -20,6 +20,20 @@ namespace simpleCNN {
     std::cout << t << std::endl;
   }
 
+  template<typename T>
+  void print_seq(T t) {
+    std::cout << t << "\t";
+  }
+
+template<typename Container>
+void printc(Container c, const std::string& name) {
+  simple_info(name.c_str());
+  for (auto iter = std::begin(c); iter != std::end(c); ++iter) {
+    print_seq(*iter);
+  }
+  std::cout << std::endl;
+}
+
   template <typename T>
   void print(T t, const std::string& name) {
     simple_info(name.c_str());

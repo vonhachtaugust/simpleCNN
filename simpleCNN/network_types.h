@@ -94,6 +94,7 @@ namespace simpleCNN {
       if (size() != 1) {
         auto head = nodes_[size() - 2];
         auto tail = nodes_[size() - 1];
+        //connect(head, tail);
         head->connect(tail);
         check_connectivity();
       }

@@ -17,6 +17,7 @@
 #include "test_tensor_multiplication.h"
 #include "test_weight_init.h"
 #include "test_dropout_layer.h"
+#include "test_cuda.h"
 
 using namespace std;
 

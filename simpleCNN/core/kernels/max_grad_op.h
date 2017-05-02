@@ -16,8 +16,8 @@ namespace simpleCNN {
       core::Maxpooling_params* maxpooling_params_ptr = static_cast<core::Maxpooling_params*>(core::OpKernel::params_);
       const auto& params                             = maxpooling_params_ptr->maxpool();
 
-      const tensor_t& curr_delta = context.input_grad(0);
-      tensor_t& prev_delta       = context.output_grad(1);
+      const tensor_t& curr_delta = context.output_grad(1);
+      tensor_t& prev_delta       = context.input_grad(0);
       tensor_t& max_index        = const_cast<tensor_t&>(params.max_index);
 
       const core::backend_t engine = context.engine();

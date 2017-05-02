@@ -11,6 +11,7 @@
 namespace simpleCNN {
   class Edge;
   class Node;
+  class Layer;
 
   typedef Node* nodeptr_t;
   typedef std::shared_ptr<Edge> edgeptr_t;
@@ -31,6 +32,10 @@ namespace simpleCNN {
     const std::vector<edgeptr_t>& next() const { return next_; }
 
    protected:
+    Node() = delete;
+
+    //friend void connect(Layer* head, Layer* tail);
+
     /**
      * Vector of edges going out and in of this node.
      *
@@ -62,7 +67,8 @@ namespace simpleCNN {
     /**
      * Next node to which this edge connect to
      **/
-    const nodeptr_t next() const { return next_; }
+    //const std::vector<nodeptr_t>& next() const { return next_; }
+    const nodeptr_t next() { return next_; }
 
     /**
      * Previous node to which this edge connect from
@@ -79,9 +85,8 @@ namespace simpleCNN {
 
     void clear_gradients() { grad_.fill(float_t{0}); }
 
-    Edge& add_next_node(nodeptr_t next) {
+    void add_next_node(nodeptr_t next) {
       next_ = next;
-      return *this;
     }
 
    private:

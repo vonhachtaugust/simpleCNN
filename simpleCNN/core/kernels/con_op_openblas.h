@@ -81,6 +81,7 @@ namespace simpleCNN {
         auto start_dW = dW.host_begin();
 
         multiply(prev_in, start_prev, curr_delta, start_curr, &(*start_dW), false, true);
+
         if (params.has_bias) {
           for (size_t j = 0; j < params.out_dim; ++j) {
             //db.host_at(i, 0, j, 0) += curr_delta.host_at(i, 0, j, 0);

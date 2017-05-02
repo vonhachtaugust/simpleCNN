@@ -13,6 +13,7 @@ namespace simpleCNN {
    public:
     virtual ~Optimizer() = default;
 
+    virtual void reset() {}
     /**
      * Method to update a parameter p.
      *
@@ -29,6 +30,11 @@ namespace simpleCNN {
    */
   template <size_t N>
   class Stateful_optimizer : public Optimizer {
+   public:
+    void reset() override {
+      for (auto& e : state) { e.clear(); }
+    }
+
    protected:
     template <size_t index>
     tensor_t* get(const tensor_t* key) {

@@ -13,7 +13,7 @@
 #include "../util/util.h"
 #include "../util/weight_init.h"
 #include "../util/math_functions.h"
-#include "../simpleCNN.h"
+#include "../network.h"
 
 namespace simpleCNN {
   /**
@@ -36,17 +36,17 @@ namespace simpleCNN {
     * @param out_type[M] type of output vector
     *
     **/
-    Layer(const data_t& in_type, const data_t& out_type)
-      : Node(static_cast<size_t>(in_type.size()), static_cast<size_t>(out_type.size())),
-        initialized_(false),
-        in_channels_(static_cast<size_t>(in_type.size())),
-        out_channels_(static_cast<size_t>(out_type.size())),
-        in_type_(in_type),
-        out_type_(out_type) {
+    Layer(const data_t &in_type, const data_t &out_type)
+        : Node(static_cast<size_t>(in_type.size()), static_cast<size_t>(out_type.size())),
+          initialized_(false),
+          in_channels_(static_cast<size_t>(in_type.size())),
+          out_channels_(static_cast<size_t>(out_type.size())),
+          in_type_(in_type),
+          out_type_(out_type) {
       weight_init_ = std::make_shared<weight_init::Gaussian>();
-      bias_init_   = std::make_shared<weight_init::Constant>();
-      trainable_   = true;
-      classifier_  = false;
+      bias_init_ = std::make_shared<weight_init::Constant>();
+      trainable_ = true;
+      classifier_ = false;
     }
 
     virtual ~Layer() = default;
@@ -55,8 +55,8 @@ namespace simpleCNN {
      * The implicitly-defined copy/move constructor for a non-union class X
      * performs activate memberwise copy/move of its bases and members.
      */
-    Layer(const Layer&) = default;
-    Layer& operator=(const Layer&) = default;
+    Layer(const Layer &) = default;
+    Layer &operator=(const Layer &) = default;
 
     /*
      * Move constructors
@@ -64,7 +64,7 @@ namespace simpleCNN {
     // Layer(Layer&&) = default;
     // Layer &operator=(const Layer&&) = default;
 
-    Layer& set_backend_type(core::backend_t backend_type) {
+    Layer &set_backend_type(core::backend_t backend_type) {
       backend_type_ = backend_type;
       return *this;
     }
@@ -72,7 +72,7 @@ namespace simpleCNN {
     // Start: Getters -------------------------------------- //
     core::backend_t engine() const { return backend_type_; }
 
-    Device* device() const { return device_ptr_.get(); }
+    Device *device() const { return device_ptr_.get(); }
 
     // number of incoming edges in this layer
     size_t in_channels() const { return in_channels_; }
@@ -93,7 +93,7 @@ namespace simpleCNN {
 
     bool trainable() const { return trainable_; }
 
-    tensor_t* in_component(component_t t) {
+    tensor_t *in_component(component_t t) {
       for (size_t i = 0; i < in_channels_; ++i) {
         if (in_type_[i].getComponentType() == t) {
           return get_component_data(i, t);
@@ -102,7 +102,7 @@ namespace simpleCNN {
       throw simple_error("Error: In component not allocated.");
     }
 
-    tensor_t* out_component(component_t t) {
+    tensor_t *out_component(component_t t) {
       for (size_t i = 0; i < out_channels_; ++i) {
         if (out_type_[i].getComponentType() == t) {
           return ith_out_node(i)->get_data();
@@ -114,28 +114,28 @@ namespace simpleCNN {
     // End: Getters ---------------------------------------- //
 
     // Start: Setters -------------------------------------- //
-    Layer& set_device(Device* device) {
+    Layer &set_device(Device *device) {
       device_ptr_.reset(device);
       return *this;
     }
 
-    template <typename WeightInit>
-    Layer& weight_init(const WeightInit& f) {
+    template<typename WeightInit>
+    Layer &weight_init(const WeightInit &f) {
       weight_init_ = std::make_shared<WeightInit>(f);
       return *this;
     }
 
-    template <typename BiasInit>
-    Layer& bias_init(const BiasInit& f) {
+    template<typename BiasInit>
+    Layer &bias_init(const BiasInit &f) {
       bias_init_ = std::make_shared<BiasInit>(f);
       return *this;
     }
 
-    void set_in_data(const tensor_t& data, component_t ct) { *in_component(ct) = data; }
+    void set_in_data(const tensor_t &data, component_t ct) { *in_component(ct) = data; }
 
-    void set_out_data(const tensor_t& data, component_t ct) { *out_component(ct) = data; }
+    void set_out_data(const tensor_t &data, component_t ct) { *out_component(ct) = data; }
 
-    void set_out_grads(const tensor_t& delta, component_t ct) {
+    void set_out_grads(const tensor_t &delta, component_t ct) {
       // Calculate loss, based on output data and target.
     }
 
@@ -189,11 +189,11 @@ namespace simpleCNN {
       }
     }
 
-    void update(Optimizer& opt, const size_t batch_size) {
+    void update(Optimizer &opt, const size_t batch_size) {
       for (size_t i = 0; i < in_channels_; ++i) {
         auto type = in_type_[i].getComponentType();
         if (type == component_t::WEIGHT) {
-          auto W  = get_component_data(i, type);
+          auto W = get_component_data(i, type);
           auto dW = get_component_gradient(i, type);
           // dW is the sum of errors over the batch, divide by batch size to get average.
           // If classifier layer also add the regularization term to prefer smaller weight values.
@@ -201,7 +201,7 @@ namespace simpleCNN {
           opt.update(dW, W);
         }
         if (type == component_t::BIAS) {
-          auto b  = get_component_data(i, type);
+          auto b = get_component_data(i, type);
           auto db = get_component_gradient(i, type);
           // db is the sum of errors over the batch, divide by batch size to get average.
           mean(*db, batch_size);
@@ -222,40 +222,14 @@ namespace simpleCNN {
       for (size_t i = 0; i < in_channels_; i++) {
         component_t type_ = in_type_[i].getComponentType();
         switch (type_) {
-          case component_t::WEIGHT:
-            weight_init_->fill(get_component_data(i, type_), fan_in_size(), fan_out_size());
+          case component_t::WEIGHT:weight_init_->fill(get_component_data(i, type_), fan_in_size(), fan_out_size());
             break;
-          case component_t::BIAS: bias_init_->fill(get_component_data(i, type_), fan_in_size(), fan_out_size()); break;
+          case component_t::BIAS: bias_init_->fill(get_component_data(i, type_), fan_in_size(), fan_out_size());
+            break;
           default: break;
         }
       }
       initialized_ = true;
-    }
-
-    bool need_reshape(const tensor_t& in_data, const shape4d& in_shape) {
-      for (size_t i = 0; i < in_shape.size(); ++i) {
-        std::cout << in_data.shape()[in_shape.size() - 1 - i] << "\t";
-      }
-      std::cout << "\t";
-
-      for (size_t i = 0; i < in_shape.size(); ++i) {
-        std::cout << in_shape[in_shape.size() - 1 - i] << "\t";
-      }
-      std::cout << std::endl;
-
-      for (size_t i = 0; i < in_shape.size(); ++i) {
-        if (in_data.shape()[i] != in_shape[i]) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    void reshape(tensor_t& in_data, const shape4d& in_shape) {
-      if (need_reshape(in_data, in_shape)) {
-        print(layer_type(), "Needed reshape; ");
-        in_data.reshape(in_shape);
-      }
     }
 
     void forward() {
@@ -273,8 +247,6 @@ namespace simpleCNN {
       // resize input to fit output shape; in_data[0] pointer is shared/connected
       // with previous layer out_data[0] pointer. So in_data[0] this layer = out_data[0]
       // previous layer.
-      reshape(*in_data[0], in_shape()[0]);
-
       forward_propagation(in_data, out_data);
       forward_activation(*out_data[1], *out_data[0]);
     }
@@ -283,19 +255,16 @@ namespace simpleCNN {
       data_ptrs_t in_data(in_channels_), in_grad(in_channels_), out_data(out_channels_), out_grad(out_channels_);
 
       for (size_t i = 0; i < in_channels_; ++i) {
-        const auto& in = ith_in_node(i);
-        in_data[i]     = in->get_data();
-        in_grad[i]     = in->get_gradient();
+        const auto &in = ith_in_node(i);
+        in_data[i] = in->get_data();
+        in_grad[i] = in->get_gradient();
       }
 
       for (size_t i = 0; i < out_channels_; ++i) {
-        const auto& out = ith_out_node(i);
-        out_data[i]     = out->get_data();
-        out_grad[i]     = out->get_gradient();
+        const auto &out = ith_out_node(i);
+        out_data[i] = out->get_data();
+        out_grad[i] = out->get_gradient();
       }
-
-      // resize out grad to fit in grad shape
-      reshape(*in_grad[0], out_shape()[0]);
 
       back_propagation(in_data, out_data, in_grad, out_grad);
       backward_activation(*out_data[1], *out_grad[1], *out_data[0]);
@@ -311,7 +280,7 @@ namespace simpleCNN {
     **/
     virtual std::pair<float_t, float_t> out_value_range() const { return {float_t{0.0}, float_t{1.0}}; }
 
-    virtual void createOp() {}
+    virtual void set_netphase(net_phase phase) {}
 
     /**
     * number of incoming connections for each output unit
@@ -348,27 +317,59 @@ namespace simpleCNN {
     **/
     virtual std::string layer_type() const = 0;
 
-    virtual void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) = 0;
+    virtual void forward_propagation(const data_ptrs_t &in_data, data_ptrs_t &out_data) = 0;
 
-    virtual void back_propagation(const data_ptrs_t& in_data,
-                                  const data_ptrs_t& out_data,
-                                  data_ptrs_t& in_grad,
-                                  data_ptrs_t& out_grad) = 0;
+    virtual void back_propagation(const data_ptrs_t &in_data,
+                                  const data_ptrs_t &out_data,
+                                  data_ptrs_t &in_grad,
+                                  data_ptrs_t &out_grad) = 0;
 
-    virtual void forward_activation(const tensor_t& affine, tensor_t& activated) = 0;
+    virtual void forward_activation(const tensor_t &affine, tensor_t &activated) = 0;
 
-    virtual void backward_activation(const tensor_t& prev_delta, const tensor_t& affine, tensor_t& activated) = 0;
+    virtual void backward_activation(const tensor_t &prev_delta, const tensor_t &affine, tensor_t &activated) = 0;
 
     // End: Pure virtuals ----------------------------------- //
 
+    void reshape(tensor_t &data, const shape4d &shape) {
+      bool re = false;
+
+      for (size_t i = 0; i < shape.size(); ++i) {
+        if (data.shape()[i] != shape[i]) {
+          re = true;
+          break;
+        }
+      }
+
+      if (re) {
+        //print(layer_type());
+        /*for (size_t i = 0; i < shape.size(); ++i) {
+          std::cout << data.shape()[shape.size() - 1 - i] << "\t";
+        }
+        std::cout << "\t";
+
+        for (size_t i = 0; i < shape.size(); ++i) {
+          std::cout << shape[shape.size() - 1 - i] << "\t";
+        }
+        std::cout << std::endl;*/
+
+        data.reshape(shape);
+      }
+    }
+
+    /*void reshape(tensor_t& in_data, const shape4d& in_shape) {
+      if (need_reshape(in_data, in_shape)) {
+        print(layer_type(), "Needed reshape; ");
+        in_data.reshape(in_shape);
+      }
+    } */
+
     inline void connect(Layer* next) {
       auto out_shape = this->out_shape()[0];
-      auto in_shape  = next->in_shape()[0];
+      auto in_shape = next->in_shape()[0];
 
       this->setup(false);
 
       if (in_shape.size() == 0) {
-        // in_shape = out_shape;
         throw simple_error("In shape is zero");
       }
 
@@ -491,4 +492,29 @@ namespace simpleCNN {
      */
     std::shared_ptr<weight_init::Function> bias_init_;
   };
+
+/*inline void connect(Layer* head, Layer* tail) {
+  auto out_shape = head->out_shape()[0];
+  auto in_shape  = tail->in_shape()[0];
+
+  head->setup(false);
+
+  if (in_shape.size() == 0) {
+    // in_shape = out_shape;
+    throw simple_error("In shape is zero");
+  }
+
+  if (out_shape.size() != in_shape.size()) {
+    throw simple_error("Connection mismatch");
+  }
+
+  if (!head->next_[0]) {
+    throw simple_error("Output edge must not be null");
+  }
+
+  tail->prev_[0] = head->next_[0];
+  tail->prev_[0]->add_next_node(tail);
+}*/
+
+
 }  // namespace simpleCNN

@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include "../util/util.h"
+#include "../core/framework/tensor_utils.h"
+
 namespace simpleCNN {
   namespace loss {
 

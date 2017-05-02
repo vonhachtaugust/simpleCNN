@@ -41,7 +41,7 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
   }
 }
 
-static void train_mnist() {
+static bool train_mnist() {
   size_t mnist_image_row  = 28;
   size_t mnist_image_col  = 28;
   size_t mnist_image_num = 60000;
@@ -80,52 +80,23 @@ static void train_mnist() {
 
   // Zero mean.
   train_images.add(-mean_value(train_images));
-
   size_t batch_size = 32;
-  tensor_t test_batch({batch_size, 1, in_height, in_width});
-  tensor_t test_labels({batch_size, 1, 1, 1});
-
-  for (size_t n = 0; n < batch_size * in_width * in_height; ++n) {
-    test_batch.host_at_index(n) = train_images.host_at_index(n);
-  }
-  for (size_t i = 0; i < batch_size; ++i) {
-    test_labels.host_at_index(i) = train_labels[i];
-  }
-
-  // Conv(in_w, in_h, in_c, b_size, filter_size, out_c, stride, padding, has_bias)
-  // Max(in_w, in_h, in_c, b_size, pool_size, stride_size)
-  // fc(in_dim, out_dim, batch_size, has_bias)
 
   network net;
   net << conv(32, 32, 1, batch_size, 5, 6) << maxpool(28, 28, 6, batch_size) << conv(14, 14, 6, batch_size, 5, 16)
       << maxpool(10, 10, 16, batch_size) << conv(5, 5, 16, batch_size, 5, 120) << classy(120, 10, batch_size);
 
-  Adam<float> a;
-  tensor_t out_delta({batch_size, 1, 10, 1});
-  net.test_onbatch<lgl, Adam<float_t>>(a, test_batch, test_labels, out_delta, batch_size);
+  Adam<float_t> a;
 
-  // Test section ---------------------------------------------------- //
+  net.test_mnist<lgl, Adam<float_t>>(a, train_images, train_labels, batch_size, 1);
 
-  /*
-  net << conv_I(in_width, in_height, 1, batch_size, 5, 6);
-
-  tensor_t output = net.test(test_batch);
-  print(output);
-
-  display_filtermaps(output, 28, 28);
-
-
-  net << conv_I(32, 32, 1, batch_size, 5, 6) << maxpool(28, 28, 6, batch_size);
-  tensor_t out = net.test(test_batch);
-
-  print(out, "Output");
-  display_filtermaps(out, 14, 14);
-
-   net.test_loss<lgl>(test_batch, test_labels, batch_size);
-  */
-
-  // End; Test section ------------------------------------------------ //
+  return true;
 }
 
 
-int main(int argc, char** argv) { train_mnist(); }
+int main(int argc, char** argv) {
+  if (train_mnist()) {
+    return 0;
+  }
+  return -1;
+}

@@ -73,4 +73,24 @@ namespace simpleCNN {
       ASSERT_EQ(*iter++, d);
     }
   }
+
+  TEST(Tensor, copy_n) {
+  size_t batch_size = 10;
+  size_t in_h = 5;
+  size_t in_w = 5;
+
+  tensor_t test_victim({batch_size, 1, in_h, in_w});
+
+  for (size_t i = 0; i < test_victim.size(); ++i) {
+    test_victim.host_at_index(i) = i + 1;
+  }
+
+  tensor_t copyTo = {1, 1, in_h, in_w};
+
+  for (size_t i = 0; i < 10; ++i) {
+    copy_n(test_victim, copyTo, in_w * in_h, i * in_w * in_h, 0);
+    print(copyTo, std::to_string(i));
+  }
+}
+
 }

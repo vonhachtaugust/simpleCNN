@@ -127,8 +127,6 @@ namespace simpleCNN {
 
     std::string layer_type() const override { return std::string("conv"); }
 
-    void createOp() override { init_backend(Layer::engine()); }
-
    private:
     /*
      * Default tensor_t has 4 dimensions where tensor_t(stack, depth, height, width)

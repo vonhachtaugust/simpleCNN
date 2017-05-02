@@ -37,13 +37,13 @@ namespace simpleCNN {
 
 
   fill(data, tensor);
-  print(tensor, "Input");
+  //print(tensor, "Input");
 
   Activation act;
 
   tensor_t a({1, 1, 10, 1});
   act.activate(tensor, a);
-  print(a, "Activated");
+  //print(a, "Activated");
 
 }
 
