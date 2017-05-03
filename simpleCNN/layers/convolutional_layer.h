@@ -89,9 +89,9 @@ namespace simpleCNN {
      */
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
       // forward convolution op context
+
       auto ctx = core::OpKernelContext(in_data, out_data);
       ctx.setEngine(Layer::engine());
-      ctx.setParams(&params_);
 
       // launch convolutional kernel
       kernel_fwd_->compute(ctx);
@@ -102,9 +102,9 @@ namespace simpleCNN {
                           data_ptrs_t& in_grad,
                           data_ptrs_t& out_grad) override {
       // backward convolution op context
+
       auto ctx = core::OpKernelContext(in_data, out_data, in_grad, out_grad);
       ctx.setEngine(Layer::engine());
-      ctx.setParams(&params_);
 
       // launch convolutional kernel
       kernel_bwd_->compute(ctx);

@@ -46,18 +46,18 @@ namespace simpleCNN {
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
       // Reshape input to suit connected layer format.
       // printc(in_data[0]->shape(), "Init");
-      auto shape = in_data[0]->shape();
-      Layer::reshape(*in_data[0], in_shape()[0]);
-      // printc(in_data[0]->shape(), "Reshape");
 
       auto ctx = core::OpKernelContext(in_data, out_data);
       ctx.setEngine(Layer::engine());
-      ctx.setParams(&params_);
+
+      // Reshape input to suit connected layer format.
+      auto shape = in_data[0]->shape();
+      Layer::reshape(*in_data[0], in_shape()[0]);
 
       kernel_fwd_->compute(ctx);
+
       // Reshape input back
       in_data[0]->reshape(shape);
-      // printc(in_data[0]->shape(), "Done");
     }
 
     void back_propagation(const data_ptrs_t& in_data,
@@ -66,7 +66,6 @@ namespace simpleCNN {
                           data_ptrs_t& out_grad) override {
       auto ctx = core::OpKernelContext(in_data, out_data, in_grad, out_grad);
       ctx.setEngine(Layer::engine());
-      ctx.setParams(&params_);
 
       kernel_bwd_->compute(ctx);
     }

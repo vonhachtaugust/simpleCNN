@@ -60,12 +60,12 @@ namespace simpleCNN {
                             stride_y, backend_type);
       init_backend(backend_type);
       Base::set_backend_type(backend_type);
+      Layer::set_trainable(false);
     }
 
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
       auto ctx = core::OpKernelContext(in_data, out_data);
       ctx.setEngine(Layer::engine());
-      ctx.setParams(&params_);
 
       kernel_fwd_->compute(ctx);
     }
@@ -76,7 +76,6 @@ namespace simpleCNN {
                           data_ptrs_t& out_grad) override {
       auto ctx = core::OpKernelContext(in_data, out_data, in_grad, out_grad);
       ctx.setEngine(Layer::engine());
-      ctx.setParams(&params_);
 
       kernel_bwd_->compute(ctx);
     }

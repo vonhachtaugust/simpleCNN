@@ -15,7 +15,9 @@ namespace simpleCNN {
         in_size_(product(in_dim)),
         phase_(phase),
         prob_(prob),
-        mask_(in_dim) {}
+        mask_(in_dim) {
+      Layer::set_trainable(false);
+    }
 
     void set_prob(float_t prob) { prob_ = prob; }
 
@@ -32,7 +34,6 @@ namespace simpleCNN {
       tensor_t& out      = *out_data[0];
 
       const size_t n = in.size();
-
       if (phase_ == net_phase::train) {
         for (size_t i = 0; i < n; ++i) {
           mask_.host_at_index(i) = bernoulli(prob_);
@@ -54,7 +55,6 @@ namespace simpleCNN {
       tensor_t& prev_grad = *in_grad[0];
 
       const size_t n = curr_grad.size();
-
       for (size_t i = 0; i < n; ++i) {
         prev_grad.host_at_index(i) = mask_.host_at_index(i) * curr_grad.host_at_index(i);
       }

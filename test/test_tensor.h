@@ -74,23 +74,20 @@ namespace simpleCNN {
     }
   }
 
-  TEST(Tensor, copy_n) {
-  size_t batch_size = 10;
+  TEST(Tensor, subview) {
+  size_t batch_size = 3;
   size_t in_h = 5;
   size_t in_w = 5;
 
-  tensor_t test_victim({batch_size, 1, in_h, in_w});
+  tensor_t total({batch_size, 1, 5, 5});
+  for (size_t i = 0; i < total.size(); ++i) total.host_at_index(i) = i + 1;
+  print(total, "Total");
 
-  for (size_t i = 0; i < test_victim.size(); ++i) {
-    test_victim.host_at_index(i) = i + 1;
-  }
+  tensor_t subview({1, 1, 5, 5});
 
-  tensor_t copyTo = {1, 1, in_h, in_w};
+  subview = total.subView({1}, {1, 1, 5, 5});
+  print(subview, "Subview");
 
-  for (size_t i = 0; i < 10; ++i) {
-    copy_n(test_victim, copyTo, in_w * in_h, i * in_w * in_h, 0);
-    print(copyTo, std::to_string(i));
-  }
 }
 
 }

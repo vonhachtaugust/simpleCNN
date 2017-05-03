@@ -106,6 +106,12 @@ namespace simpleCNN {
      */
     const std::array<size_t, kDimensions>& shape() const { return shape_; };
 
+    const std::vector<size_t> shape_v() const {
+      std::vector<size_t> v(shape_.size());
+      std::copy(shape_.begin(), shape_.end(), v.begin());
+      return v;
+    }
+
     /**
     * Checked version of access to indexes in tensor (throw exceptions
     * for out-of-range error)
@@ -271,6 +277,10 @@ namespace simpleCNN {
     Tensor subView(std::initializer_list<size_t> const& start, std::initializer_list<size_t> const& new_shape) {
       return subview_impl(start, new_shape);
     }
+    
+    Tensor subView(const std::initializer_list<size_t> start, const std::array<size_t, kDimensions> new_shape) const {
+      return subview_impl(start, new_shape); 
+    }
 
     /**
      * @brief Returns whether the tensor is a view of another tensor
@@ -319,7 +329,7 @@ namespace simpleCNN {
      * are bigger than the current dimensions number. Also raises an exception
      * when the requested view size is not feasible.
      */
-    Tensor subview_impl(std::initializer_list<size_t> const& start, std::initializer_list<size_t> const& new_shape) {
+    Tensor subview_impl(std::initializer_list<size_t> const& start, std::initializer_list<size_t> const& new_shape) const {
       if (start.size() > kDimensions || new_shape.size() > kDimensions) {
         throw simple_error("Overpassed number of existing dimensions.");
       }
@@ -331,6 +341,19 @@ namespace simpleCNN {
         throw simple_error("Cannot create activate view from this tensor");
       }
 
+      return Tensor(storage_ptr_, new_offset, new_shape);
+    }
+    
+    Tensor subview_impl(const std::initializer_list<size_t> start, const std::array<size_t, kDimensions> new_shape) const {
+      if (start.size() > kDimensions || new_shape.size() > kDimensions) {
+        throw simple_error("Overpassed number of existing dimensions.");
+      }
+      
+      const size_t new_offset = offset_ + compute_offset(start, shape_);
+      if (new_offset + product(new_shape) > size_) {
+        throw simple_error("Cannot create activate view from this tensor");
+      }
+      
       return Tensor(storage_ptr_, new_offset, new_shape);
     }
 

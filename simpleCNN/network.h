@@ -37,11 +37,11 @@ namespace simpleCNN {
      * @param target : list of correct labels
      * @param batch_size
      */
-    template<typename Loss>
+    template <typename Loss>
     void test_loss(const tensor_t& input, const tensor_t& target, const size_t batch_size) {
       net_.setup(true);
       tensor_t output = net_.forward(input);
-      float_t er = error<Loss>(output, target, batch_size);
+      float_t er      = error<Loss>(output, target, batch_size);
       print(er, "Error: ");
     }
 
@@ -54,7 +54,7 @@ namespace simpleCNN {
      * @param target
      * @param batch_size
      */
-    template<typename Loss>
+    template <typename Loss>
     void test_forward_twice(const tensor_t& input) {
       net_.setup(true);
       tensor_t output = net_.forward(input);
@@ -75,12 +75,9 @@ namespace simpleCNN {
      * @param output_delta : store delta results to check gradient values
      * @param batch_size
      */
-    template<typename Loss, typename optimizer>
-    void test_onbatch(optimizer& opt,
-                      const tensor_t& in,
-                      const tensor_t& target,
-                      tensor_t& output_delta,
-                      const size_t batch_size) {
+    template <typename Loss, typename optimizer>
+    void test_onbatch(
+      optimizer& opt, const tensor_t& in, const tensor_t& target, tensor_t& output_delta, const size_t batch_size) {
       net_.setup(true);
       tensor_t output = net_.forward(in);
       print(error<Loss>(output, target, batch_size), "Error: ");
@@ -91,18 +88,18 @@ namespace simpleCNN {
       print(error<Loss>(output, target, batch_size), "Error: ");
     };
 
-//    template<typename loss, typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumaerate>
-    template<typename loss, typename optimizer>
+    //    template<typename loss, typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumaerate>
+    template <typename loss, typename optimizer>
     bool test_mnist(optimizer& opt,
                     const tensor_t& train_data,
                     const std::vector<label_t>& train_lables,
                     size_t batch_size,
-                    size_t mini_batch_size,
-  //                  OnBatchEnumerate on_batch_enumerate,
-  //                  OnEpochEnumaerate on_epoch_enumerate,
+                    size_t epoch,
+                    //                  OnBatchEnumerate on_batch_enumerate,
+                    //                  OnEpochEnumaerate on_epoch_enumerate,
                     const bool reset_weight = true) {
-      size_t in_w = train_data.shape()[0];
-      size_t in_h = train_data.shape()[1];
+      size_t in_w        = train_data.shape()[3];
+      size_t in_h        = train_data.shape()[2];
       size_t num_classes = 10;
 
       tensor_t test_batch({batch_size, 1, in_h, in_w});
@@ -117,37 +114,53 @@ namespace simpleCNN {
       opt.reset();
       stop_training_ = false;
 
-      for (size_t i = 0; i < mini_batch_size; ++i) {
+      for (size_t i = 0; i < epoch; ++i) {
         for (size_t j = 0; j < n; ++j) {
-          size_t index = n * i + j;
+          size_t index                    = n * i + j;
           test_batch.host_at_index(index) = train_data.host_at_index(index);
         }
         for (size_t j = 0; j < m; ++j) {
-          size_t index = m * i + j;
+          size_t index                     = m * i + j;
           test_labels.host_at_index(index) = train_lables[index];
         }
 
-        train_onebatch<loss, optimizer>(opt, test_batch, test_labels, output_error, batch_size);
+        train_onebatch<loss, optimizer>(opt, &test_batch, &test_labels, &output_error, batch_size);
       }
+
+      print("Success!");
+      return true;
     };
 
     template <typename loss, typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumerate>
-    bool train(Optimizer& opt,
+    bool train(optimizer& opt,
                const tensor_t& input,
-               const tensor_t& target,
-               const std::vector<label_t>& train_lables,
+               const tensor_t& train_labels,
                size_t batch_size,
                size_t epoch,
                OnBatchEnumerate on_batch_enumerate,
                OnEpochEnumerate on_epoch_enumerate,
                const bool reset_weight = false) {
-      if (!(input.size() >= train_lables.size())) {
+      if (!(input.size() >= train_labels.size())) {
         return false;
       }
-      if (input.size() < batch_size || train_lables.size() < batch_size) {
+      if (input.size() < batch_size || train_labels.size() < batch_size) {
         return false;
       }
+      net_.setup(reset_weight);
+      set_netphase(net_phase::train);
+      opt.reset();
+      stop_training_ = false;
+      time_t t = clock();
 
+      for (size_t i = 0; i < epoch && !stop_training_; ++i) {
+        for (size_t j = 0; j < input.size() && !stop_training_; j += batch_size) {
+          train_once<loss>(opt, input.subView({j}, {batch_size, input.dimension(dim_t::depth),
+                                                    input.dimension(dim_t::height), input.dimension(dim_t::width)}),
+                           train_labels.subView({j}, {batch_size, 1, 1, 1}), batch_size);
+          on_batch_enumerate(t);
+        }
+        on_epoch_enumerate(i);
+      }
       return true;
     }
 
@@ -158,6 +171,23 @@ namespace simpleCNN {
     }
 
    private:
+    template <typename loss, typename optimizer>
+    void train_once(optimizer& opt, const tensor_t minibatch, const tensor_t labels, const size_t batch_size) {
+      tensor_t output = net_.forward(minibatch);
+      print_seq(error<loss>(output, labels, batch_size));
+      tensor_t grad = gradient<loss>(output, labels, batch_size);
+      net_.backward(grad);
+      net_.update(opt, batch_size);
+    }
+
+    template <typename loss, typename optimizer>
+    void train_onebatch(optimizer& opt, const tensor_t* in, const tensor_t* target, const size_t batch_size) {
+      tensor_t output = net_.forward(in);
+      tensor_t grad   = gradient<loss>(output, *target, batch_size);
+      net_.backward(grad);
+      net_.update(opt, batch_size);
+    };
+
     /**
      * trains on one minibatch, i.e. runs forward and backward propagation to
      * calculate
@@ -169,14 +199,12 @@ namespace simpleCNN {
      */
     template <typename loss, typename optimizer>
     void train_onebatch(
-      optimizer& opt, const tensor_t& in, const tensor_t& target, tensor_t& output_delta, const size_t batch_size) {
-      auto output = forward_pass(in);
-      print(error<loss>(output, target, batch_size), "Error: ");
-      backward_pass<loss>(output, target, output_delta, batch_size);
+      optimizer& opt, const tensor_t* in, const tensor_t* target, tensor_t* output_delta, const size_t batch_size) {
+      tensor_t output = net_.forward(in);
+      print(error<loss>(output, *target, batch_size), "Error: ");
+      backward_pass<loss>(output, *target, *output_delta, batch_size);
       net_.update(opt, batch_size);
     }
-
-    tensor_t forward_pass(const tensor_t& in) { net_.forward(in); }
 
     template <typename loss>
     void backward_pass(const tensor_t& output,

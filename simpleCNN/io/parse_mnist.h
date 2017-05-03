@@ -86,7 +86,7 @@ namespace simpleCNN {
     }
   }  // namespace parser_details
 
-  inline void parse_mnist_labels(const std::string& file, std::vector<label_t>* labels) {
+  inline void parse_mnist_labels(const std::string& file, tensor_t* labels) {
     std::ifstream ifs(file.c_str(), std::ios::in | std::ios::binary);
 
     if (ifs.bad() || ifs.fail()) {
@@ -96,13 +96,12 @@ namespace simpleCNN {
     parser_details::mnist_label_header header;
     parser_details::parse_mnist_header(ifs, header);
 
-    labels->resize(header.num_items);
+    //labels->resize(header.num_items);
     for (uint32_t i = 0; i < header.num_items; ++i) {
       uint8_t label;
       ifs.read(reinterpret_cast<char *>(&label), 1);
-      (*labels)[i] = static_cast<label_t>(label);
+      labels->host_at_index(i) = static_cast<float_t>(label);
     }
-
   }
 
   inline void parse_mnist_images(

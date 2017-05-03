@@ -190,22 +190,24 @@ namespace simpleCNN {
     }
 
     void update(Optimizer &opt, const size_t batch_size) {
-      for (size_t i = 0; i < in_channels_; ++i) {
-        auto type = in_type_[i].getComponentType();
-        if (type == component_t::WEIGHT) {
-          auto W = get_component_data(i, type);
-          auto dW = get_component_gradient(i, type);
-          // dW is the sum of errors over the batch, divide by batch size to get average.
-          // If classifier layer also add the regularization term to prefer smaller weight values.
-          classifier_ ? mean_and_regularize(*W, *dW, batch_size) : mean(*dW, batch_size);
-          opt.update(dW, W);
-        }
-        if (type == component_t::BIAS) {
-          auto b = get_component_data(i, type);
-          auto db = get_component_gradient(i, type);
-          // db is the sum of errors over the batch, divide by batch size to get average.
-          mean(*db, batch_size);
-          opt.update(db, b);
+      if (trainable()) {
+        for (size_t i = 0; i < in_channels_; ++i) {
+          auto type = in_type_[i].getComponentType();
+          if (type == component_t::WEIGHT) {
+            auto W = get_component_data(i, type);
+            auto dW = get_component_gradient(i, type);
+            // dW is the sum of errors over the batch, divide by batch size to get average.
+            // If classifier layer also add the regularization term to prefer smaller weight values.
+            classifier_ ? mean_and_regularize(*W, *dW, batch_size) : mean(*dW, batch_size);
+            opt.update(dW, W);
+          }
+          if (type == component_t::BIAS) {
+            auto b = get_component_data(i, type);
+            auto db = get_component_gradient(i, type);
+            // db is the sum of errors over the batch, divide by batch size to get average.
+            mean(*db, batch_size);
+            opt.update(db, b);
+          }
         }
       }
     }
@@ -233,6 +235,7 @@ namespace simpleCNN {
     }
 
     void forward() {
+      //print(layer_type());
       data_ptrs_t in_data(in_channels_), out_data(out_channels_);
 
       for (size_t i = 0; i < in_channels_; ++i) {
@@ -244,14 +247,12 @@ namespace simpleCNN {
         ith_out_node(i)->clear_gradients();
       }
 
-      // resize input to fit output shape; in_data[0] pointer is shared/connected
-      // with previous layer out_data[0] pointer. So in_data[0] this layer = out_data[0]
-      // previous layer.
       forward_propagation(in_data, out_data);
       forward_activation(*out_data[1], *out_data[0]);
     }
 
     void backward() {
+      //print(layer_type());
       data_ptrs_t in_data(in_channels_), in_grad(in_channels_), out_data(out_channels_), out_grad(out_channels_);
 
       for (size_t i = 0; i < in_channels_; ++i) {
@@ -341,27 +342,9 @@ namespace simpleCNN {
       }
 
       if (re) {
-        //print(layer_type());
-        /*for (size_t i = 0; i < shape.size(); ++i) {
-          std::cout << data.shape()[shape.size() - 1 - i] << "\t";
-        }
-        std::cout << "\t";
-
-        for (size_t i = 0; i < shape.size(); ++i) {
-          std::cout << shape[shape.size() - 1 - i] << "\t";
-        }
-        std::cout << std::endl;*/
-
         data.reshape(shape);
       }
     }
-
-    /*void reshape(tensor_t& in_data, const shape4d& in_shape) {
-      if (need_reshape(in_data, in_shape)) {
-        print(layer_type(), "Needed reshape; ");
-        in_data.reshape(in_shape);
-      }
-    } */
 
     inline void connect(Layer* next) {
       auto out_shape = this->out_shape()[0];
@@ -428,11 +411,6 @@ namespace simpleCNN {
      */
     std::shared_ptr<Device> device_ptr_ = nullptr;
 
-    /** Used in update_weight method. Kept as a member variable to reduce
-     * frequent memory allocation
-     */
-    vec_t weights_diff_;
-
     private:
     /**
      * @brief Allocates the necessary edge memory in a specific incoming connection.
@@ -492,29 +470,5 @@ namespace simpleCNN {
      */
     std::shared_ptr<weight_init::Function> bias_init_;
   };
-
-/*inline void connect(Layer* head, Layer* tail) {
-  auto out_shape = head->out_shape()[0];
-  auto in_shape  = tail->in_shape()[0];
-
-  head->setup(false);
-
-  if (in_shape.size() == 0) {
-    // in_shape = out_shape;
-    throw simple_error("In shape is zero");
-  }
-
-  if (out_shape.size() != in_shape.size()) {
-    throw simple_error("Connection mismatch");
-  }
-
-  if (!head->next_[0]) {
-    throw simple_error("Output edge must not be null");
-  }
-
-  tail->prev_[0] = head->next_[0];
-  tail->prev_[0]->add_next_node(tail);
-}*/
-
 
 }  // namespace simpleCNN
