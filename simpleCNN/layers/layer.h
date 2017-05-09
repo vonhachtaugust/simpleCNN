@@ -45,8 +45,6 @@ namespace simpleCNN {
           out_type_(out_type) {
       weight_init_ = std::make_shared<weight_init::Gaussian>();
       bias_init_ = std::make_shared<weight_init::Constant>();
-      trainable_ = true;
-      classifier_ = false;
     }
 
     virtual ~Layer() = default;
@@ -69,7 +67,7 @@ namespace simpleCNN {
       return *this;
     }
 
-    // Start: Getters -------------------------------------- //
+    /** Start: Getters -------------------------------------- */
     core::backend_t engine() const { return backend_type_; }
 
     Device *device() const { return device_ptr_.get(); }
@@ -79,11 +77,6 @@ namespace simpleCNN {
 
     // number of outcoming edge in this layer
     size_t out_channels() const { return out_channels_; }
-
-    // in_type_[0]: data, in_type_[1]: weights, in_type_[2]: bias
-    // tensor_t weights() const { return in_type_[1]; }
-
-    // tensor_t weights() { return in_type_[1]; }
 
     data_t in_type() const { return in_type_; }
 
@@ -111,12 +104,16 @@ namespace simpleCNN {
       throw simple_error("Error: Out component not allocated.");
     }
 
-    // End: Getters ---------------------------------------- //
+    /** End: Getters ---------------------------------------- */
 
-    // Start: Setters -------------------------------------- //
+    /** Start: Setters -------------------------------------- */
     Layer &set_device(Device *device) {
       device_ptr_.reset(device);
       return *this;
+    }
+
+    virtual void set_in_shape(const shape4d& shape) {
+      throw simple_not_implemented_error();
     }
 
     template<typename WeightInit>
@@ -136,8 +133,10 @@ namespace simpleCNN {
     void set_out_data(const tensor_t &data, component_t ct) { *out_component(ct) = data; }
 
     void set_out_grads(const tensor_t &delta, component_t ct) {
-      // Calculate loss, based on output data and target.
+      *ith_out_node(0)->get_gradient() = delta;
     }
+
+    /** End: Setters ---------------------------------------- */
 
     std::vector<edgeptr_t> inputs() {
       std::vector<edgeptr_t> nodes(in_channels_);
@@ -189,6 +188,20 @@ namespace simpleCNN {
       }
     }
 
+    void print_gradients() {
+      if (trainable()) {
+        for (size_t i = 0; i < in_channels_; ++i) {
+          auto type = in_type_[i].getComponentType();
+          if (type == component_t::WEIGHT) {
+            auto W = get_component_data(i, type);
+            auto dW = get_component_gradient(i, type);
+            print(*W, "W");
+            print(*dW, "dW");
+          }
+        }
+      }
+    }
+
     void update(Optimizer &opt, const size_t batch_size) {
       if (trainable()) {
         for (size_t i = 0; i < in_channels_; ++i) {
@@ -196,15 +209,14 @@ namespace simpleCNN {
           if (type == component_t::WEIGHT) {
             auto W = get_component_data(i, type);
             auto dW = get_component_gradient(i, type);
-            // dW is the sum of errors over the batch, divide by batch size to get average.
-            // If classifier layer also add the regularization term to prefer smaller weight values.
+
             classifier_ ? mean_and_regularize(*W, *dW, batch_size) : mean(*dW, batch_size);
             opt.update(dW, W);
           }
           if (type == component_t::BIAS) {
             auto b = get_component_data(i, type);
             auto db = get_component_gradient(i, type);
-            // db is the sum of errors over the batch, divide by batch size to get average.
+
             mean(*db, batch_size);
             opt.update(db, b);
           }
@@ -234,8 +246,32 @@ namespace simpleCNN {
       initialized_ = true;
     }
 
+    tensor_t* gradients(component_t component) {
+      for (size_t i = 0; i < in_channels_; ++i) {
+        component_t type = in_type_[i].getComponentType();
+        if (type == component) {
+          return get_component_gradient(i, type);
+        }
+      }
+    }
+
+    void print_layer_data() {
+      print(layer_type(), "Layer type");
+
+      for (size_t i = 0; i < in_channels_; ++i) {
+        const auto &in = ith_in_node(i);
+        print(*in->get_data(), "Input data " + std::to_string(i));
+        print(*in->get_gradient(), "Input grad " + std::to_string(i));
+      }
+
+      for (size_t i = 0; i < out_channels_; ++i) {
+        const auto &out = ith_out_node(i);
+        print(*out->get_data(), "Output data " + std::to_string(i));
+        print(*out->get_gradient(), "Output grad " + std::to_string(i));
+      }
+    }
+
     void forward() {
-      //print(layer_type());
       data_ptrs_t in_data(in_channels_), out_data(out_channels_);
 
       for (size_t i = 0; i < in_channels_; ++i) {
@@ -248,11 +284,9 @@ namespace simpleCNN {
       }
 
       forward_propagation(in_data, out_data);
-      forward_activation(*out_data[1], *out_data[0]);
     }
 
     void backward() {
-      //print(layer_type());
       data_ptrs_t in_data(in_channels_), in_grad(in_channels_), out_data(out_channels_), out_grad(out_channels_);
 
       for (size_t i = 0; i < in_channels_; ++i) {
@@ -268,13 +302,11 @@ namespace simpleCNN {
       }
 
       back_propagation(in_data, out_data, in_grad, out_grad);
-      backward_activation(*out_data[1], *out_grad[1], *out_data[0]);
     }
 
-    // End: Setters ---------------------------------------- //
+    /** Start: Virtuals ------------------------------------- */
 
-    // Start: Virtuals ------------------------------------- //
-    /**
+     /**
     * return output value range used only for calculating target
     * value from label-id in final(output) layer override properly
     * if the layer is intended to be used as output layer
@@ -299,11 +331,12 @@ namespace simpleCNN {
     **/
     virtual size_t fan_out_size() const { return *(out_shape()[0].end() - 1); }
 
-    // End: Virtuals ---------------------------------------- //
+    /** End: Virtuals ---------------------------------------- */
 
-    // Start: Pure virtuals --------------------------------- //
+    /** Start: Pure virtuals --------------------------------- */
+
     /**
-    * array of input shapes (height x width x depth)
+    * array of input shapes
     *
     **/
     virtual shape_t in_shape() const = 0;
@@ -318,18 +351,28 @@ namespace simpleCNN {
     **/
     virtual std::string layer_type() const = 0;
 
+    /**
+     * Performs a forward propagation and computes the input of the next layer
+     *
+     * @param in_data       input vector of this layer (in_data, weight, bias)
+     * @param out_data      output vector (out_data)
+     */
     virtual void forward_propagation(const data_ptrs_t &in_data, data_ptrs_t &out_data) = 0;
 
+    /**
+     * Performs a backward proagation and 're-computes' the output from the previous layer
+     *
+     * @param in_data       input data vector of this layer (in_data, weight, bias)
+     * @param out_data      output data vector (out_data)
+     * @param in_grad       input grad vector of this layer (prev_grad, dW, db)
+     * @param out_grad      output data vector (curr_grad)
+     */
     virtual void back_propagation(const data_ptrs_t &in_data,
                                   const data_ptrs_t &out_data,
                                   data_ptrs_t &in_grad,
                                   data_ptrs_t &out_grad) = 0;
 
-    virtual void forward_activation(const tensor_t &affine, tensor_t &activated) = 0;
-
-    virtual void backward_activation(const tensor_t &prev_delta, const tensor_t &affine, tensor_t &activated) = 0;
-
-    // End: Pure virtuals ----------------------------------- //
+    /** End: Pure virtuals ----------------------------------- */
 
     void reshape(tensor_t &data, const shape4d &shape) {
       bool re = false;
@@ -352,8 +395,10 @@ namespace simpleCNN {
 
       this->setup(false);
 
+      /** Activation layer shape is equal to previous layer shape */
       if (in_shape.size() == 0) {
-        throw simple_error("In shape is zero");
+        next->set_in_shape(out_shape);
+        in_shape = out_shape;
       }
 
       if (out_shape.size() != in_shape.size()) {
@@ -374,7 +419,7 @@ namespace simpleCNN {
     /**
      * Flag to indicate whether the layer is a classifier layer.
      */
-    bool classifier_;
+    bool classifier_ = false;
     
     /**
      * Flag indication whether the layer/node is initialized

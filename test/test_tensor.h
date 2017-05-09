@@ -81,12 +81,12 @@ namespace simpleCNN {
 
   tensor_t total({batch_size, 1, 5, 5});
   for (size_t i = 0; i < total.size(); ++i) total.host_at_index(i) = i + 1;
-  print(total, "Total");
+  //print(total, "Total");
 
   tensor_t subview({1, 1, 5, 5});
 
   subview = total.subView({1}, {1, 1, 5, 5});
-  print(subview, "Subview");
+  //print(subview, "Subview");
 
 }
 

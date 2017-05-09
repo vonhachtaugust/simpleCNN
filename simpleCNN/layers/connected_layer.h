@@ -10,20 +10,18 @@
 #include "layer.h"
 
 namespace simpleCNN {
-
-  template <typename T = float_t, typename Activation = activation::Identity<T>>
-  class Connected_layer : public Feedforward_layer<T, Activation> {
+  class Connected_layer : public Layer {
    public:
-    typedef Feedforward_layer<T, Activation> Base;
     Connected_layer(size_t in_dim,
                     size_t out_dim,
                     size_t batch_size,
                     bool has_bias                = true,
                     core::backend_t backend_type = core::default_engine())
-      : Base(std_input_order(has_bias)) {
+      : Layer(std_input_order(has_bias), {tensor_t(component_t::OUT_DATA)}) {
       con_set_params(in_dim, out_dim, batch_size, has_bias);
       init_backend(backend_type);
-      Base::set_backend_type(backend_type);
+      Layer::set_backend_type(backend_type);
+      Layer::set_trainable(true);
     }
 
     size_t fan_in_size() const override { return params_.in_dim; }
@@ -40,7 +38,7 @@ namespace simpleCNN {
     }
 
     shape_t out_shape() const override {
-      return {{params_.batch_size, 1, params_.out_dim, 1}, {params_.batch_size, 1, params_.out_dim, 1}};
+      return {{params_.batch_size, 1, params_.out_dim, 1}};
     }
 
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {

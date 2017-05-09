@@ -5,7 +5,7 @@
 #include "../simpleCNN/simpleCNN.h"
 #include "gtest/gtest.h"
 
-#include "test_activation_function.h"
+#include "test_activation_layer.h"
 #include "test_connected_layer.h"
 #include "test_convolutional_layer.h"
 #include "test_feedforward_layer.h"

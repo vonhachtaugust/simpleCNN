@@ -8,19 +8,13 @@
 #include <string>
 #include <vector>
 
-#include "feedforward_layer.h"
-
 #include "../core/framework/op_kernel.h"
 #include "../core/kernels/conv_grad_op.h"
 #include "../core/kernels/conv_op.h"
 
 namespace simpleCNN {
-
-  template <typename T = float_t, typename Activation = activation::ReLU<T>>
-  class Convolutional_layer : public Feedforward_layer<T, Activation> {
+  class Convolutional_layer : public Layer {
    public:
-    typedef Feedforward_layer<T, Activation> Base;
-
     Convolutional_layer(size_t input_width,
                         size_t input_height,
                         size_t in_channels,
@@ -41,16 +35,15 @@ namespace simpleCNN {
                             stride,
                             padding,
                             has_bias) {}
-
     /**
-    * Constructing convolutional layer.
+    * Constructing a convolutional layer.
     *
     * @param input_width             input image width
     * @param input_height            input image height
     * @param in_channels             input image channels (grayscale=1, rgb=3)
     * @param batch_size              number of input images to processes in a forward pass
-    * @param filter_width            window width(kernel)
-    * @param filter_height           window height(kernel)
+    * @param filter_width            kernel window width
+    * @param filter_height           kernel window height
     * @param out_channels            output image channels
     * @param horizontal_stride   specify the horizontal interval at which to
     *apply the filters to the input
@@ -72,11 +65,12 @@ namespace simpleCNN {
                         size_t padding,
                         bool has_bias,
                         core::backend_t backend_type = core::default_engine())
-      : Base(std_input_order(has_bias)) {
+      : Layer(std_input_order(has_bias), {tensor_t(component_t::OUT_DATA)}) {
       conv_set_params(input_width, input_height, in_channels, batch_size, filter_width, filter_height, out_channels,
                       horizontal_stride, vertical_stride, padding, has_bias);
       init_backend(backend_type);
-      Base::set_backend_type(backend_type);
+      Layer::set_backend_type(backend_type);
+      Layer::set_trainable(true);
     }
 
     size_t fan_in_size() const override {
@@ -84,12 +78,14 @@ namespace simpleCNN {
     }
 
     /**
-     * @param in_data       input vector of this layer (data, weight, bias)
-     * @param out_data      output vectors
+     * Loads a context object (parameters already specified) with data and executes
+     * a forward computation based on the parameter specification.
+     *
+     * @param in_data       input vector of this layer (in_data, weight, bias)
+     * @param out_data      output vector (out_data)
      */
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
       // forward convolution op context
-
       auto ctx = core::OpKernelContext(in_data, out_data);
       ctx.setEngine(Layer::engine());
 
@@ -97,12 +93,20 @@ namespace simpleCNN {
       kernel_fwd_->compute(ctx);
     }
 
+    /**
+     * Loads a context object (parameters already specified) with data and executes
+     * a backward computation based on the parameter specification.
+     *
+     * @param in_data       input data vector of this layer (in_data, weight, bias)
+     * @param out_data      output data vector (out_data)
+     * @param in_grad       input grad vector of this layer (prev_delta, dW, dB)
+     * @param out_grad      output grad vector (curr_delta)
+     */
     void back_propagation(const data_ptrs_t& in_data,
                           const data_ptrs_t& out_data,
                           data_ptrs_t& in_grad,
                           data_ptrs_t& out_grad) override {
       // backward convolution op context
-
       auto ctx = core::OpKernelContext(in_data, out_data, in_grad, out_grad);
       ctx.setEngine(Layer::engine());
 
@@ -121,14 +125,13 @@ namespace simpleCNN {
     }
 
     shape_t out_shape() const override {
-      return {{params_.batch_size, params_.out_channels, params_.output_height, params_.output_width},
-              {params_.batch_size, params_.out_channels, params_.output_height, params_.output_width}};
+      return {{params_.batch_size, params_.out_channels, params_.output_height, params_.output_width}};
     }
 
     std::string layer_type() const override { return std::string("conv"); }
 
    private:
-    /*
+    /**
      * Default tensor_t has 4 dimensions where tensor_t(stack, depth, height, width)
      * according to row-major order: rightmost index varies fastest
      */
@@ -164,10 +167,6 @@ namespace simpleCNN {
       core::OpKernelConstruction ctx(Layer::device(), &params_);
 
       if (backend_type == core::backend_t::internal) {
-        /*
-         * RAII: C++ guarantees that the destructors of objects on the stack
-         * will be called, even if an exception is thrown.
-         */
         kernel_fwd_.reset(new simpleCNN::ConvOp(ctx));
         kernel_bwd_.reset(new simpleCNN::ConvGradOp(ctx));
       } else {
@@ -182,10 +181,6 @@ namespace simpleCNN {
 
     /**
      * @breif Forward and backward ops (only this object executes this kernel).
-     *
-     * @note Alternative design to let each layer share ownership of
-     * the one kernel. Since the data is sequentially propagated,
-     * parallelism in execution is not possible.
      *
      **/
     std::unique_ptr<core::OpKernel> kernel_fwd_;

@@ -23,7 +23,7 @@ namespace simpleCNN {
     }
 
     template <typename T = float_t>
-    class Log_likelihood {
+    class Softmax_classifier {
      public:
       /**
        * Loss value for an individual training example i
@@ -51,7 +51,6 @@ namespace simpleCNN {
         for (size_t b = 0; b < batch_size; ++b) {
           size_t target_index = target.host_at_index(b);
           auto val = f(output.host_at_index(b * n + target_index));
-          // print(val, "Value");
           loss_i += val;
         }
         return loss_i;
@@ -61,6 +60,7 @@ namespace simpleCNN {
         size_t n = output.size() / output.shape()[0];
         for (size_t b = 0; b < batch_size; ++b) {
           size_t t = target.host_at_index(b * n);
+
           for (size_t i = 0; i < n; ++i) {
             if (i == t) {
               delta.host_at_index(b * n + i) = df(output.host_at_index(b * n + i));
@@ -85,43 +85,11 @@ namespace simpleCNN {
             delta.host_at_index(b * n + i) = output.host_at_index(b * n + i);
           }
         }
+        return delta;
       }
 
      private:
       Log_likelihood() {}
-    };
-
-    /**
-     * Deep Learning using Linear Support Vector Machines : https://arxiv.org/pdf/1306.0239.pdf
-     *
-     * @note Also known as multiclass SVM
-     *
-     * @tparam T - precision
-     */
-    template <typename T>
-    class L2SVM {
-     public:
-      static T f(const T& value) { return std::max(0, value) * std::max(0, value); }
-
-      static T df(T value) { simple_not_implemented_error(); }
-
-      static T L(const tensor_t& output, const size_t target_index) {
-        /*T loss_i = T(0);
-
-        auto activated_i = activated.host_begin();
-        T target_activation = *(activated_i + target_index);
-        T delta = T(1);
-
-        for (size_t j = 0; j < n; ++j) {
-          if (j == target_index) {
-            continue;
-          }
-          loss_i += f(*activated_i++ - target_activation + delta);
-        }*/
-      }
-
-     private:
-      L2SVM() {}
     };
   }  // namespace loss
 

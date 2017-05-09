@@ -9,15 +9,10 @@
 #include "../core/framework/op_kernel.h"
 #include "../core/kernels/max_grad_op.h"
 #include "../core/kernels/max_op.h"
-#include "feedforward_layer.h"
 
 namespace simpleCNN {
-
-  template <typename T = float_t, typename Activation = activation::Identity<T>>
-  class Maxpooling_layer : public Feedforward_layer<T, Activation> {
+  class Maxpooling_layer : public Layer {
    public:
-    typedef Feedforward_layer<T, Activation> Base;
-
     /**
      * Short version of constructing default maxpooling layer
      *
@@ -55,11 +50,11 @@ namespace simpleCNN {
                      size_t stride_x,
                      size_t stride_y,
                      core::backend_t backend_type = core::default_engine())
-      : Base({tensor_t(component_t::IN_DATA)}) {
+      : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
       set_maxpooling_params(in_width, in_height, in_channels, batch_size, pooling_size_x, pooling_size_y, stride_x,
                             stride_y, backend_type);
       init_backend(backend_type);
-      Base::set_backend_type(backend_type);
+      Layer::set_backend_type(backend_type);
       Layer::set_trainable(false);
     }
 
@@ -85,8 +80,7 @@ namespace simpleCNN {
     }
 
     shape_t out_shape() const override {
-      return {{params_.batch_size, params_.out_channels, params_.output_height, params_.output_width},
-              {params_.batch_size, params_.out_channels, params_.output_height, params_.output_width}};
+      return {{params_.batch_size, params_.out_channels, params_.output_height, params_.output_width}};
     }
 
     std::string layer_type() const override { return std::string("maxpooling"); }

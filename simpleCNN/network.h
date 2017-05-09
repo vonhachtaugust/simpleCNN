@@ -16,6 +16,16 @@ namespace simpleCNN {
    public:
     explicit Network() : stop_training_(false) {}
 
+    template<typename loss>
+    void gradient_check(const tensor_t& input, const tensor_t& labels, const size_t batch_size) {
+      net_.setup(true);
+      tensor_t output = net_.forward(input);
+      print(output, "Output");
+      tensor_t delta = gradient<loss>(output, labels, batch_size);
+      net_.backward(delta);
+      //net_.print_layers();
+    }
+
     /**
      * Test a forward pass and check the result.
      * Used to check if weight init was appropriate (i.e. no saturation)
@@ -86,49 +96,6 @@ namespace simpleCNN {
       net_.update(opt, batch_size);
       output = net_.forward(in);
       print(error<Loss>(output, target, batch_size), "Error: ");
-    };
-
-    //    template<typename loss, typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumaerate>
-    template <typename loss, typename optimizer>
-    bool test_mnist(optimizer& opt,
-                    const tensor_t& train_data,
-                    const std::vector<label_t>& train_lables,
-                    size_t batch_size,
-                    size_t epoch,
-                    //                  OnBatchEnumerate on_batch_enumerate,
-                    //                  OnEpochEnumaerate on_epoch_enumerate,
-                    const bool reset_weight = true) {
-      size_t in_w        = train_data.shape()[3];
-      size_t in_h        = train_data.shape()[2];
-      size_t num_classes = 10;
-
-      tensor_t test_batch({batch_size, 1, in_h, in_w});
-      tensor_t test_labels({batch_size, 1, 1, 1});
-      tensor_t output_error({batch_size, 1, num_classes, 1});
-
-      size_t n = batch_size * in_h * in_w;
-      size_t m = batch_size;
-
-      set_netphase(net_phase::train);
-      net_.setup(reset_weight);
-      opt.reset();
-      stop_training_ = false;
-
-      for (size_t i = 0; i < epoch; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-          size_t index                    = n * i + j;
-          test_batch.host_at_index(index) = train_data.host_at_index(index);
-        }
-        for (size_t j = 0; j < m; ++j) {
-          size_t index                     = m * i + j;
-          test_labels.host_at_index(index) = train_lables[index];
-        }
-
-        train_onebatch<loss, optimizer>(opt, &test_batch, &test_labels, &output_error, batch_size);
-      }
-
-      print("Success!");
-      return true;
     };
 
     template <typename loss, typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumerate>

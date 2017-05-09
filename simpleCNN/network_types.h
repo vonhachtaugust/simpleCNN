@@ -30,6 +30,12 @@ namespace simpleCNN {
       }
     }
 
+    void print_layers() {
+      for (auto l : nodes_) {
+        l->print_layer_data();
+      }
+    }
+
     size_t size() const { return nodes_.size(); }
     iterator begin() { nodes_.begin(); }
     iterator end() { nodes_.end(); }
@@ -87,6 +93,7 @@ namespace simpleCNN {
       return nodes_.back()->output();
     }
 
+
     template <typename T>
     void add(T&& layer) {
       push_back(std::forward<T>(layer));
@@ -94,7 +101,6 @@ namespace simpleCNN {
       if (size() != 1) {
         auto head = nodes_[size() - 2];
         auto tail = nodes_[size() - 1];
-        //connect(head, tail);
         head->connect(tail);
         check_connectivity();
       }

@@ -21,10 +21,6 @@ namespace simpleCNN {
 
     void set_prob(float_t prob) { prob_ = prob; }
 
-    void forward_activation(const tensor_t& affine, tensor_t& activated) { return; }
-
-    void backward_activation(const tensor_t& prev_delta, const tensor_t& affine, tensor_t& activated) { return; }
-
     shape_t in_shape() const override { return {shape_}; }
 
     shape_t out_shape() const override { return {shape_}; }

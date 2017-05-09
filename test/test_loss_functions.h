@@ -19,7 +19,7 @@ namespace simpleCNN {
 
   TEST(Loss, log_likelihod) {
     typedef loss::Log_likelihood<float_t> Loss;
-    typedef activation::Softmax<float_t> Soft;
+    typedef activation::Softmax Soft;
     size_t n = 3;
     Soft s;
 
@@ -28,7 +28,10 @@ namespace simpleCNN {
     fill(non_act_data, non_activ);
 
     tensor_t activated({1, 1, n, 1});
-    s.activate(non_activ, activated);
+    data_ptrs_t input = {&non_activ};
+    data_ptrs_t output = {&activated};
+
+    s.forward_propagation(input, output);
 
     tensor_t target_I({1, 1, 1, 1});
     vec_t target_data_I = {0};
@@ -49,7 +52,7 @@ namespace simpleCNN {
 
   TEST(Loss, delta_log_likelihood) {
     typedef loss::Log_likelihood<float_t> Loss;
-    typedef activation::Softmax<float_t> Soft;
+    typedef activation::Softmax Soft;
     size_t n = 3;
     Soft s;
 
@@ -58,7 +61,11 @@ namespace simpleCNN {
     fill(non_act_data, non_activ);
 
     tensor_t activated({1, 1, n, 1});
-    s.activate(non_activ, activated);
+
+    data_ptrs_t input = {&non_activ};
+    data_ptrs_t output = {&activated};
+
+    s.forward_propagation(input, output);
 
     tensor_t target({1, 1, 1, 1});
     target.host_at(0, 0, 0, 0) = 0;

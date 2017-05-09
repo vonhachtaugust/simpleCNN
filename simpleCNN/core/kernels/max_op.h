@@ -21,7 +21,7 @@ namespace simpleCNN {
       const auto& params                             = maxpooling_params_ptr->maxpool();
 
       const tensor_t& in_data = context.input(0);
-      tensor_t& out_data      = context.output(1);
+      tensor_t& out_data      = context.output(0);
 
       const core::backend_t engine = context.engine();
 

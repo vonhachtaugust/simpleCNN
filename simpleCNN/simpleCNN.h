@@ -8,9 +8,10 @@
 #include "network_types.h"
 #include "node.h"
 
-#include "activations/activation_function.h"
+#include "activations/activation_layer.h"
+#include "activations/softmax.h"
+#include "activations/relu.h"
 
-#include "layers/feedforward_layer.h"
 #include "layers/layer.h"
 
 #include "core/framework/device.h"
@@ -22,7 +23,6 @@
 #include "layers/connected_layer.h"
 #include "layers/convolutional_layer.h" /* Don't move this guy. */
 #include "layers/maxpooling_layer.h"
-#include "layers/batchnorm_layer.h"
 #include "layers/dropout_layer.h"
 
 #include "core/params/con_params.h"

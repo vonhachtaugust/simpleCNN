@@ -99,7 +99,7 @@ namespace simpleCNN {
     size_t out_dim    = 2;
     size_t batch_size = 1;
 
-    Connected_layer<> con(in_dim, out_dim, batch_size);
+    Connected_layer con(in_dim, out_dim, batch_size);
 
     vec_t weight_data = {1, 1, 1, 1, -1, -1, -1, -1};
     vec_t bias_data   = {1, -1};
@@ -134,7 +134,7 @@ namespace simpleCNN {
     size_t out_dim    = 2;
     size_t batch_size = 1;
 
-    Connected_layer<> con(in_dim, out_dim, batch_size);
+    Connected_layer con(in_dim, out_dim, batch_size);
 
     // Input
     tensor_t in({batch_size, 1, in_dim, 1});

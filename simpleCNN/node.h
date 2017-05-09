@@ -52,7 +52,7 @@ namespace simpleCNN {
    public:
     Edge(nodeptr_t prev, const shape4d& shape) : shape_(shape), data_(shape), grad_(shape), prev_(prev) {}
 
-    // Getter: ----------------------------------------------- //
+    /** Getter: ----------------------------------------------- */
     tensor_t* get_data() { return &data_; }
 
     const tensor_t* get_data() const { return &data_; }
@@ -79,9 +79,10 @@ namespace simpleCNN {
 
     /**
      * Tensor shape
-     **/
+     */
     const shape4d& shape() const { return shape_; }
-    // ------------------------------------------------------- //
+    /** ------------------------------------------------------- */
+
 
     void clear_gradients() { grad_.fill(float_t{0}); }
 

@@ -17,7 +17,7 @@ namespace simpleCNN {
     size_t pooling_size_x = 2;
     size_t pooling_size_y = 2;
 
-    Maxpooling_layer<> maxpool(in_width, in_height, in_channels, batch_size);
+    Maxpooling_layer maxpool(in_width, in_height, in_channels, batch_size);
 
     vec_t in_data = {1, 1, 2, 4, 5, 6, 7, 8, 3, 2, 1, 0, 1, 2, 3, 4, 1, 1, 2, 4, 5, 6, 7, 8, 3, 2, 1, 0, 1, 2, 3, 4,
                      1, 1, 2, 4, 5, 6, 7, 8, 3, 2, 1, 0, 1, 2, 3, 4, 1, 1, 2, 4, 5, 6, 7, 8, 3, 2, 1, 0, 1, 2, 3, 4};
@@ -57,7 +57,7 @@ namespace simpleCNN {
     size_t pooling_size_x = 2;
     size_t pooling_size_y = 2;
 
-    Maxpooling_layer<> maxpool(in_width, in_height, in_channels, batch_size);
+    Maxpooling_layer maxpool(in_width, in_height, in_channels, batch_size);
 
     // In order to get max index tensor we have to perform activate forward pass first.
     vec_t in_data = {1, 1, 2, 4, 5, -1, 7, -1, 3, 5, 1, 0, 1, 2, 3, 4};

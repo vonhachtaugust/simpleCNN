@@ -10,6 +10,7 @@
 
 namespace simpleCNN {
   namespace activation {
+    /*
     template <typename T = float_t>
     class Activation_Function {
      public:
@@ -75,6 +76,7 @@ namespace simpleCNN {
        * @param activated
        * @param n
        */
+    /*
       void activate(const tensor_t& affine, tensor_t& activated) const {
         size_t batch_size = affine.shape()[0];
         size_t batch_length = affine.size() / batch_size;
@@ -98,5 +100,6 @@ namespace simpleCNN {
         }
       }
     };
+    */
   }  // namespace activation
 }  // namespace simpleCNN

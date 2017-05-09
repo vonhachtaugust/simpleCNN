@@ -61,17 +61,17 @@ namespace simpleCNN {
    */
   inline data_t std_input_order(bool has_bias) {
     if (has_bias) {
-      return data_t({tensor_t(component_t::IN_DATA), tensor_t(component_t::WEIGHT), tensor_t(component_t::BIAS)});
+      return {tensor_t(component_t::IN_DATA), tensor_t(component_t::WEIGHT), tensor_t(component_t::BIAS)};
     } else {
-      return data_t({tensor_t(component_t::IN_DATA), tensor_t(component_t::WEIGHT)});
+      return {tensor_t(component_t::IN_DATA), tensor_t(component_t::WEIGHT)};
     }
   }
 
   inline data_t std_output_order(bool has_activation) {
     if (has_activation) {
-      return data_t({tensor_t(component_t::OUT_DATA), tensor_t(component_t::AUX)});
+      return {tensor_t(component_t::OUT_DATA), tensor_t(component_t::AUX)};
     } else {
-      return data_t({tensor_t(component_t::OUT_DATA)});
+      return {tensor_t(component_t::OUT_DATA)};
     }
   }
   // ------------------------------------------------------------------- //

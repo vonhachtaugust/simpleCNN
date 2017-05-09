@@ -27,14 +27,14 @@ enable_testing()
 # Create test executable and link gtest
 add_executable(simpleCNN_test
         test.cpp
-        test_feedforward_layer.h
+        #test_feedforward_layer.h
         test_maxpooling_layer.h
         test_convolutional_layer.h
         test_connected_layer.h
         test_tensor.h
         test_tensor_multiplication.h
         test_loss_functions.h
-        test_activation_function.h
+        test_activation_layer.h
         test_network.h
         test_weight_init.h
         test_optimizer.h

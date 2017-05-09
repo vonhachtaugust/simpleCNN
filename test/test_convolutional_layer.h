@@ -54,7 +54,7 @@ namespace simpleCNN {
     size_t stride       = 2;
     bool has_bias       = true;
 
-    Convolutional_layer<> conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
+    Convolutional_layer conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
                                padding, has_bias);
     // In-data
     tensor_t image({1, in_channels, imageHeight, imageWidth});
@@ -111,12 +111,11 @@ namespace simpleCNN {
     tensor_t output({1, out_channels, conv_out_length(imageHeight, filterSize, stride, padding),
                      conv_out_length(imageWidth, filterSize, stride, padding)});
     conv.set_out_data(output, component_t::OUT_DATA);
-    conv.set_out_data(output, component_t::AUX);
 
     // conv.forward_propagation()
     data_ptrs_t input = {conv.in_component(component_t::IN_DATA), conv.in_component(component_t::WEIGHT),
                          conv.in_component(component_t::BIAS)};
-    data_ptrs_t output_ = {conv.out_component(component_t::OUT_DATA), conv.out_component(component_t::AUX)};
+    data_ptrs_t output_ = {conv.out_component(component_t::OUT_DATA)};
     conv.forward_propagation(input, output_);
     // simple_info("Output volume");
     // std::cout << output << std::endl;
@@ -246,7 +245,7 @@ namespace simpleCNN {
     size_t stride       = 2;
     bool has_bias       = true;
 
-    Convolutional_layer<> conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
+    Convolutional_layer conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
                                padding, has_bias);
 
     tensor_t input_previous_layer({1, in_channels, imageHeight, imageWidth});
@@ -315,7 +314,7 @@ namespace simpleCNN {
     size_t stride       = 2;
     bool has_bias       = true;
 
-    Convolutional_layer<> conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
+    Convolutional_layer conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
                                padding, has_bias);
 
     tensor_t input_previous_layer({batch_size, in_channels, imageHeight, imageWidth});
@@ -396,8 +395,8 @@ namespace simpleCNN {
   }
 
   TEST(Convolution, backprop_op_III) {
-  using conv = Convolutional_layer<float_t, activation::ReLU<float_t>>;
-  using classy = Connected_layer<float_t, activation::Softmax<float_t>>;
+  using conv = Convolutional_layer;
+  using classy = Connected_layer;
 
   size_t in_w = 5;
   size_t in_h = 5;
