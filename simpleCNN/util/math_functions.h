@@ -38,14 +38,30 @@ void mean(tensor_t& x, const size_t batch_size) {
   }
 }
 
+/**
+ * Regularization term. Without it solution is not guaranteed to be unique.
+ *
+ * @tparam T
+ * @param weights
+ * @return
+ */
+template <typename T>
+T regularization(const tensor_t& weight) {
+  return dot(weight, &(*weight.host_begin()), weight, &(*weight.host_begin()));
+}
+
 void mean_and_regularize(const tensor_t& x, tensor_t& dx, const size_t batch_size) {
+  assert(x.size() == dx.size());
   float_t norm = float_t(1) / float_t(batch_size);
   float_t reg = float_t(0.001);
 
-  size_t n = dx.size();
 
+  // dx is the summed up gradient over the entire batch.
+  // x are the weights
+
+  size_t n = dx.size();
   for(size_t i = 0; i < n; ++i) {
-    dx.host_at_index(i) = (dx.host_at_index(i) + reg * x.host_at_index(i)) * norm;
+    dx.host_at_index(i) = dx.host_at_index(i) * norm + reg * x.host_at_index(i);
   }
 }
 

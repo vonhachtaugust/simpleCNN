@@ -15,6 +15,7 @@ namespace simpleCNN {
     typedef std::vector<Layer*>::const_iterator const_iterator;
 
     virtual tensor_t forward(const tensor_t& input) = 0;
+    virtual void forward_pass(const tensor_t& input) = 0;
 
     virtual void backward(const tensor_t& deltas) = 0;
 
@@ -34,6 +35,10 @@ namespace simpleCNN {
       for (auto l : nodes_) {
         l->print_layer_data();
       }
+    }
+
+    void print_error() {
+      print(nodes_.back()->error(), "Loss: ");
     }
 
     size_t size() const { return nodes_.size(); }
@@ -72,10 +77,9 @@ namespace simpleCNN {
 
   class Sequential : public Network_type {
    public:
-    void backward(const tensor_t& deltas) override {
-      nodes_.back()->set_out_grads(deltas, component_t::OUT_GRAD);
-      nodes_.back()->set_as_classifier();
-      
+    void backward(const tensor_t& labels) override {
+      nodes_.back()->set_targets(labels);
+
       size_t n = nodes_.size();
       for (size_t i = 0; i < n; ++i) {
         size_t index = n - 1 - i;
@@ -90,9 +94,16 @@ namespace simpleCNN {
         nodes_[i]->forward();
       }
 
-      return nodes_.back()->output();
+      return nodes_.back()->network_output();
     }
 
+    void forward_pass(const tensor_t& input) {
+      nodes_.front()->set_in_data(input, component_t::IN_DATA);
+
+      for(size_t i = 0; i < nodes_.size(); ++i) {
+        nodes_[i]->forward();
+      }
+    }
 
     template <typename T>
     void add(T&& layer) {

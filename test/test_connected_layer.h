@@ -117,7 +117,7 @@ namespace simpleCNN {
 
     tensor_t out({batch_size, 1, out_dim, 1});
 
-    data_ptrs_t input  = {&in, con.in_component(component_t::WEIGHT), con.in_component(component_t::BIAS)};
+    data_ptrs_t input  = {&in, con.in_component_data(component_t::WEIGHT), con.in_component_data(component_t::BIAS)};
     data_ptrs_t output = {&out, &out};
 
     con.forward_propagation(input, output);
@@ -163,7 +163,7 @@ namespace simpleCNN {
     // prev grad
     tensor_t prev_grad({batch_size, 1, in_dim, 1});
 
-    data_ptrs_t input    = {&in, con.in_component(component_t::WEIGHT), con.in_component(component_t::BIAS)};
+    data_ptrs_t input    = {&in, con.in_component_data(component_t::WEIGHT), con.in_component_data(component_t::BIAS)};
     data_ptrs_t output   = {};
     data_ptrs_t in_grad  = {&prev_grad, &dW, &db};
     data_ptrs_t out_grad = {&curr_grad, &curr_grad};

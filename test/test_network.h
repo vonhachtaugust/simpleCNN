@@ -14,7 +14,7 @@ using conv    = Convolutional_layer;
 using maxpool = Maxpooling_layer;
 using fully = Connected_layer;
 using network = Network<Sequential>;
-using softmax = activation::Softmax;
+using softmax = loss::Softmax;
 using relu    = activation::ReLU;
 
   TEST(Network, Move_semantics) {
@@ -31,7 +31,7 @@ using relu    = activation::ReLU;
 
     size_t batch_size = 1;
 
-    net << fully(ils, hls, 1) << relu() << fully(hls, ols, 1);
+    net << fully(ils, hls, 1) << relu() << fully(hls, ols, 1) << softmax();
 
     tensor_t input({batch_size, 1, ils, 1});
     tensor_t labels({batch_size, 1, 1, 1});
@@ -41,7 +41,7 @@ using relu    = activation::ReLU;
 
     labels.host_at_index(0) = 1;
 
-    net.gradient_check<lgl>(input, labels, batch_size);
+    net.gradient_check(input, labels, batch_size);
 }
 
 }

@@ -58,7 +58,7 @@ namespace simpleCNN {
     const tensor_t* get_data() const { return &data_; }
 
     /**
-     * Gradient data for weights
+     * Gradient data
      **/
     tensor_t* get_gradient() { return &grad_; }
 

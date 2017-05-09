@@ -89,11 +89,11 @@ namespace simpleCNN {
     // Fill with values (depends on weight::init class)
     conv.init_weight();
 
-    auto weights = conv.in_component(component_t::WEIGHT);
+    auto weights = conv.in_component_data(component_t::WEIGHT);
     // simple_info("Weights");
     // std::cout << *weights << std::endl;
 
-    auto biases = conv.in_component(component_t::BIAS);
+    auto biases = conv.in_component_data(component_t::BIAS);
     // simple_info("Bias");
     // std::cout << *biases << std::endl;
 
@@ -113,9 +113,9 @@ namespace simpleCNN {
     conv.set_out_data(output, component_t::OUT_DATA);
 
     // conv.forward_propagation()
-    data_ptrs_t input = {conv.in_component(component_t::IN_DATA), conv.in_component(component_t::WEIGHT),
-                         conv.in_component(component_t::BIAS)};
-    data_ptrs_t output_ = {conv.out_component(component_t::OUT_DATA)};
+    data_ptrs_t input = {conv.in_component_data(component_t::IN_DATA), conv.in_component_data(component_t::WEIGHT),
+                         conv.in_component_data(component_t::BIAS)};
+    data_ptrs_t output_ = {conv.out_component_data(component_t::OUT_DATA)};
     conv.forward_propagation(input, output_);
     // simple_info("Output volume");
     // std::cout << output << std::endl;
@@ -278,8 +278,8 @@ namespace simpleCNN {
     tensor_t dW({out_channels, in_channels, filterSize, filterSize});
     tensor_t dB({out_channels, 1, 1, 1});
 
-    data_ptrs_t input = {&input_previous_layer, conv.in_component(component_t::WEIGHT),
-                         conv.in_component(component_t::BIAS)};
+    data_ptrs_t input = {&input_previous_layer, conv.in_component_data(component_t::WEIGHT),
+                         conv.in_component_data(component_t::BIAS)};
     data_ptrs_t output    = {};
     data_ptrs_t in_grads  = {&prev_delta, &dW, &dB};
     data_ptrs_t out_grads = {&curr_delta, &curr_delta};
@@ -344,8 +344,8 @@ namespace simpleCNN {
     tensor_t dW({out_channels, in_channels, filterSize, filterSize});
     tensor_t dB({out_channels, 1, 1, 1});
 
-    data_ptrs_t input = {&input_previous_layer, conv.in_component(component_t::WEIGHT),
-                         conv.in_component(component_t::BIAS)};
+    data_ptrs_t input = {&input_previous_layer, conv.in_component_data(component_t::WEIGHT),
+                         conv.in_component_data(component_t::BIAS)};
     data_ptrs_t output    = {};
     data_ptrs_t in_grads  = {&prev_delta, &dW, &dB};
     data_ptrs_t out_grads = {&curr_delta, &curr_delta};

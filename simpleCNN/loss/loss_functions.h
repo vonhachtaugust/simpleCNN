@@ -56,23 +56,10 @@ namespace simpleCNN {
         return loss_i;
       }
 
-      static void dL(const tensor_t& output, const tensor_t& target, tensor_t& delta, const size_t batch_size) {
-        size_t n = output.size() / output.shape()[0];
-        for (size_t b = 0; b < batch_size; ++b) {
-          size_t t = target.host_at_index(b * n);
-
-          for (size_t i = 0; i < n; ++i) {
-            if (i == t) {
-              delta.host_at_index(b * n + i) = df(output.host_at_index(b * n + i));
-              continue;
-            }
-            delta.host_at_index(b * n + i) = output.host_at_index(b * n + i);
-          }
-        }
-      }
-
       static tensor_t dL(const tensor_t&output, const tensor_t& target, const size_t batch_size) {
         tensor_t delta(output.shape_v());
+
+
 
         size_t n = output.size() / output.shape()[0];
         for (size_t b = 0; b < batch_size; ++b) {
@@ -89,24 +76,18 @@ namespace simpleCNN {
       }
 
      private:
-      Log_likelihood() {}
+      Softmax_classifier() {}
     };
   }  // namespace loss
 
   /**
    * Returns output layer deltas
    *
-   * @tparam Loss           : Type of loss function.
-   * @param output_t        : Activated (e.g. softmax) data from output layer.
-   * @param target_t        : List of correct targets for this example.
-   * @param target_loss_t   : The computed loss for each example in the batch.
+   * @tparam Loss           : Loss function type.
+   * @param output_t        : Non-activated data from output layer.
+   * @param target_t        : Tensor of target indices.
    * @return deltas that initiates backpropagation.
    */
-  template <typename Loss>
-  void gradient(const tensor_t& output, const tensor_t& target, tensor_t& output_delta, const size_t batch_size) {
-    Loss::dL(output, target, output_delta, batch_size);
-  }
-
   template<typename Loss>
   tensor_t gradient(const tensor_t& output, const tensor_t& target, const size_t batch_size) {
     return Loss::dL(output, target, batch_size);

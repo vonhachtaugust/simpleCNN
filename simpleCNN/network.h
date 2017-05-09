@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "lossfunctions/loss_functions.h"
 #include "network_types.h"
 
 namespace simpleCNN {
@@ -16,14 +15,12 @@ namespace simpleCNN {
    public:
     explicit Network() : stop_training_(false) {}
 
-    template<typename loss>
     void gradient_check(const tensor_t& input, const tensor_t& labels, const size_t batch_size) {
       net_.setup(true);
       tensor_t output = net_.forward(input);
       print(output, "Output");
-      tensor_t delta = gradient<loss>(output, labels, batch_size);
-      net_.backward(delta);
-      //net_.print_layers();
+      net_.backward(labels);
+      net_.print_layers();
     }
 
     /**
@@ -51,8 +48,7 @@ namespace simpleCNN {
     void test_loss(const tensor_t& input, const tensor_t& target, const size_t batch_size) {
       net_.setup(true);
       tensor_t output = net_.forward(input);
-      float_t er      = error<Loss>(output, target, batch_size);
-      print(er, "Error: ");
+      net_.print_error();
     }
 
     /**
@@ -87,15 +83,14 @@ namespace simpleCNN {
      */
     template <typename Loss, typename optimizer>
     void test_onbatch(
-      optimizer& opt, const tensor_t& in, const tensor_t& target, tensor_t& output_delta, const size_t batch_size) {
+      optimizer& opt, const tensor_t& in, const tensor_t& target, const size_t batch_size) {
       net_.setup(true);
-      tensor_t output = net_.forward(in);
-      print(error<Loss>(output, target, batch_size), "Error: ");
-      gradient<Loss>(output, target, output_delta, batch_size);
-      net_.backward(output_delta);
+      net_.forward_pass(in);
+      net_.print_error();
+      net_.backward(target);
       net_.update(opt, batch_size);
-      output = net_.forward(in);
-      print(error<Loss>(output, target, batch_size), "Error: ");
+      net_.forward_pass(in);
+      net_.print_error();
     };
 
     template <typename loss, typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumerate>
@@ -121,8 +116,7 @@ namespace simpleCNN {
 
       for (size_t i = 0; i < epoch && !stop_training_; ++i) {
         for (size_t j = 0; j < input.size() && !stop_training_; j += batch_size) {
-          train_once<loss>(opt, input.subView({j}, {batch_size, input.dimension(dim_t::depth),
-                                                    input.dimension(dim_t::height), input.dimension(dim_t::width)}),
+          train_once<loss>(opt, input.subView({j}, {batch_size, input.dimension(dim_t::depth), input.dimension(dim_t::height), input.dimension(dim_t::width)}),
                            train_labels.subView({j}, {batch_size, 1, 1, 1}), batch_size);
           on_batch_enumerate(t);
         }
@@ -138,48 +132,19 @@ namespace simpleCNN {
     }
 
    private:
+    /**
+     * Trains on one minibatch, i.e. runs forward and backward propagation to
+     * calculate
+     * the gradient of the loss function with respect to the network parameters,
+     * then calls the optimizer algorithm to update the weights
+     *
+     */
     template <typename loss, typename optimizer>
     void train_once(optimizer& opt, const tensor_t minibatch, const tensor_t labels, const size_t batch_size) {
       tensor_t output = net_.forward(minibatch);
-      print_seq(error<loss>(output, labels, batch_size));
-      tensor_t grad = gradient<loss>(output, labels, batch_size);
-      net_.backward(grad);
+      net_.print_error();
+      net_.backward(labels);
       net_.update(opt, batch_size);
-    }
-
-    template <typename loss, typename optimizer>
-    void train_onebatch(optimizer& opt, const tensor_t* in, const tensor_t* target, const size_t batch_size) {
-      tensor_t output = net_.forward(in);
-      tensor_t grad   = gradient<loss>(output, *target, batch_size);
-      net_.backward(grad);
-      net_.update(opt, batch_size);
-    };
-
-    /**
-     * trains on one minibatch, i.e. runs forward and backward propagation to
-     * calculate
-     * the gradient of the loss function with respect to the network parameters
-     * (weights),
-     * then calls the optimizer algorithm to update the weights
-     *
-     * @param batch_size the number of data points to use in this batch
-     */
-    template <typename loss, typename optimizer>
-    void train_onebatch(
-      optimizer& opt, const tensor_t* in, const tensor_t* target, tensor_t* output_delta, const size_t batch_size) {
-      tensor_t output = net_.forward(in);
-      print(error<loss>(output, *target, batch_size), "Error: ");
-      backward_pass<loss>(output, *target, *output_delta, batch_size);
-      net_.update(opt, batch_size);
-    }
-
-    template <typename loss>
-    void backward_pass(const tensor_t& output,
-                       const tensor_t& target,
-                       tensor_t& output_delta,
-                       const size_t batch_size) {
-      gradient<loss>(output, target, output_delta, batch_size);
-      net_.backward(output_delta);
     }
 
     template <typename layer>

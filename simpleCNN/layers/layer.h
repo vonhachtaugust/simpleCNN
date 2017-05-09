@@ -72,36 +72,26 @@ namespace simpleCNN {
 
     Device *device() const { return device_ptr_.get(); }
 
-    // number of incoming edges in this layer
-    size_t in_channels() const { return in_channels_; }
-
-    // number of outcoming edge in this layer
-    size_t out_channels() const { return out_channels_; }
-
-    data_t in_type() const { return in_type_; }
-
-    data_t out_type() const { return out_type_; }
-
     void set_trainable(bool trainable) { trainable_ = trainable; }
 
     bool trainable() const { return trainable_; }
 
-    tensor_t *in_component(component_t t) {
+    tensor_t *in_component_data(component_t t) {
       for (size_t i = 0; i < in_channels_; ++i) {
         if (in_type_[i].getComponentType() == t) {
           return get_component_data(i, t);
         }
       }
-      throw simple_error("Error: In component not allocated.");
+      throw simple_error("Error: In component not allocated, or not specified properly.");
     }
 
-    tensor_t *out_component(component_t t) {
+    tensor_t *out_component_data(component_t t) {
       for (size_t i = 0; i < out_channels_; ++i) {
         if (out_type_[i].getComponentType() == t) {
           return ith_out_node(i)->get_data();
         }
       }
-      throw simple_error("Error: Out component not allocated.");
+      throw simple_error("Error: Out component not allocated, or not specified properly.");
     }
 
     /** End: Getters ---------------------------------------- */
@@ -128,12 +118,39 @@ namespace simpleCNN {
       return *this;
     }
 
-    void set_in_data(const tensor_t &data, component_t ct) { *in_component(ct) = data; }
+    void set_in_data(const tensor_t &data, component_t ct) { *in_component_data(ct) = data; }
 
-    void set_out_data(const tensor_t &data, component_t ct) { *out_component(ct) = data; }
+    void set_out_data(const tensor_t &data, component_t ct) { *out_component_data(ct) = data; }
 
-    void set_out_grads(const tensor_t &delta, component_t ct) {
-      *ith_out_node(0)->get_gradient() = delta;
+    /**
+     * Override by the loss layer to return the gradients with respect to the loss function.
+     *
+     * @param output        : output tensor from the forward pass.
+     */
+
+    virtual void set_targets(const tensor_t& labels) {
+      throw simple_error("Error: Last layer is not a loss layer.");
+    }
+
+    float_t error() {
+      return error(network_output(), network_target());
+    }
+
+    virtual float_t error(const tensor_t& output, const tensor_t& target) const {
+      throw simple_error("Error: Last layer is not a loss layer");
+    }
+
+    /**
+     * Overide by the loss layer to return the gradients with respect to the loss function.
+     *
+     * @return output of the network
+     */
+    virtual tensor_t network_output() {
+      throw simple_error("Error: Function not called on a loss layer type.");
+    }
+
+    virtual tensor_t network_target() {
+      throw simple_error("Error: Function not called on a loss layer type.");
     }
 
     /** End: Setters ---------------------------------------- */
@@ -153,8 +170,6 @@ namespace simpleCNN {
       }
       return nodes;
     }
-
-    tensor_t output() { return *ith_out_node(0)->get_data(); }
 
     void setup(bool reset_weight) {
       /**
@@ -210,7 +225,7 @@ namespace simpleCNN {
             auto W = get_component_data(i, type);
             auto dW = get_component_gradient(i, type);
 
-            classifier_ ? mean_and_regularize(*W, *dW, batch_size) : mean(*dW, batch_size);
+            mean_and_regularize(*W, *dW, batch_size);
             opt.update(dW, W);
           }
           if (type == component_t::BIAS) {
@@ -259,16 +274,18 @@ namespace simpleCNN {
       print(layer_type(), "Layer type");
 
       for (size_t i = 0; i < in_channels_; ++i) {
-        const auto &in = ith_in_node(i);
-        print(*in->get_data(), "Input data " + std::to_string(i));
-        print(*in->get_gradient(), "Input grad " + std::to_string(i));
+        if (in_type_[i].getComponentType() == component_t::WEIGHT) {
+          const auto &in = ith_in_node(i);
+          //print(*in->get_data(), "Input data " + std::to_string(i));
+          print(*in->get_gradient(), "Input grad " + std::to_string(i));
+        }
       }
 
-      for (size_t i = 0; i < out_channels_; ++i) {
+      /* for (size_t i = 0; i < out_channels_; ++i) {
         const auto &out = ith_out_node(i);
         print(*out->get_data(), "Output data " + std::to_string(i));
         print(*out->get_gradient(), "Output grad " + std::to_string(i));
-      }
+      } */
     }
 
     void forward() {
@@ -412,15 +429,8 @@ namespace simpleCNN {
       next->prev_[0] = this->next_[0];
       next->prev_[0]->add_next_node(next);
     }
-    
-    const void set_as_classifier() { classifier_ = true; }
 
    protected:
-    /**
-     * Flag to indicate whether the layer is a classifier layer.
-     */
-    bool classifier_ = false;
-    
     /**
      * Flag indication whether the layer/node is initialized
      */

@@ -31,9 +31,9 @@ namespace simpleCNN {
     // maxpool.set_out_data(out, component_t::OUT_DATA);
     // maxpool.set_out_data(out, component_t::AUX);
 
-    // data_ptrs_t input  = {maxpool.in_component(component_t::IN_DATA)};
-    // data_ptrs_t output = {maxpool.out_component(component_t::OUT_DATA),
-    //                      maxpool.out_component(component_t::AUX)};
+    // data_ptrs_t input  = {maxpool.in_component_data(component_t::IN_DATA)};
+    // data_ptrs_t output = {maxpool.out_component_data(component_t::OUT_DATA),
+    //                      maxpool.out_component_data(component_t::AUX)};
 
     data_ptrs_t input  = {&img};
     data_ptrs_t output = {&out, &out};

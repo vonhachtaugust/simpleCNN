@@ -33,7 +33,7 @@ add_executable(simpleCNN_test
         test_connected_layer.h
         test_tensor.h
         test_tensor_multiplication.h
-        test_loss_functions.h
+        test_loss_layer.h
         test_activation_layer.h
         test_network.h
         test_weight_init.h

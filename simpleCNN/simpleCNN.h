@@ -44,7 +44,8 @@
 
 #include "optimizers/optimizer.h"
 
-#include "lossfunctions/loss_functions.h"
+#include "loss/loss_layer.h"
+#include "loss/softmax.h"
 
 #include "util/aligned_allocator.h"
 #include "util/colored_print.h"

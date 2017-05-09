@@ -16,8 +16,8 @@ using maxpool = Maxpooling_layer<>;
 using fully   = Connected_layer<>;
 using classy  = Connected_layer<float_t, activation::Softmax<float_t>>;
 using network = Network<Sequential>;
-using lgl     = loss::Log_likelihood<float_t>;
 using adam    = Adam<float_t>;
+using softmax = loss::Softmax;
 
 void display_filtermaps(const tensor_t& output, const size_t in_height, const size_t in_width) {
   namedWindow("Display window", WINDOW_AUTOSIZE);
@@ -95,10 +95,10 @@ static bool train_mnist() {
 
   network net;
   net << conv(32, 32, 1, minibatch_size, 5, 6) << maxpool(28, 28, 6, minibatch_size) << conv(14, 14, 6, minibatch_size, 5, 16)
-      << maxpool(10, 10, 16, minibatch_size) << conv(5, 5, 16, minibatch_size, 5, 120) << dropout({minibatch_size, 120, 1, 1}, 0.5) << classy(120, 10, minibatch_size);
+      << maxpool(10, 10, 16, minibatch_size) << conv(5, 5, 16, minibatch_size, 5, 120) << dropout({minibatch_size, 120, 1, 1}, 0.5) << classy(120, 10, minibatch_size) << softmax();
 
   adam a;
-  net.train<lgl, adam>(a, train_images, train_labels, minibatch_size, epochs, on_enumerate_minibatch, on_enumerate_epoch, true);
+  net.train<adam>(a, train_images, train_labels, minibatch_size, epochs, on_enumerate_minibatch, on_enumerate_epoch, true);
   return true;
 }
 

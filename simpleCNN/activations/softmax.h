@@ -39,7 +39,7 @@ namespace simpleCNN {
       }
 
       void backward_activation(const tensor_t &affine, const tensor_t &curr_delta, tensor_t &activated) const override {
-        //throw simple_not_implemented_error();
+        throw simple_not_implemented_error();
       }
 
       std::pair<float_t, float_t> scale() const override { return std::make_pair(float_t(0), float_t(1)); };
