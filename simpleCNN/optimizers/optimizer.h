@@ -56,7 +56,7 @@ namespace simpleCNN {
   class Adam : public Stateful_optimizer<2> {
    public:
     Adam()
-      : alpha(float_t(0.001)),
+      : alpha(Hyperparameters::learning_rate),
         b1(float_t(0.9)),
         b2(float_t(0.999)),
         b1_t(float_t(0.9)),

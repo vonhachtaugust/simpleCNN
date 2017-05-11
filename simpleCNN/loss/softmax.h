@@ -8,9 +8,12 @@ namespace simpleCNN {
   namespace loss {
     class Softmax : public Loss_layer {
      public:
-      Softmax() : Loss_layer() {}
+      std::string layer_type() const override { return "Softmax-loss-layer"; }
 
-      Softmax(shape4d shape) : Loss_layer(shape) {}
+      template <typename T>
+      T df(T value) const { return value - T(1); }
+
+      template <typename T> T f(const T &value) const { return -std::log(value); }
 
       void loss_function(const tensor_t &in_data, tensor_t &out_data) const override {
         size_t batch_size   = in_data.shape()[0];
@@ -66,20 +69,7 @@ namespace simpleCNN {
           size_t index = b * n + target_i;
           loss_tot += f(output.host_at_index(index));
         }
-        return loss_tot;
-      }
-
-      std::string layer_type() const override { return "Softmax-loss-layer"; }
-
-     private:
-      template <typename T>
-      T df(T value) const {
-        return value - T(1);
-      }
-
-      template <typename T>
-      T f(const T &value) const {
-        return -std::log(value);
+        return loss_tot / static_cast<float_t>(batch_size);
       }
     };
   }  // namespace loss

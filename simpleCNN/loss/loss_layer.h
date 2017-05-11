@@ -6,6 +6,9 @@
 
 namespace simpleCNN {
 
+#include "../util/util.h"
+#include "../layers/layer.h"
+
 class Loss_layer : public Layer {
  public:
   Loss_layer() : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA), tensor_t(component_t::TARGET)}) {
@@ -16,11 +19,9 @@ class Loss_layer : public Layer {
     Layer::set_trainable(false);
   }
 
-  virtual ~Loss_layer() = default;
-
   shape_t in_shape() const override { return {shape_}; }
 
-  shape_t out_shape() const override { return {shape_, {shape_.front(), 1, 1, 1}}; }
+  shape_t out_shape() const override { return {shape_, shape_}; }
 
   void set_in_shape(const shape4d& shape) override { shape_ = shape; }
 
@@ -50,7 +51,7 @@ class Loss_layer : public Layer {
   }
 
   float_t error(const tensor_t& output, const tensor_t& target) const override {
-    return loss(output, target);
+    return loss(output, target); /* + Hyperparameters::regularization_constant * regularization<float_t>(weights); */
   }
 
   /**
@@ -83,6 +84,8 @@ class Loss_layer : public Layer {
   virtual float_t loss(const tensor_t& output, const tensor_t& target) const = 0;
 
   virtual std::string layer_type() const = 0;
+
+  virtual void set_shape(const shape4d& shape) { shape_ = shape; }
 
  private:
   shape4d shape_;

@@ -10,6 +10,11 @@ namespace simpleCNN {
 
   enum class net_phase { train, test };
 
+  struct Hyperparameters {
+    constexpr static float_t regularization_constant = 1E-3;
+    constexpr static float_t learning_rate = 1E-3;
+  };
+
   template <typename T = float_t, typename Allocator = aligned_allocator<T, 64>>
   using default_vec_t = std::vector<T, Allocator>;
 

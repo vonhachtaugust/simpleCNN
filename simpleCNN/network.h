@@ -17,10 +17,47 @@ namespace simpleCNN {
 
     void gradient_check(const tensor_t& input, const tensor_t& labels, const size_t batch_size) {
       net_.setup(true);
-      tensor_t output = net_.forward(input);
-      print(output, "Output");
+      auto ng  = computeNumericalGradient(input, labels);
+      //printvt(ng, "Numerical gradient");
+
+      net_.forward_pass(input);
       net_.backward(labels);
-      net_.print_layers();
+      auto dW = net_.get_dW();
+      //printvt_ptr(dW, "dW");
+
+      auto error = relative_error(dW, ng);
+      printvt(error, "Numerical error");
+    }
+
+    /**
+     * Perturb each weight by +epsilon / -epsilon and compute loss.
+     * Use this to approximate gradient.
+     */
+    std::vector<tensor_t> computeNumericalGradient(const tensor_t& input, const tensor_t& labels) {
+      std::vector<tensor_t *> weights = net_.get_weights();
+      size_t batch_size = input.shape()[0];
+      std::vector<tensor_t> num_grads;
+
+      float_t e = 1E-3;
+      // For each layer containing weights.
+      for (size_t i = 0; i < weights.size(); ++i) {
+        std::cout << "Computing ... " + std::to_string(i) << std::endl;
+        // For each weight in the layer.
+        tensor_t numerical_weight_gradient(weights[i]->shape_v());
+
+        for (size_t j = 0; j < weights[i]->size(); ++j) {
+          weights[i]->host_at_index(j) += e;
+          auto loss1 = net_.forward_loss(input, labels);
+
+          weights[i]->host_at_index(j) -= 2 * e;
+          auto loss2 = net_.forward_loss(input, labels);
+
+          numerical_weight_gradient.host_at_index(j) = (loss1 - loss2) / (2 * e);
+          weights[i]->host_at_index(j) += e;
+        }
+        num_grads.push_back(numerical_weight_gradient);
+      }
+      return num_grads;
     }
 
     /**
@@ -34,6 +71,12 @@ namespace simpleCNN {
       net_.setup(true);
       return net_.forward(input);
     };
+
+    template<typename loss,typename optimizer>
+    void test(optimizer& opt, const tensor_t& input, const tensor_t& labels) {
+      net_.setup(true);
+      train_once<loss>(opt, input, labels, input.shape()[0]);
+    }
 
     /**
      * Test a forward pass and check the result
@@ -116,9 +159,10 @@ namespace simpleCNN {
 
       for (size_t i = 0; i < epoch && !stop_training_; ++i) {
         for (size_t j = 0; j < input.size() && !stop_training_; j += batch_size) {
-          train_once<loss>(opt, input.subView({j}, {batch_size, input.dimension(dim_t::depth), input.dimension(dim_t::height), input.dimension(dim_t::width)}),
-                           train_labels.subView({j}, {batch_size, 1, 1, 1}), batch_size);
-          on_batch_enumerate(t);
+          auto minibatch = input.subView({j}, {batch_size, input.dimension(dim_t::depth), input.dimension(dim_t::height), input.dimension(dim_t::width)});
+          auto minilabels = train_labels.subView({j}, {batch_size, 1, 1, 1});
+          train_once<loss>(opt, minibatch, minilabels, batch_size);
+          //on_batch_enumerate(t);
         }
         on_epoch_enumerate(i);
       }
@@ -140,9 +184,14 @@ namespace simpleCNN {
      *
      */
     template <typename loss, typename optimizer>
-    void train_once(optimizer& opt, const tensor_t minibatch, const tensor_t labels, const size_t batch_size) {
-      tensor_t output = net_.forward(minibatch);
+    void train_once(optimizer& opt, const tensor_t& minibatch, const tensor_t& labels, const size_t batch_size) {
+      net_.forward(minibatch);
       net_.print_error();
+      //net_.print_layers();
+      //tensor_t output = net_.forward(minibatch);
+      //print(output, "Output");
+      //net_.print_layers();
+
       net_.backward(labels);
       net_.update(opt, batch_size);
     }

@@ -77,11 +77,9 @@ namespace simpleCNN {
       for (size_t i = 0; i < params.batch_size; ++i) {
         auto start_prev = prev_in.host_ptr(i, 0, 0, 0);
         auto start_curr = curr_delta.host_ptr(i, 0, 0, 0);
-        //auto start_dW   = dW.host_ptr(i, 0, 0, 0);
         auto start_dW = dW.host_begin();
 
-        multiply(prev_in, start_prev, curr_delta, start_curr, &(*start_dW), false, true);
-
+        multiply(curr_delta, start_curr, prev_in, start_prev, &(*start_dW), false, true);
         if (params.has_bias) {
           for (size_t j = 0; j < params.out_dim; ++j) {
             //db.host_at(i, 0, j, 0) += curr_delta.host_at(i, 0, j, 0);
@@ -110,9 +108,17 @@ namespace simpleCNN {
                                 tensor_t& curr_delta,
                                 tensor_t& prev_delta,
                                 const core::Con_params& params) {
-      backpropagate_deltas(weight, curr_delta, prev_delta, params);
-      accumulate_deltas(prev_in, weight, dW, db, curr_delta, params);
-    }
+      //print(prev_in, "Previous in");
+      //print(weight, "Weights");
+      //print(curr_delta, "Current delta");
 
+      backpropagate_deltas(weight, curr_delta, prev_delta, params);
+
+      //print(prev_delta, "Previous delta");
+      accumulate_deltas(prev_in, weight, dW, db, curr_delta, params);
+
+      //print(dW, "dW");
+      //print(db, "db");
+    }
   }  // namespace kernels
 }  // namespace simpleCNN

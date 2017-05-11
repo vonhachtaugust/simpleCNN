@@ -25,6 +25,35 @@ namespace simpleCNN {
     std::cout << t << "\t";
   }
 
+  template<typename T>
+  void printvt(std::vector<T> c, const std::string& name) {
+    simple_info(name.c_str());
+    for (size_t i = 0; i < c.size(); ++i) {
+      print(c[i]);
+    }
+    print("");
+  }
+
+template<typename T>
+void printvt_ptr(std::vector<T*> c, const std::string& name) {
+  simple_info(name.c_str());
+  for (size_t i = 0; i < c.size(); ++i) {
+    print(*c[i]);
+  }
+  print("");
+}
+
+template<typename Container>
+void printvc(std::vector<Container> c, const std::string& name) {
+  simple_info(name.c_str());
+  for (size_t i = 0; i < c.size(); ++i) {
+    for (auto iter = std::begin(c[i]); iter != std::end(c[i]); ++iter) {
+      print_seq(*iter);
+    }
+    print("");
+  }
+}
+
 template<typename Container>
 void printc(Container c, const std::string& name) {
   simple_info(name.c_str());

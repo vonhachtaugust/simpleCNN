@@ -114,7 +114,7 @@ namespace simpleCNN {
             auto start = curr_delta.host_iter(i, j, 0, 0);
             auto end   = start + params.output_height * params.output_width;
 
-            db.host_at(j, 0, 0, 0) = std::accumulate(start, end, float_t{0});
+            db.host_at(j, 0, 0, 0) = std::accumulate(start, end, float_t(0));
           }
         }
       }
@@ -138,8 +138,16 @@ namespace simpleCNN {
                                  tensor_t& prev_delta,
                                  tensor_t& curr_delta,
                                  const core::Conv_params& params) {
+      //print(prev_in, "Previous in");
+      //print(weights, "Weights");
+      //print(curr_delta, "Current delta");
+
       backpropagate_deltas(weights, prev_delta, curr_delta, params);
+      //print(prev_delta, "Previous delta");
       accumulate_deltas(prev_in, weights, dW, db, curr_delta, params);
+
+      //print(dW, "dW");
+      //print(db, "db");
     }
 
   }  // namespace kernels

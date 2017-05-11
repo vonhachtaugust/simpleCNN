@@ -85,6 +85,12 @@ namespace simpleCNN {
       throw simple_error("Error: In component not allocated, or not specified properly.");
     }
 
+    void get_weights(std::vector<tensor_t*>& weights) {
+      if (trainable()) {
+        weights.push_back(in_component_data(component_t::WEIGHT));
+      }
+    }
+
     tensor_t *out_component_data(component_t t) {
       for (size_t i = 0; i < out_channels_; ++i) {
         if (out_type_[i].getComponentType() == t) {
@@ -270,22 +276,36 @@ namespace simpleCNN {
       }
     }
 
+    void print_dW() {
+      if (trainable()) {
+        print(*ith_in_node(1)->get_gradient(), "dW");
+      }
+    }
+
+    void get_dW(std::vector<tensor_t*>& dW) {
+      if (trainable()) {
+        dW.push_back(ith_in_node(1)->get_gradient());
+      }
+    }
+
     void print_layer_data() {
       print(layer_type(), "Layer type");
 
       for (size_t i = 0; i < in_channels_; ++i) {
-        if (in_type_[i].getComponentType() == component_t::WEIGHT) {
-          const auto &in = ith_in_node(i);
-          //print(*in->get_data(), "Input data " + std::to_string(i));
-          print(*in->get_gradient(), "Input grad " + std::to_string(i));
-        }
+        //if (in_type_[i].getComponentType() == component_t::WEIGHT) {
+        const auto &in = ith_in_node(i);
+        print(*in->get_data(), "Input data " + std::to_string(i));
+        print(*in->get_gradient(), "Input grad " + std::to_string(i));
+        //print(*in->get_gradient(), "Input grad " + std::to_string(i));
+        //}
       }
 
-      /* for (size_t i = 0; i < out_channels_; ++i) {
-        const auto &out = ith_out_node(i);
-        print(*out->get_data(), "Output data " + std::to_string(i));
-        print(*out->get_gradient(), "Output grad " + std::to_string(i));
-      } */
+      for (size_t i = 0; i < out_channels_; ++i) {
+        const auto& out = ith_out_node(i);
+        print(*out->get_data(), "Out data " + std::to_string(i));
+        print(*out->get_gradient(), "Out gradient " + std::to_string(i));
+
+      }
     }
 
     void forward() {
@@ -307,15 +327,13 @@ namespace simpleCNN {
       data_ptrs_t in_data(in_channels_), in_grad(in_channels_), out_data(out_channels_), out_grad(out_channels_);
 
       for (size_t i = 0; i < in_channels_; ++i) {
-        const auto &in = ith_in_node(i);
-        in_data[i] = in->get_data();
-        in_grad[i] = in->get_gradient();
+        in_data[i] = ith_in_node(i)->get_data();
+        in_grad[i] = ith_in_node(i)->get_gradient();
       }
 
       for (size_t i = 0; i < out_channels_; ++i) {
-        const auto &out = ith_out_node(i);
-        out_data[i] = out->get_data();
-        out_grad[i] = out->get_gradient();
+        out_data[i] = ith_out_node(i)->get_data();
+        out_grad[i] = ith_out_node(i)->get_gradient();
       }
 
       back_propagation(in_data, out_data, in_grad, out_grad);
@@ -470,7 +488,8 @@ namespace simpleCNN {
     /**
      * @brief Allocates the necessary edge memory in a specific incoming connection.
      */
-    void alloc_input(size_t i) const { prev_[i] = std::make_shared<Edge>(nullptr, in_shape()[i]); }
+    void alloc_input(size_t i) const {
+      prev_[i] = std::make_shared<Edge>(nullptr, in_shape()[i]); }
 
     /**
      * @brief Allocates the necessary edge memory in a specific outcoming connection.

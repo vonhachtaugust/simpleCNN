@@ -30,6 +30,7 @@ float_t mean_value(const tensor_t& x) {
   return std::accumulate(x.host_begin(), x.host_end(), float_t{0}) / static_cast<float_t>(x.size());
 }
 
+
 void mean(tensor_t& x, const size_t batch_size) {
   float_t norm = float_t(1) / float_t(batch_size);
 
@@ -50,12 +51,48 @@ T regularization(const tensor_t& weight) {
   return dot(weight, &(*weight.host_begin()), weight, &(*weight.host_begin()));
 }
 
+float_t l2norm(const tensor_t& a, const tensor_t& b) {
+  float_t sum = float_t(0);
+
+  for (size_t i = 0; i < a.size(); ++i) {
+    auto val_a = a.host_at_index(i);
+    auto val_b = b.host_at_index(i);
+
+    sum +=  (val_a + val_b) * (val_a + val_b);
+  }
+  return sum;
+}
+
+
+float_t l2norm_diff(const tensor_t& a, const tensor_t& b) {
+  float_t sum = float_t(0);
+
+  for (size_t i = 0; i < a.size(); ++i) {
+    auto val_a = a.host_at_index(i);
+    auto val_b = b.host_at_index(i);
+
+    sum +=  (val_a - val_b) * (val_a - val_b);
+  }
+  return sum;
+}
+
+std::vector<float_t> relative_error(const std::vector<tensor_t*>& A, std::vector<tensor_t>& B) {
+  assert(A.size() == B.size());
+  std::vector<float_t> errors;
+
+  for (size_t i = 0; i < B.size(); ++i) {
+    auto sum = l2norm(*A[i], B[i]);
+    auto diff = l2norm_diff(*A[i], B[i]);
+    errors.push_back(diff / sum);
+  }
+  return errors;
+}
+
 void mean_and_regularize(const tensor_t& x, tensor_t& dx, const size_t batch_size) {
   assert(x.size() == dx.size());
   float_t norm = float_t(1) / float_t(batch_size);
-  float_t reg = float_t(0.001);
-
-
+  float_t reg = Hyperparameters::regularization_constant;
+  
   // dx is the summed up gradient over the entire batch.
   // x are the weights
 

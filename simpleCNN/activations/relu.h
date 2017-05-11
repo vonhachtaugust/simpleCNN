@@ -22,7 +22,7 @@ namespace simpleCNN {
       }
     }
 
-    void backward_activation(const tensor_t& affine, const tensor_t& curr_delta, tensor_t& activated) const override{
+    void backward_activation(const tensor_t& affine, const tensor_t& curr_delta, tensor_t& activated) const override {
       for (size_t i = 0; i < affine.size(); ++i) {
         activated.host_at_index(i) = df(affine.host_at_index(i)) * curr_delta.host_at_index(i);
       }

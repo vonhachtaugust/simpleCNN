@@ -429,4 +429,8 @@ namespace simpleCNN {
   c.back_propagation(in_d, out_d, in_g, out_g);
 }
 
+  TEST(Convolution, backprop_op_IIII) {
+  
+}
+
 }  // namespace simpleCNN

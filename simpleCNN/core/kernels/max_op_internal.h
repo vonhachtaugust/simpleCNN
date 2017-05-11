@@ -57,6 +57,9 @@ namespace simpleCNN {
                                        tensor_t& prev_delta,
                                        tensor_t& max_index,
                                        const core::Maxpooling_params& params) {
+      //print(curr_delta, "Curr_delta");
+      //print(max_index, "Max index");
+
       for (size_t b = 0; b < params.batch_size; ++b) {
         for (size_t ch = 0; ch < params.out_channels; ++ch) {
           for (size_t i = 0; i < params.output_height; ++i) {
@@ -76,6 +79,7 @@ namespace simpleCNN {
           }
         }
       }
+      //print(prev_delta, "Prev_delta");
     }
   }  // namespace kernels
 }  // namespace simpleCNN

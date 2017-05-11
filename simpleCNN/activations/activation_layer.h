@@ -23,8 +23,6 @@ class Activation_layer : public Layer {
     Layer::set_trainable(false);
   }
 
-  virtual ~Activation_layer() = default;
-
   shape_t in_shape() const override { return {shape_}; }
 
   shape_t out_shape() const override { return {shape_}; }

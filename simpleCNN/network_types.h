@@ -8,7 +8,6 @@
 #include "optimizers/optimizer.h"
 
 namespace simpleCNN {
-
   class Network_type {
    public:
     typedef std::vector<Layer*>::iterator iterator;
@@ -16,6 +15,7 @@ namespace simpleCNN {
 
     virtual tensor_t forward(const tensor_t& input) = 0;
     virtual void forward_pass(const tensor_t& input) = 0;
+    virtual float_t forward_loss(const tensor_t& input, const tensor_t& labels) = 0;
 
     virtual void backward(const tensor_t& deltas) = 0;
 
@@ -37,8 +37,31 @@ namespace simpleCNN {
       }
     }
 
+    std::vector<tensor_t*> get_dW() {
+      std::vector<tensor_t *> dW;
+      for (auto l : nodes_) {
+        l->get_dW(dW);
+      }
+      return dW;
+    }
+
+    void print_dW() {
+      for (auto l : nodes_) {
+        l->print_dW();
+      }
+    }
+
+    virtual std::vector<tensor_t*> get_weights() {
+      std::vector<tensor_t*> weights;
+
+      for (auto l : nodes_) {
+        l->get_weights(weights);
+      }
+      return weights;
+    }
+
     void print_error() {
-      print(nodes_.back()->error(), "Loss: ");
+      std::cout << nodes_.back()->error() << std::endl;
     }
 
     size_t size() const { return nodes_.size(); }
@@ -97,7 +120,18 @@ namespace simpleCNN {
       return nodes_.back()->network_output();
     }
 
-    void forward_pass(const tensor_t& input) {
+    float_t forward_loss(const tensor_t& input, const tensor_t& labels) override {
+      nodes_.front()->set_in_data(input, component_t::IN_DATA);
+
+      for (size_t i = 0; i < nodes_.size(); ++i) {
+        nodes_[i]->forward();
+      }
+
+      nodes_.back()->set_targets(labels);
+      return nodes_.back()->error();
+    }
+
+    void forward_pass(const tensor_t& input) override {
       nodes_.front()->set_in_data(input, component_t::IN_DATA);
 
       for(size_t i = 0; i < nodes_.size(); ++i) {
@@ -128,5 +162,4 @@ namespace simpleCNN {
       }
     }
   };
-
 }  // namespace simpleCNN

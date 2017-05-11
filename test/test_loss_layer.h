@@ -20,7 +20,8 @@ namespace simpleCNN {
   TEST(Loss, loss_function) {
   size_t n = 3;
   shape4d shape = {1, 1, n, 1};
-  loss::Softmax ll(shape);
+  loss::Softmax ll;
+  ll.set_shape(shape);
 
   tensor_t in_data({1, 1, n, 1});
   vec_t test_data = {std::log(1), std::log(2), std::log(3)};
@@ -39,7 +40,8 @@ namespace simpleCNN {
   TEST(Loss, loss_gradient) {
   size_t n = 3;
   shape4d shape = {1, 1, n, 1};
-  loss::Softmax ll(shape);
+  loss::Softmax ll;
+  ll.set_shape(shape);
 
   tensor_t output({1, 1, n, 1});
   vec_t test_data = {0.2, 0.3, 0.5};
@@ -63,7 +65,8 @@ namespace simpleCNN {
 TEST(Loss, loss) {
   size_t n = 3;
   shape4d shape = {1, 1, n, 1};
-  loss::Softmax ll(shape);
+  loss::Softmax ll;
+  ll.set_shape(shape);
 
   tensor_t output({1, 1, n, 1});
   vec_t test_data = {0.2, 0.3, 0.5};

@@ -16,18 +16,19 @@ using fully = Connected_layer;
 using network = Network<Sequential>;
 using softmax = loss::Softmax;
 using relu    = activation::ReLU;
+using adam    = Adam<float_t>;
 
   TEST(Network, Move_semantics) {
     Network<Sequential> net;
 
-    net << conv(28, 28, 1, 1, 5, 6, 1, 2, true) << maxpool(28, 28, 6, 1);
+    //net << conv(28, 28, 1, 1, 5, 6, 1, 2, true) << maxpool(28, 28, 6, 1);
 }
 
   TEST(Network, gradient_check) {
-    Network<Sequential> net;
+    /* Network<Sequential> net;
     size_t ils = 2; // input layer size
     size_t hls = 3; // hidden layer size
-    size_t ols = 1; // output layer size
+    size_t ols = 3; // output layer size
 
     size_t batch_size = 1;
 
@@ -39,9 +40,32 @@ using relu    = activation::ReLU;
     input.host_at_index(0) = 1;
     input.host_at_index(1) = 2;
 
-    labels.host_at_index(0) = 1;
+    labels.host_at_index(0) = 0;
 
-    net.gradient_check(input, labels, batch_size);
+    net.gradient_check(input, labels, batch_size); */
+}
+
+  TEST(Network, test) {
+  Network<Sequential> net;
+  size_t in_w = 10;
+  size_t in_h = 10;
+  size_t in_ch = 1;
+  size_t bs = 2;
+  size_t out_ch = 3;
+  size_t fs = 5;
+
+  tensor_t input({bs, in_ch, in_h, in_w});
+  uniform_rand(input.host_begin(), input.host_end(), -1, 1);
+
+  tensor_t labels({bs, 1, 1, 1});
+  vec_t test_labels = {0};
+  fill(test_labels, labels);
+
+  // w, h, in_c, batch
+
+  net << conv(in_w, in_h, in_ch, bs, fs, out_ch) << maxpool(6, 6, out_ch, bs) << fully(3 * 3 * out_ch, out_ch, bs) << softmax();
+
+  net.gradient_check(input, labels, bs);
 }
 
 }

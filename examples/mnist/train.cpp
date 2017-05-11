@@ -11,12 +11,12 @@ using namespace simpleCNN;
 using namespace cv;
 
 using dropout = Dropout_layer;
-using conv    = Convolutional_layer<float_t, activation::ReLU<float_t>>;
-using maxpool = Maxpooling_layer<>;
-using fully   = Connected_layer<>;
-using classy  = Connected_layer<float_t, activation::Softmax<float_t>>;
+using conv    = Convolutional_layer;
+using maxpool = Maxpooling_layer;
+using fully   = Connected_layer;
 using network = Network<Sequential>;
 using adam    = Adam<float_t>;
+using relu    = activation::ReLU;
 using softmax = loss::Softmax;
 
 void display_filtermaps(const tensor_t& output, const size_t in_height, const size_t in_width) {
@@ -80,7 +80,7 @@ static bool train_mnist() {
 
   // Zero mean.
   train_images.add(-mean_value(train_images));
-  size_t minibatch_size = 10;
+  size_t minibatch_size = 1;
   size_t epochs = 1;
 
 
@@ -94,11 +94,14 @@ static bool train_mnist() {
   };
 
   network net;
-  net << conv(32, 32, 1, minibatch_size, 5, 6) << maxpool(28, 28, 6, minibatch_size) << conv(14, 14, 6, minibatch_size, 5, 16)
-      << maxpool(10, 10, 16, minibatch_size) << conv(5, 5, 16, minibatch_size, 5, 120) << dropout({minibatch_size, 120, 1, 1}, 0.5) << classy(120, 10, minibatch_size) << softmax();
+  net << conv(32, 32, 1, minibatch_size, 5, 6) << relu() << maxpool(28, 28, 6, minibatch_size)
+      << conv(14, 14, 6, minibatch_size, 5, 16) << relu() << maxpool(10, 10, 16, minibatch_size)
+      << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout({minibatch_size, 120, 1, 1}, 0.5)
+      << fully(120, 10, minibatch_size) << softmax();
 
   adam a;
   net.train<adam>(a, train_images, train_labels, minibatch_size, epochs, on_enumerate_minibatch, on_enumerate_epoch, true);
+  //net.test<adam>(a, train_images, train_labels);
   return true;
 }
 
