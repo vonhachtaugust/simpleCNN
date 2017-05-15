@@ -11,21 +11,24 @@ namespace simpleCNN {
 
 class Loss_layer : public Layer {
  public:
-  Loss_layer() : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA), tensor_t(component_t::TARGET)}) {
+  Loss_layer() : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
     Layer::set_trainable(false);
   }
 
-  Loss_layer(shape4d shape) : shape_(shape), Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA), tensor_t(component_t::TARGET)}) {
+  Loss_layer(shape4d shape) : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
+    shape_ = shape;
     Layer::set_trainable(false);
   }
 
   shape_t in_shape() const override { return {shape_}; }
 
-  shape_t out_shape() const override { return {shape_, shape_}; }
+  shape_t out_shape() const override { return {shape_}; }
 
   void set_in_shape(const shape4d& shape) override { shape_ = shape; }
 
-  void set_targets(const tensor_t& labels) override { *Layer::out_component_data(component_t::TARGET) = labels; }
+  void set_targets(const tensor_t& labels) override { targets_ = labels; }
+
+  virtual void set_shape(const shape4d& shape) { shape_ = shape; }
 
   /**
    * Applies the loss function onto the input data. (aka. output data of the network)
@@ -62,7 +65,7 @@ class Loss_layer : public Layer {
   };
 
   tensor_t network_target() override {
-    return *Layer::out_component_data(component_t::TARGET);
+    return targets_;
   }
 
   /**
@@ -85,10 +88,10 @@ class Loss_layer : public Layer {
 
   virtual std::string layer_type() const = 0;
 
-  virtual void set_shape(const shape4d& shape) { shape_ = shape; }
-
  private:
   shape4d shape_;
+
+  tensor_t targets_;
 };
 
 }

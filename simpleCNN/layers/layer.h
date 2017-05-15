@@ -59,8 +59,8 @@ namespace simpleCNN {
     /*
      * Move constructors
      */
-    // Layer(Layer&&) = default;
-    // Layer &operator=(const Layer&&) = default;
+    Layer(Layer&&) = default;
+    //Layer &operator=(const Layer&&) = default;
 
     Layer &set_backend_type(core::backend_t backend_type) {
       backend_type_ = backend_type;
@@ -157,6 +157,23 @@ namespace simpleCNN {
 
     virtual tensor_t network_target() {
       throw simple_error("Error: Function not called on a loss layer type.");
+    }
+
+    tensor_t output() const {
+      for (size_t i = 0; i < out_channels_; i++) {
+        if (out_type_[i].getComponentType() == component_t::OUT_DATA) {
+          return *(const_cast<Layer *>(this))->ith_out_node(i)->get_data();
+        }
+      }
+      throw simple_error("ERROR: No out-component found");
+    }
+
+    void set_out_grad(const tensor_t& gradient) {
+      *(const_cast<Layer *>(this))->ith_out_node(0)->get_gradient() = gradient;
+    }
+
+    tensor_t output() {
+      return *ith_out_node(0)->get_data();
     }
 
     /** End: Setters ---------------------------------------- */
@@ -310,6 +327,7 @@ namespace simpleCNN {
 
     void forward() {
       data_ptrs_t in_data(in_channels_), out_data(out_channels_);
+
 
       for (size_t i = 0; i < in_channels_; ++i) {
         in_data[i] = ith_in_node(i)->get_data();
@@ -489,12 +507,15 @@ namespace simpleCNN {
      * @brief Allocates the necessary edge memory in a specific incoming connection.
      */
     void alloc_input(size_t i) const {
-      prev_[i] = std::make_shared<Edge>(nullptr, in_shape()[i]); }
+      prev_[i] = std::make_shared<Edge>(nullptr, in_shape()[i]);
+    }
 
     /**
      * @brief Allocates the necessary edge memory in a specific outcoming connection.
      */
-    void alloc_output(size_t i) const { next_[i] = std::make_shared<Edge>(const_cast<Layer*>(this), out_shape()[i]); }
+    void alloc_output(size_t i) const {
+      next_[i] = std::make_shared<Edge>(const_cast<Layer*>(this), out_shape()[i]);
+    }
 
     /**
      * @brief Creates an edge between the current node and one incoming or previous node.

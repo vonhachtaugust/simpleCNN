@@ -41,7 +41,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 else(NOT CMAKE_BUILD_TYPE)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(CMAKE_BUILD_TYPE Debug)
+        set(CMAKE_BUILD_TYPE Release)
         message("==========================================================================================")
         message(STATUS "Build type: ${CMAKE_BUILD_TYPE}.")
         message("==========================================================================================")
@@ -77,31 +77,6 @@ if(CUDA_FOUND)
 else()
     message(STATUS "Cannot find required package CUDA. Please set CUDA_INCLUDE_DIR")
 endif()
-
-#opencv_core;
-#opencv_cudaarithm;
-#opencv_cudabgsegm;
-#opencv_cudacodec;
-#opencv_cudafeatures2d;
-#opencv_cudafilters;
-#opencv_cudaimgproc;
-#opencv_cudalegacy;
-#opencv_cudaobjdetect;
-#opencv_cudaoptflow;
-#opencv_cudawarping;
-#opencv_cudev;
-#opencv_features2d;
-#opencv_flann;
-#opencv_highgui;
-#opencv_imgcodecs;
-#opencv_imgproc;
-#opencv_ml;
-#opencv_objdetect;
-#opencv_photo;
-#opencv_shape;
-#opencv_superres;
-#opencv_video;
-#opencv_videoio
 
 #####
 # Define user options (To be implemented when source is build as library)

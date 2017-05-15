@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "../activations/activation_function.h"
 #include "layer.h"
 
 namespace simpleCNN {

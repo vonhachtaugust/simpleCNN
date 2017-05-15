@@ -50,7 +50,7 @@ using adam    = Adam<float_t>;
   size_t in_w = 10;
   size_t in_h = 10;
   size_t in_ch = 1;
-  size_t bs = 2;
+  size_t bs = 3;
   size_t out_ch = 3;
   size_t fs = 5;
 
@@ -63,7 +63,7 @@ using adam    = Adam<float_t>;
 
   // w, h, in_c, batch
 
-  net << conv(in_w, in_h, in_ch, bs, fs, out_ch) << maxpool(6, 6, out_ch, bs) << fully(3 * 3 * out_ch, out_ch, bs) << softmax();
+  net << conv(in_w, in_h, in_ch, bs, fs, out_ch) << maxpool(6, 6, out_ch, bs) << fully(3 * 3 * out_ch, out_ch, bs);
 
   net.gradient_check(input, labels, bs);
 }

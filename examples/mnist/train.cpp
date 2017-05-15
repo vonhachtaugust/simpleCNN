@@ -4,8 +4,7 @@
 
 #include <iostream>
 #include "../../simpleCNN/simpleCNN.h"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
+
 
 using namespace simpleCNN;
 using namespace cv;
@@ -17,6 +16,7 @@ using fully   = Connected_layer;
 using network = Network<Sequential>;
 using adam    = Adam<float_t>;
 using relu    = activation::ReLU;
+using th    = activation::Tanh;
 using softmax = loss::Softmax;
 
 void display_filtermaps(const tensor_t& output, const size_t in_height, const size_t in_width) {
@@ -80,8 +80,8 @@ static bool train_mnist() {
 
   // Zero mean.
   train_images.add(-mean_value(train_images));
-  size_t minibatch_size = 1;
-  size_t epochs = 1;
+  size_t minibatch_size = 32;
+  size_t epochs = 10;
 
 
   // create callback
@@ -97,7 +97,7 @@ static bool train_mnist() {
   net << conv(32, 32, 1, minibatch_size, 5, 6) << relu() << maxpool(28, 28, 6, minibatch_size)
       << conv(14, 14, 6, minibatch_size, 5, 16) << relu() << maxpool(10, 10, 16, minibatch_size)
       << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout({minibatch_size, 120, 1, 1}, 0.5)
-      << fully(120, 10, minibatch_size) << softmax();
+      << fully(120, 10, minibatch_size);
 
   adam a;
   net.train<adam>(a, train_images, train_labels, minibatch_size, epochs, on_enumerate_minibatch, on_enumerate_epoch, true);

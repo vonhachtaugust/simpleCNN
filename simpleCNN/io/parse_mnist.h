@@ -70,7 +70,7 @@ namespace simpleCNN {
                                   size_t start_index,
                                   tensor_t* dst) {
       const int width  = header.num_cols + 2 * x_padding;
-      const int height = header.num_rows + 2 * y_padding;
+      // const int height = header.num_rows + 2 * y_padding;
 
       std::vector<uint8_t> vec(header.num_cols * header.num_rows);
 

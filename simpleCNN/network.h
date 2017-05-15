@@ -5,10 +5,34 @@
 #pragma once
 
 #include "network_types.h"
+#include "loss/loss_functions.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 namespace simpleCNN {
 
   typedef int label_t;
+
+void display_filtermaps(const tensor_t& output, const size_t in_height, const size_t in_width) {
+  cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
+  cv::Mat image(in_height, in_width, CV_8UC1);
+
+  for (size_t batch = 0; batch < output.shape()[0]; ++batch) {
+    for (size_t filter = 0; filter < output.shape()[1]; ++filter) {
+
+      uchar *p = image.data;
+      for (size_t i = 0; i < in_height; ++i) {
+        for (size_t j = 0; j < in_width; ++j) {
+          auto val = output.host_at(batch, filter, i, j);
+          p[i * in_width + j] = val;
+        }
+      }
+
+      cv::imshow("Display window", image);
+      cv::waitKey(0);
+    }
+  }
+}
 
   template <typename NetType>
   class Network {
@@ -17,16 +41,21 @@ namespace simpleCNN {
 
     void gradient_check(const tensor_t& input, const tensor_t& labels, const size_t batch_size) {
       net_.setup(true);
-      auto ng  = computeNumericalGradient(input, labels);
+      //net_.set_targets(labels);
+      //auto ng  = computeNumericalGradient(input, labels);
       //printvt(ng, "Numerical gradient");
 
-      net_.forward_pass(input);
-      net_.backward(labels);
-      auto dW = net_.get_dW();
+      //net_.forward_pass(input);
+      tensor_t output = net_.forward(input);
+      //print(output, "Output");
+      tensor_t gradient = grads(output, labels);
+      //print(gradient, "Gradients");
+      net_.backward(gradient);
+      //auto dW = net_.get_dW();
       //printvt_ptr(dW, "dW");
 
-      auto error = relative_error(dW, ng);
-      printvt(error, "Numerical error");
+      //auto error = relative_error(dW, ng);
+      //printvt(error, "Numerical error");
     }
 
     /**
@@ -145,7 +174,7 @@ namespace simpleCNN {
                OnBatchEnumerate on_batch_enumerate,
                OnEpochEnumerate on_epoch_enumerate,
                const bool reset_weight = false) {
-      if (!(input.size() >= train_labels.size())) {
+      if (input.size() < train_labels.size()) {
         return false;
       }
       if (input.size() < batch_size || train_labels.size() < batch_size) {
@@ -159,10 +188,16 @@ namespace simpleCNN {
 
       for (size_t i = 0; i < epoch && !stop_training_; ++i) {
         for (size_t j = 0; j < input.size() && !stop_training_; j += batch_size) {
-          auto minibatch = input.subView({j}, {batch_size, input.dimension(dim_t::depth), input.dimension(dim_t::height), input.dimension(dim_t::width)});
+          auto minibatch = input.subView({j},
+                                         {batch_size, input.dimension(dim_t::depth), input.dimension(dim_t::height),
+                                          input.dimension(dim_t::width)});
+          //display_filtermaps(minibatch, 32, 32);
           auto minilabels = train_labels.subView({j}, {batch_size, 1, 1, 1});
           train_once<loss>(opt, minibatch, minilabels, batch_size);
-          //on_batch_enumerate(t);
+          if (j % 1000 == 0) {
+            loss_value(output_, minilabels);
+            on_batch_enumerate(t);
+          }
         }
         on_epoch_enumerate(i);
       }
@@ -176,6 +211,8 @@ namespace simpleCNN {
     }
 
    private:
+    tensor_t output_;
+    tensor_t gradient_;
     /**
      * Trains on one minibatch, i.e. runs forward and backward propagation to
      * calculate
@@ -185,14 +222,9 @@ namespace simpleCNN {
      */
     template <typename loss, typename optimizer>
     void train_once(optimizer& opt, const tensor_t& minibatch, const tensor_t& labels, const size_t batch_size) {
-      net_.forward(minibatch);
-      net_.print_error();
-      //net_.print_layers();
-      //tensor_t output = net_.forward(minibatch);
-      //print(output, "Output");
-      //net_.print_layers();
-
-      net_.backward(labels);
+      output_ = net_.forward(minibatch);
+      gradient_ = grads(output_, labels);
+      net_.backward(gradient_);
       net_.update(opt, batch_size);
     }
 

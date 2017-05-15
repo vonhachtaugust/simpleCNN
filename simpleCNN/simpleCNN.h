@@ -11,6 +11,7 @@
 #include "activations/activation_layer.h"
 #include "activations/softmax.h"
 #include "activations/relu.h"
+#include "activations/tanh.h"
 
 #include "layers/layer.h"
 
@@ -44,6 +45,7 @@
 
 #include "optimizers/optimizer.h"
 
+#include "loss/loss_functions.h"
 #include "loss/loss_layer.h"
 #include "loss/softmax.h"
 

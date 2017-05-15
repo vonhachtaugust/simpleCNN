@@ -19,7 +19,8 @@ class Activation_layer : public Layer {
     Layer::set_trainable(false);
   }
 
-  Activation_layer(shape4d shape) : shape_(shape), Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
+  Activation_layer(shape4d shape) : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
+    shape_ = shape;
     Layer::set_trainable(false);
   }
 

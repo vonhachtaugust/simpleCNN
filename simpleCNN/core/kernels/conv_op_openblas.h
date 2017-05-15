@@ -138,17 +138,8 @@ namespace simpleCNN {
                                  tensor_t& prev_delta,
                                  tensor_t& curr_delta,
                                  const core::Conv_params& params) {
-      //print(prev_in, "Previous in");
-      //print(weights, "Weights");
-      //print(curr_delta, "Current delta");
-
       backpropagate_deltas(weights, prev_delta, curr_delta, params);
-      //print(prev_delta, "Previous delta");
       accumulate_deltas(prev_in, weights, dW, db, curr_delta, params);
-
-      //print(dW, "dW");
-      //print(db, "db");
     }
-
   }  // namespace kernels
 }  // namespace simpleCNN

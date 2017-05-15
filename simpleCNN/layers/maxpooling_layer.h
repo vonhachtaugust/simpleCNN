@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "../activations/activation_function.h"
 #include "../core/backend.h"
 #include "../core/framework/op_kernel.h"
 #include "../core/kernels/max_grad_op.h"

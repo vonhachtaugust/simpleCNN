@@ -34,8 +34,6 @@ namespace simpleCNN {
    protected:
     Node() = delete;
 
-    //friend void connect(Layer* head, Layer* tail);
-
     /**
      * Vector of edges going out and in of this node.
      *
