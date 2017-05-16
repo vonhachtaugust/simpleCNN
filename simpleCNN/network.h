@@ -4,58 +4,77 @@
 
 #pragma once
 
-#include "network_types.h"
+#include <fstream>
+#include "../third_party/cereal/archives/binary.hpp"
+#include "../third_party/cereal/cereal.hpp"
 #include "loss/loss_functions.h"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
+#include "network_types.h"
 
 namespace simpleCNN {
 
   typedef int label_t;
 
-void display_filtermaps(const tensor_t& output, const size_t in_height, const size_t in_width) {
-  cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
-  cv::Mat image(in_height, in_width, CV_8UC1);
+  enum class content_type { weights_and_bias, loss, accuracy };
 
-  for (size_t batch = 0; batch < output.shape()[0]; ++batch) {
-    for (size_t filter = 0; filter < output.shape()[1]; ++filter) {
-
-      uchar *p = image.data;
-      for (size_t i = 0; i < in_height; ++i) {
-        for (size_t j = 0; j < in_width; ++j) {
-          auto val = output.host_at(batch, filter, i, j);
-          p[i * in_width + j] = val;
-        }
-      }
-
-      cv::imshow("Display window", image);
-      cv::waitKey(0);
-    }
-  }
-}
+  enum class file_format { binary };
 
   template <typename NetType>
   class Network {
    public:
     explicit Network() : stop_training_(false) {}
 
-    void gradient_check(const tensor_t& input, const tensor_t& labels, const size_t batch_size) {
+    void print_weights_and_bias() {
+      auto w = net_.get_weights();
+      auto b = net_.get_bias();
+      printvt_ptr(w, "Weights");
+      printvt_ptr(b, "Bias");
+    }
+
+    void load_from_file(const std::string& filename,
+                        content_type what,
+                        file_format format = file_format::binary) const {
+      std::ifstream ifs(filename.c_str(), std::ios::binary);
+
+      if (ifs.fail() || ifs.bad()) {
+        throw simple_error("Failed to open: " + filename);
+      }
+
+      from_archive(ifs, what);
+    }
+
+    void save_to_file(const std::string& filename, content_type what, file_format format = file_format::binary) const {
+      std::ofstream ofs(filename.c_str(), std::ios::binary);
+
+      if (ofs.fail() || ofs.bad()) {
+        throw simple_error("Failed to open: " + filename);
+      }
+
+      to_archive(ofs, what);
+    }
+
+    template <typename OutputArchive>
+    void to_archive(OutputArchive& ar, content_type what) const {
+      if (what == content_type::weights_and_bias) {
+        net_.save_weight_and_bias(ar);
+      }
+    }
+
+    template <typename InputArchive>
+    void from_archive(InputArchive& ar, content_type what) const {
+      if (what == content_type::weights_and_bias) {
+        net_.load_weight_and_bias(ar);
+      }
+    }
+
+    std::vector<float_t> gradient_check(const tensor_t& input, const tensor_t& labels, const size_t batch_size) {
       net_.setup(true);
-      //net_.set_targets(labels);
-      //auto ng  = computeNumericalGradient(input, labels);
-      //printvt(ng, "Numerical gradient");
+      auto ng = computeNumericalGradient(input, labels);
 
-      //net_.forward_pass(input);
-      tensor_t output = net_.forward(input);
-      //print(output, "Output");
-      tensor_t gradient = grads(output, labels);
-      //print(gradient, "Gradients");
-      net_.backward(gradient);
-      //auto dW = net_.get_dW();
-      //printvt_ptr(dW, "dW");
+      net_.forward_pass(input);
+      net_.backward(labels);
+      auto dW = net_.get_dW();
 
-      //auto error = relative_error(dW, ng);
-      //printvt(error, "Numerical error");
+      return relative_error(dW, ng);
     }
 
     /**
@@ -63,14 +82,14 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
      * Use this to approximate gradient.
      */
     std::vector<tensor_t> computeNumericalGradient(const tensor_t& input, const tensor_t& labels) {
-      std::vector<tensor_t *> weights = net_.get_weights();
-      size_t batch_size = input.shape()[0];
+      std::vector<tensor_t*> weights = net_.get_weights();
+      size_t batch_size              = input.shape()[0];
       std::vector<tensor_t> num_grads;
 
       float_t e = 1E-3;
       // For each layer containing weights.
       for (size_t i = 0; i < weights.size(); ++i) {
-        std::cout << "Computing ... " + std::to_string(i) << std::endl;
+        // std::cout << "Computing ... " + std::to_string(i) << std::endl;
         // For each weight in the layer.
         tensor_t numerical_weight_gradient(weights[i]->shape_v());
 
@@ -101,11 +120,7 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
       return net_.forward(input);
     };
 
-    template<typename loss,typename optimizer>
-    void test(optimizer& opt, const tensor_t& input, const tensor_t& labels) {
-      net_.setup(true);
-      train_once<loss>(opt, input, labels, input.shape()[0]);
-    }
+    void init_network() { net_.setup(true); }
 
     /**
      * Test a forward pass and check the result
@@ -154,8 +169,7 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
      * @param batch_size
      */
     template <typename Loss, typename optimizer>
-    void test_onbatch(
-      optimizer& opt, const tensor_t& in, const tensor_t& target, const size_t batch_size) {
+    void test_onbatch(optimizer& opt, const tensor_t& in, const tensor_t& target, const size_t batch_size) {
       net_.setup(true);
       net_.forward_pass(in);
       net_.print_error();
@@ -165,14 +179,17 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
       net_.print_error();
     };
 
-    template <typename loss, typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumerate>
+    template <typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumerate>
     bool train(optimizer& opt,
                const tensor_t& input,
                const tensor_t& train_labels,
-               size_t batch_size,
-               size_t epoch,
+               const size_t batch_size,
+               const size_t epoch,
                OnBatchEnumerate on_batch_enumerate,
                OnEpochEnumerate on_epoch_enumerate,
+               const std::string weight_and_bias_file,
+               const std::string loss_filename,
+               const std::string accuracy_filename,
                const bool reset_weight = false) {
       if (input.size() < train_labels.size()) {
         return false;
@@ -184,23 +201,26 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
       set_netphase(net_phase::train);
       opt.reset();
       stop_training_ = false;
-      time_t t = clock();
+      //time_t t       = clock();
+
+      std::vector<float_t> loss;
+      std::vector<float_t> accuracy;
 
       for (size_t i = 0; i < epoch && !stop_training_; ++i) {
-        for (size_t j = 0; j < input.size() && !stop_training_; j += batch_size) {
-          auto minibatch = input.subView({j},
-                                         {batch_size, input.dimension(dim_t::depth), input.dimension(dim_t::height),
-                                          input.dimension(dim_t::width)});
-          //display_filtermaps(minibatch, 32, 32);
+        for (size_t j = 0; j < input.shape()[0] && !stop_training_; j += batch_size) {
+          auto minibatch = input.subView({j}, {batch_size, input.dimension(dim_t::depth),
+                                               input.dimension(dim_t::height), input.dimension(dim_t::width)});
           auto minilabels = train_labels.subView({j}, {batch_size, 1, 1, 1});
-          train_once<loss>(opt, minibatch, minilabels, batch_size);
-          if (j % 1000 == 0) {
-            loss_value(output_, minilabels);
-            on_batch_enumerate(t);
-          }
+          train_once(opt, minibatch, minilabels, loss, accuracy);
+          // on_batch_enumerate(t);
         }
-        on_epoch_enumerate(i);
+        // on_epoch_enumerate(i);
       }
+
+      save_to_file(weight_and_bias_file, content_type::weights_and_bias);
+      save_data_to_file<float_t>(loss_filename, loss);
+      save_data_to_file<float_t>(accuracy_filename, accuracy);
+
       return true;
     }
 
@@ -211,8 +231,6 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
     }
 
    private:
-    tensor_t output_;
-    tensor_t gradient_;
     /**
      * Trains on one minibatch, i.e. runs forward and backward propagation to
      * calculate
@@ -220,12 +238,15 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
      * then calls the optimizer algorithm to update the weights
      *
      */
-    template <typename loss, typename optimizer>
-    void train_once(optimizer& opt, const tensor_t& minibatch, const tensor_t& labels, const size_t batch_size) {
-      output_ = net_.forward(minibatch);
-      gradient_ = grads(output_, labels);
-      net_.backward(gradient_);
-      net_.update(opt, batch_size);
+    template <typename optimizer>
+    void train_once(optimizer& opt,
+                    const tensor_t& minibatch,
+                    const tensor_t& labels,
+                    std::vector<float_t>& loss,
+                    std::vector<float_t>& accuracy) {
+      net_.forward_pass(minibatch);
+      net_.backward_pass(labels, loss, accuracy);
+      net_.update(opt);
     }
 
     template <typename layer>

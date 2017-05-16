@@ -11,24 +11,26 @@ namespace simpleCNN {
 
 class Loss_layer : public Layer {
  public:
-  Loss_layer() : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
+  Loss_layer() : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA), tensor_t(component_t::TARGET)}) {
     Layer::set_trainable(false);
   }
 
-  Loss_layer(shape4d shape) : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
+  Loss_layer(shape4d shape) : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA), tensor_t(component_t::TARGET)}) {
     shape_ = shape;
     Layer::set_trainable(false);
   }
 
   shape_t in_shape() const override { return {shape_}; }
 
-  shape_t out_shape() const override { return {shape_}; }
+  shape_t out_shape() const override { return {shape_, {shape_[0], 1, 1, 1}}; }
 
   void set_in_shape(const shape4d& shape) override { shape_ = shape; }
 
-  void set_targets(const tensor_t& labels) override { targets_ = labels; }
-
   virtual void set_shape(const shape4d& shape) { shape_ = shape; }
+
+  void set_targets(const tensor_t& labels) override {
+    *Layer::out_component_data(component_t::TARGET) = labels;
+  }
 
   /**
    * Applies the loss function onto the input data. (aka. output data of the network)
@@ -54,7 +56,38 @@ class Loss_layer : public Layer {
   }
 
   float_t error(const tensor_t& output, const tensor_t& target) const override {
-    return loss(output, target); /* + Hyperparameters::regularization_constant * regularization<float_t>(weights); */
+    return loss(output, target); /* + Hyperparameters::regularization_constant * regularization<float_t>(); */
+  }
+
+  float_t accuracy(const tensor_t &output, const tensor_t &target) const override {
+    size_t batch_size   = output.shape()[0];
+    size_t batch_length = output.size() / batch_size;
+
+    float_t acc = float_t(0);
+    for (size_t i = 0; i < batch_size; ++i) {
+      size_t max_index    = -1;
+      float_t max         = float_t(0);
+      size_t target_index = target.host_at_index(i);
+
+      for (size_t j = 0; j < batch_length; ++j) {
+        size_t index = i * batch_length + j;
+
+        auto val = output.host_at_index(index);
+        if (val > max) {
+          max       = val;
+          max_index = j;
+        }
+      }
+
+      if (max_index == -1) {
+        throw simple_error("Error: No max index was found");
+      }
+
+      if (max_index == target_index) {
+        acc += float_t(1);
+      }
+    }
+    return acc / static_cast<float_t>(batch_size);
   }
 
   /**
@@ -65,7 +98,7 @@ class Loss_layer : public Layer {
   };
 
   tensor_t network_target() override {
-    return targets_;
+    return *Layer::out_component_data(component_t::TARGET);
   }
 
   /**
@@ -90,8 +123,6 @@ class Loss_layer : public Layer {
 
  private:
   shape4d shape_;
-
-  tensor_t targets_;
 };
 
 }

@@ -91,6 +91,36 @@ namespace simpleCNN {
       }
     }
 
+    void get_bias(std::vector<tensor_t*>& bias) {
+      if (trainable()) {
+        bias.push_back(in_component_data(component_t::BIAS));
+      }
+    }
+
+    tensor_t weights() {
+      if (trainable()) {
+        for (size_t i = 0; i < in_channels_; ++i) {
+          component_t type = in_type_[i].getComponentType();
+          if (type == component_t::WEIGHT) {
+            return *get_component_data(i, type);
+          }
+        }
+      }
+      throw simple_error("Weight function called on layer without weights.");
+    }
+
+    tensor_t bias() {
+      if (trainable()) {
+        for (size_t i = 0; i < in_channels_; ++i) {
+          component_t type = in_type_[i].getComponentType();
+          if (type == component_t::BIAS) {
+            return *get_component_data(i, type);
+          }
+        }
+      }
+      throw simple_error("Bias function called on layer without bias.");
+    }
+
     tensor_t *out_component_data(component_t t) {
       for (size_t i = 0; i < out_channels_; ++i) {
         if (out_type_[i].getComponentType() == t) {
@@ -101,6 +131,52 @@ namespace simpleCNN {
     }
 
     /** End: Getters ---------------------------------------- */
+
+    /** Start: Save/Load ------------------------------------ */
+
+
+    template<typename OutputArchive>
+    void save(OutputArchive& os, const int precision = std::numeric_limits<float_t>::digits10 + 2) {
+      if (!trainable()) {
+        return;
+      }
+
+      os << std::setprecision(precision);
+
+      auto layer_weights = weights();
+      auto layer_bias = bias();
+
+      for (auto iter = layer_weights.host_begin(); iter != layer_weights.host_end(); ++iter) {
+        os << *iter << " ";
+      }
+
+      for (auto iter = layer_bias.host_begin(); iter != layer_bias.host_end(); ++iter) {
+        os << *iter << " ";
+      }
+    }
+
+    void load(std::istream& is, const int precision = std::numeric_limits<float_t>::digits10 + 2) {
+      if (!trainable()) {
+        return;
+      }
+
+      is >> std::setprecision(precision);
+
+      auto layer_weights = weights();
+      auto layer_bias = bias();
+
+      for (auto iter = layer_weights.host_begin(); iter != layer_weights.host_end(); ++iter) {
+         is >> *iter;
+      }
+
+      for (auto iter = layer_bias.host_begin(); iter != layer_bias.host_end(); ++iter) {
+        is >> *iter;
+      }
+
+      initialized_ = true;
+    }
+
+    /** End: Save/Load -------------------------------------- */
 
     /** Start: Setters -------------------------------------- */
     Layer &set_device(Device *device) {
@@ -140,6 +216,14 @@ namespace simpleCNN {
 
     float_t error() {
       return error(network_output(), network_target());
+    }
+
+    float_t accuracy() {
+      return accuracy(network_output(), network_target());
+    }
+
+    virtual float_t accuracy(const tensor_t& output, const tensor_t& target) const {
+      throw simple_error("Error: Last layer is not a loss layer");
     }
 
     virtual float_t error(const tensor_t& output, const tensor_t& target) const {
@@ -240,7 +324,12 @@ namespace simpleCNN {
       }
     }
 
-    void update(Optimizer &opt, const size_t batch_size) {
+    /**
+     * Error weights and bias are affecting the same adam class.
+     *
+     * @param opt
+     */
+    void update(Optimizer &opt) {
       if (trainable()) {
         for (size_t i = 0; i < in_channels_; ++i) {
           auto type = in_type_[i].getComponentType();
@@ -248,16 +337,18 @@ namespace simpleCNN {
             auto W = get_component_data(i, type);
             auto dW = get_component_gradient(i, type);
 
-            mean_and_regularize(*W, *dW, batch_size);
+            average_deltas_and_regularize(*W, *dW);
             opt.update(dW, W);
           }
+          /*
           if (type == component_t::BIAS) {
             auto b = get_component_data(i, type);
             auto db = get_component_gradient(i, type);
 
-            mean(*db, batch_size);
+            average_deltas(*db);
             opt.update(db, b);
           }
+          */
         }
       }
     }
@@ -302,26 +393,6 @@ namespace simpleCNN {
     void get_dW(std::vector<tensor_t*>& dW) {
       if (trainable()) {
         dW.push_back(ith_in_node(1)->get_gradient());
-      }
-    }
-
-    void print_layer_data() {
-      print(layer_type(), "Layer type");
-
-      for (size_t i = 0; i < in_channels_; ++i) {
-        //if (in_type_[i].getComponentType() == component_t::WEIGHT) {
-        const auto &in = ith_in_node(i);
-        print(*in->get_data(), "Input data " + std::to_string(i));
-        print(*in->get_gradient(), "Input grad " + std::to_string(i));
-        //print(*in->get_gradient(), "Input grad " + std::to_string(i));
-        //}
-      }
-
-      for (size_t i = 0; i < out_channels_; ++i) {
-        const auto& out = ith_out_node(i);
-        print(*out->get_data(), "Out data " + std::to_string(i));
-        print(*out->get_gradient(), "Out gradient " + std::to_string(i));
-
       }
     }
 

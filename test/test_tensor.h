@@ -74,7 +74,7 @@ namespace simpleCNN {
     }
   }
 
-  TEST(Tensor, subview) {
+  TEST(Tensor, subview_I) {
   size_t batch_size = 3;
   size_t in_h = 5;
   size_t in_w = 5;
@@ -83,11 +83,24 @@ namespace simpleCNN {
   for (size_t i = 0; i < total.size(); ++i) total.host_at_index(i) = i + 1;
   //print(total, "Total");
 
-  tensor_t subview({1, 1, 5, 5});
-
-  subview = total.subView({1}, {1, 1, 5, 5});
+  auto subview = total.subView({1}, {1, 1, 5, 5});
   //print(subview, "Subview");
 
 }
 
+  TEST(Tensor, subview_II) {
+  size_t total_num = 10;
+  size_t in_h = 5;
+  size_t in_w = 5;
+
+  tensor_t total({total_num, 1, in_h, in_w});
+
+  for (size_t i = 0; i < total.size(); ++i) total.host_at_index(i) = i + 1;
+
+  size_t batch_size = 3;
+
+  for (size_t j = 0; j < total_num; j += batch_size) {
+    auto minibatch = total.subView({j}, {batch_size, 1, in_h, in_w});
+  }
+}
 }

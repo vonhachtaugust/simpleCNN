@@ -200,11 +200,10 @@ namespace simpleCNN {
 
     Tensor& fill(T value) {
       static_assert(!kConst, "Non-constant operation on constant Tensor");
-      // data_is_on_host_ = true;
-      // data_dirty_ = true;
       std::fill(storage_ptr_->host_data(offset_), storage_ptr_->host_data(offset_) + size_, value);
       return *this;
     }
+
 
     Tensor& add(T value) {
       static_assert(!kConst, "Non-constant operation on constant Tensor");
@@ -334,6 +333,40 @@ namespace simpleCNN {
       std::copy(shape.begin(), shape.end(), shape_.begin());
     }
 
+    explicit Tensor(const TensorStoragePointer storage,
+                    const size_t offset,
+                    std::vector<size_t> const& shape) {
+      offset_ = offset;
+      size_ = product(shape);
+      storage_ptr_ = storage;
+      std::copy(shape.begin(), shape.end(), shape_.begin());
+    }
+
+    /**
+     * Make largest possible subview from when new_shape in subview_impl is too large to form a view of tensor.
+     *
+     * @param new_shape             : required shape by caller
+     * @param squeeze_length        : maximum length by which a view can be made
+     * @return                      : squeezed shape (made fit)
+     */
+    template<typename Container>
+    inline std::vector<size_t> squeeze(const Container& new_shape, const size_t squeeze_length) const {
+      std::vector<size_t> squeezed(new_shape.size());
+      std::copy(std::begin(new_shape), std::end(new_shape), squeezed.begin());
+
+      size_t reduceable_dim = 0;
+      while (product(squeezed) > squeeze_length) {
+        if (squeezed[reduceable_dim] <= 1) {
+          if (reduceable_dim > squeezed.size()) {
+            return {0};
+          }
+          reduceable_dim++;
+        }
+        squeezed[reduceable_dim]--;
+      }
+      return squeezed;
+    }
+
     /*
      * Implementation method to extract a view from activate tensor
      * Raises an exception when sizes of the starting offset and new_shape
@@ -349,6 +382,11 @@ namespace simpleCNN {
       // the new view.
       const size_t new_offset = offset_ + compute_offset(start, shape_);
       if (new_offset + product(new_shape) > size_) {
+        auto squeezed_shape = squeeze(new_shape, size_ - new_offset);
+
+        if (squeezed_shape.size() != 0) {
+          return Tensor(storage_ptr_, new_offset, squeezed_shape);
+        }
         throw simple_error("Cannot create activate view from this tensor");
       }
 
@@ -362,6 +400,11 @@ namespace simpleCNN {
       
       const size_t new_offset = offset_ + compute_offset(start, shape_);
       if (new_offset + product(new_shape) > size_) {
+        auto squeezed_shape = squeeze(new_shape, size_ - new_offset);
+
+        if (squeezed_shape.size() != 0) {
+          return Tensor(storage_ptr_, new_offset, squeezed_shape);
+        }
         throw simple_error("Cannot create activate view from this tensor");
       }
       

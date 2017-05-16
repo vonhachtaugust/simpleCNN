@@ -8,7 +8,6 @@
 #include "test_activation_layer.h"
 #include "test_connected_layer.h"
 #include "test_convolutional_layer.h"
-#include "test_feedforward_layer.h"
 #include "test_loss_layer.h"
 #include "test_maxpooling_layer.h"
 #include "test_network.h"
@@ -18,6 +17,8 @@
 #include "test_weight_init.h"
 #include "test_dropout_layer.h"
 #include "test_cuda.h"
+#include "test_serialization.h"
+#include "test_math_functions.h"
 
 using namespace std;
 

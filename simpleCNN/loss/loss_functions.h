@@ -50,8 +50,7 @@ namespace simpleCNN {
 
         for (size_t b = 0; b < batch_size; ++b) {
           size_t target_index = target.host_at_index(b);
-          auto val            = f(output.host_at_index(b * n + target_index));
-          loss_i += val;
+          loss_i += f(output.host_at_index(b * n + target_index));
         }
         return loss_i;
       }
@@ -158,6 +157,7 @@ namespace simpleCNN {
     return loss::loss_gradient(val, targets);
   }
 
+  /*
   float_t accuracy(const tensor_t &prob_dist, const tensor_t &targets) {
     size_t batch_size   = prob_dist.shape()[0];
     size_t batch_length = prob_dist.size() / batch_size;
@@ -188,13 +188,14 @@ namespace simpleCNN {
     }
     return acc / static_cast<float_t>(batch_size);
   }
+   */
 
   void loss_value(const tensor_t &output, const tensor_t &targets) {
-    auto val = loss::loss_function(output);
-    auto acc = accuracy(val, targets);
-    auto l   = loss::loss(val, targets);
-    std::cout << "Loss: " << l << " ; "
-              << "Acc: " << acc << std::endl;
+    //auto val = loss::loss_function(output);
+    //auto acc = accuracy(val, targets);
+    //auto l   = loss::loss(val, targets);
+    //std::cout << "Loss: " << l << " ; "
+    //          << "Acc: " << acc << std::endl;
   }
 
   /**

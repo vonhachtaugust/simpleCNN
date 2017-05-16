@@ -45,7 +45,6 @@
 
 #include "optimizers/optimizer.h"
 
-#include "loss/loss_functions.h"
 #include "loss/loss_layer.h"
 #include "loss/softmax.h"
 
@@ -59,3 +58,4 @@
 #include "util/math_functions.h"
 
 #include "io/parse_mnist.h"
+#include "io/serialize.h"

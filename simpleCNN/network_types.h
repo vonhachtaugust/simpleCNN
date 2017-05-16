@@ -19,13 +19,11 @@ namespace simpleCNN {
 
     virtual float_t forward_loss(const tensor_t& input, const tensor_t& labels) = 0;
 
-    virtual void set_targets(const tensor_t& labels) = 0;
+    virtual void backward(const tensor_t& labels) = 0;
 
-    virtual void backward(const tensor_t& gradients) = 0;
-
-    virtual void update(Optimizer& opt, const size_t batch_size) {
+    virtual void update(Optimizer& opt) {
       for (auto l : nodes_) {
-        l->update(opt, batch_size);
+        l->update(opt);
       }
     }
 
@@ -35,17 +33,16 @@ namespace simpleCNN {
       }
     }
 
-    void print_layers() {
-      for (auto l : nodes_) {
-        l->print_layer_data();
-      }
-    }
-
     std::vector<tensor_t*> get_dW() {
       std::vector<tensor_t *> dW;
       for (auto l : nodes_) {
         l->get_dW(dW);
       }
+
+      if (dW.size() == 0) {
+        throw simple_error("Network has no trainable weights");
+      }
+
       return dW;
     }
 
@@ -53,6 +50,15 @@ namespace simpleCNN {
       for (auto l : nodes_) {
         l->print_dW();
       }
+    }
+
+    virtual std::vector<tensor_t*> get_bias() {
+      std::vector<tensor_t *> bias;
+
+      for (auto l : nodes_) {
+        l->get_bias(bias);
+      }
+      return bias;
     }
 
     virtual std::vector<tensor_t*> get_weights() {
@@ -66,6 +72,20 @@ namespace simpleCNN {
 
     void print_error() {
       std::cout << nodes_.back()->error() << std::endl;
+    }
+
+    template<typename OutputArchive>
+    void save_weight_and_bias(OutputArchive &oa) const {
+      for (auto l : nodes_) {
+        l->save(oa);
+      }
+    }
+
+    template<typename InputArchive>
+    void load_weight_and_bias(InputArchive &ia) const {
+      for (auto l : nodes_) {
+        l->load(ia);
+      }
     }
 
     size_t size() const { return nodes_.size(); }
@@ -104,13 +124,26 @@ namespace simpleCNN {
 
   class Sequential : public Network_type {
    public:
-    void backward(const tensor_t& gradients) override {
-      nodes_.back()->set_out_grad(gradients);
-
+    void backward(const tensor_t& labels) override {
+      nodes_.back()->set_targets(labels);
 
       for (auto l = nodes_.rbegin(); l != nodes_.rend(); ++l) {
         (*l)->backward();
       }
+    }
+
+    void backward_pass(const tensor_t& labels, std::vector<float_t>& loss, std::vector<float_t>& accuracy) {
+      nodes_.back()->set_targets(labels);
+
+      for (auto l = nodes_.rbegin(); l != nodes_.rend(); ++l) {
+        (*l)->backward();
+      }
+
+      auto err = nodes_.back()->error();
+      loss.push_back(err);
+
+      auto acc = nodes_.back()->accuracy();
+      accuracy.push_back(acc);
     }
 
     tensor_t forward(const tensor_t& input) override {
@@ -136,13 +169,9 @@ namespace simpleCNN {
     void forward_pass(const tensor_t& input) override {
       nodes_.front()->set_in_data(input, component_t::IN_DATA);
 
-      for(size_t i = 0; i < nodes_.size(); ++i) {
-        nodes_[i]->forward();
+      for (auto l : nodes_) {
+        l->forward();
       }
-    }
-
-    void set_targets(const tensor_t& labels) override {
-      nodes_.back()->set_targets(labels);
     }
 
     template <typename T>

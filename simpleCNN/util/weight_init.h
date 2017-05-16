@@ -33,9 +33,8 @@ namespace simpleCNN {
 
       void fill(tensor_t* weight, size_t fan_in, size_t fan_out) override {
         const float_t std = std::sqrt(scale_ / (fan_in));
-        const float_t mean = float_t(0);
 
-        normal_dist(weight->host_begin(), weight->host_end(), mean, std);
+        normal_dist(weight->host_begin(), weight->host_end(), float_t(0), std);
       }
     };
 

@@ -67,6 +67,7 @@ namespace simpleCNN {
         for (size_t b = 0; b < batch_size; ++b) {
           size_t target_i = target.host_at_index(b);
           size_t index = b * n + target_i;
+
           loss_tot += f(output.host_at_index(index));
         }
         return loss_tot / static_cast<float_t>(batch_size);

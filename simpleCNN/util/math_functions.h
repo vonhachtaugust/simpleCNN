@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "../io/serialize.h"
+
 namespace simpleCNN {
 
 
@@ -26,16 +28,86 @@ T max(const Container& c) {
   return max;
 };
 
-float_t mean_value(const tensor_t& x) {
-  return std::accumulate(x.host_begin(), x.host_end(), float_t{0}) / static_cast<float_t>(x.size());
+std::vector<float_t> standard_deviation(const tensor_t& x, const std::vector<float_t> means) {
+  size_t batch_size = x.shape()[0];
+  size_t batch_length = x.size() / batch_size;
+
+  std::vector<float_t> stds;
+
+  for (size_t b = 0; b < batch_size; ++b) {
+    float_t std = float_t(0);
+    for (size_t i = 0; i < batch_length; ++i) {
+      size_t index = b * batch_length + i;
+
+      std += std::pow(x.host_at_index(index) - means[b], 2);
+    }
+    stds.push_back(std::sqrt(std / static_cast<float_t>(batch_length)));
+  }
+
+  return stds;
 }
 
+std::vector<float_t> means(const tensor_t& x) {
+  size_t batch_size = x.shape()[0];
+  size_t batch_length = x.size() / batch_size;
 
-void mean(tensor_t& x, const size_t batch_size) {
-  float_t norm = float_t(1) / float_t(batch_size);
+  std::vector<float_t> means;
 
-  for (auto iter = x.host_begin(); iter != x.host_end(); ++iter) {
-    *iter *= norm;
+  for (size_t b = 0; b < batch_size; ++b) {
+    float_t mean = float_t(0);
+    for (size_t i = 0; i < batch_length; ++i) {
+      size_t index = b * batch_length + i;
+
+      mean += x.host_at_index(index);
+    }
+    means.push_back(mean / static_cast<float_t>(batch_length));
+  }
+
+  return means;
+}
+
+void zero_mean_unit_variance(tensor_t& x, bool save = false, std::string filename = "") {
+  auto m = means(x);
+  auto s = standard_deviation(x, m);
+
+  float_t mean = std::accumulate(m.begin(), m.end(), float_t(0)) / static_cast<float_t>(m.size());
+  float_t std = std::accumulate(s.begin(), s.end(), float_t(0)) / static_cast<float_t>(s.size());
+
+  size_t batch_size = x.shape()[0];
+  size_t batch_length = x.size() / batch_size;
+
+  for (size_t b = 0; b < batch_size; ++b) {
+    for (size_t i = 0; i < batch_length; ++i) {
+      size_t index = b * batch_length + i;
+
+      x.host_at_index(index) -= mean;
+      x.host_at_index(index) /= std;
+    }
+  }
+
+  if (save) {
+    std::vector<float_t> result = {mean, std};
+    save_data_to_file<float_t>(filename, result);
+  }
+}
+
+void zero_mean_unit_variance(tensor_t& x, std::string filename) {
+  std::vector<float_t> data(2);
+  load_data_from_file<float_t>(filename, data);
+
+  float_t mean = data[0];
+  float_t std = data[1];
+
+  size_t batch_size = x.shape()[0];
+  size_t batch_length = x.size() / batch_size;
+
+  for (size_t b = 0; b < batch_size; ++b) {
+    for (size_t i = 0; i < batch_length; ++i) {
+      size_t index = b * batch_length + i;
+
+      x.host_at_index(index) -= mean;
+      x.host_at_index(index) /= std;
+    }
   }
 }
 
@@ -88,17 +160,26 @@ std::vector<float_t> relative_error(const std::vector<tensor_t*>& A, std::vector
   return errors;
 }
 
-void mean_and_regularize(const tensor_t& x, tensor_t& dx, const size_t batch_size) {
-  assert(x.size() == dx.size());
-  float_t norm = float_t(1) / float_t(batch_size);
-  float_t reg = Hyperparameters::regularization_constant;
-  
-  // dx is the summed up gradient over the entire batch.
-  // x are the weights
+void average_deltas(tensor_t& dx) {
+  size_t batch_size = dx.shape()[0];
+  float_t norm = float_t(1) / static_cast<float_t>(batch_size);
 
   size_t n = dx.size();
   for(size_t i = 0; i < n; ++i) {
-    dx.host_at_index(i) = dx.host_at_index(i) * norm + reg * x.host_at_index(i);
+    dx.host_at_index(i) *= norm;
+  }
+}
+
+void average_deltas_and_regularize(const tensor_t& x, tensor_t& dx) {
+  assert(x.size() == dx.size());
+  size_t batch_size = x.shape()[0];
+  float_t norm = float_t(1) / static_cast<float_t>(batch_size);
+  float_t reg = Hyperparameters::regularization_constant;
+  
+  size_t n = dx.size();
+  for(size_t i = 0; i < n; ++i) {
+    dx.host_at_index(i) *= norm;
+    dx.host_at_index(i) += reg * x.host_at_index(i);
   }
 }
 

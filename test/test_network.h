@@ -25,7 +25,7 @@ using adam    = Adam<float_t>;
 }
 
   TEST(Network, gradient_check) {
-    /* Network<Sequential> net;
+    Network<Sequential> net;
     size_t ils = 2; // input layer size
     size_t hls = 3; // hidden layer size
     size_t ols = 3; // output layer size
@@ -42,7 +42,11 @@ using adam    = Adam<float_t>;
 
     labels.host_at_index(0) = 0;
 
-    net.gradient_check(input, labels, batch_size); */
+    auto error = net.gradient_check(input, labels, batch_size);
+
+    for (auto e : error) {
+      ASSERT_NEAR(e, 1E-7, 1E-4);
+    }
 }
 
   TEST(Network, test) {
@@ -50,7 +54,7 @@ using adam    = Adam<float_t>;
   size_t in_w = 10;
   size_t in_h = 10;
   size_t in_ch = 1;
-  size_t bs = 3;
+  size_t bs = 1;
   size_t out_ch = 3;
   size_t fs = 5;
 
@@ -63,9 +67,13 @@ using adam    = Adam<float_t>;
 
   // w, h, in_c, batch
 
-  net << conv(in_w, in_h, in_ch, bs, fs, out_ch) << maxpool(6, 6, out_ch, bs) << fully(3 * 3 * out_ch, out_ch, bs);
+  net << conv(in_w, in_h, in_ch, bs, fs, out_ch) << maxpool(6, 6, out_ch, bs) << fully(3 * 3 * out_ch, out_ch, bs) << softmax();
 
-  net.gradient_check(input, labels, bs);
+  auto error = net.gradient_check(input, labels, bs);
+
+  for (auto e : error) {
+    ASSERT_NEAR(e, 1E-4, 1E-4);
+  }
 }
 
 }
