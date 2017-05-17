@@ -66,15 +66,33 @@ namespace simpleCNN {
       }
     }
 
-    std::vector<float_t> gradient_check(const tensor_t& input, const tensor_t& labels, const size_t batch_size) {
+    std::vector<float_t> gradient_check(const tensor_t& input, const tensor_t& labels) {
       net_.setup(true);
+      Adam<float_t> a;
       auto ng = computeNumericalGradient(input, labels);
 
       net_.forward_pass(input);
       net_.backward(labels);
       auto dW = net_.get_dW();
 
+      //printvt(ng, "Numerical gradient");
+      //printvt_ptr(dW, "Backprop gradient");
+
       return relative_error(dW, ng);
+    }
+
+    std::vector<float_t> gradient_check_bias(const tensor_t& input, const tensor_t& labels) {
+      net_.setup(true);
+      auto ng = computeNumericalGradient_bias(input, labels);
+
+      net_.forward_pass(input);
+      net_.backward(labels);
+      auto dB = net_.get_dB();
+
+      //printvt(ng, "Numerical gradient");
+      //printvt_ptr(dB, "Backprop gradient");
+
+      return relative_error(dB, ng);
     }
 
     /**
@@ -104,6 +122,34 @@ namespace simpleCNN {
           weights[i]->host_at_index(j) += e;
         }
         num_grads.push_back(numerical_weight_gradient);
+      }
+      return num_grads;
+    }
+
+    std::vector<tensor_t> computeNumericalGradient_bias(const tensor_t& input, const tensor_t& labels) {
+      std::vector<tensor_t *> bias = net_.get_bias();
+      size_t batch_size = input.shape()[0];
+      std::vector<tensor_t> num_grads;
+
+      float_t e = 1E-3;
+
+      // For each layer containing weights.
+      for (size_t i = 0; i < bias.size(); ++i) {
+        // std::cout << "Computing ... " + std::to_string(i) << std::endl;
+        // For each weight in the layer.
+        tensor_t numerical_gradient(bias[i]->shape_v());
+
+        for (size_t j = 0; j < bias[i]->size(); ++j) {
+          bias[i]->host_at_index(j) += e;
+          auto loss1 = net_.forward_loss(input, labels);
+
+          bias[i]->host_at_index(j) -= 2 * e;
+          auto loss2 = net_.forward_loss(input, labels);
+
+          numerical_gradient.host_at_index(j) = (loss1 - loss2) / (2 * e);
+          bias[i]->host_at_index(j) += e;
+        }
+        num_grads.push_back(numerical_gradient);
       }
       return num_grads;
     }

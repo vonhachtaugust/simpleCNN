@@ -155,33 +155,31 @@ std::vector<float_t> relative_error(const std::vector<tensor_t*>& A, std::vector
   for (size_t i = 0; i < B.size(); ++i) {
     auto sum = l2norm(*A[i], B[i]);
     auto diff = l2norm_diff(*A[i], B[i]);
-    errors.push_back(diff / sum);
+    auto val = diff / sum;
+    if (isnan(val)) {
+      print(sum);
+      print(diff);
+      throw simple_error("Error: sum or diff was nan");
+    }
+
+    errors.push_back(val);
   }
   return errors;
 }
 
-void average_deltas(tensor_t& dx) {
-  size_t batch_size = dx.shape()[0];
+void average_deltas(tensor_t& dx, const size_t batch_size) {
   float_t norm = float_t(1) / static_cast<float_t>(batch_size);
 
   size_t n = dx.size();
   for(size_t i = 0; i < n; ++i) {
-    dx.host_at_index(i) *= norm;
+    dx.host_at_index(i) *= norm; // average
   }
 }
 
-void average_deltas_and_regularize(const tensor_t& x, tensor_t& dx) {
-  assert(x.size() == dx.size());
-  size_t batch_size = x.shape()[0];
-  float_t norm = float_t(1) / static_cast<float_t>(batch_size);
-  float_t reg = Hyperparameters::regularization_constant;
-  
-  size_t n = dx.size();
-  for(size_t i = 0; i < n; ++i) {
-    dx.host_at_index(i) *= norm;
-    dx.host_at_index(i) += reg * x.host_at_index(i);
+void regularize(const tensor_t& W, tensor_t& dW) {
+  for (size_t i = 0; i < dW.size(); ++i) {
+    dW.host_at_index(i) += Hyperparameters::regularization_constant * W.host_at_index(i);
   }
 }
-
 
 }

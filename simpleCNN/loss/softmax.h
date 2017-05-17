@@ -13,7 +13,12 @@ namespace simpleCNN {
       template <typename T>
       T df(T value) const { return value - T(1); }
 
-      template <typename T> T f(const T &value) const { return -std::log(value); }
+      template <typename T> T f(const T &value) const {
+        if (value == 0) {
+          throw simple_error("Value equals zero, loss is infinity");
+        }
+        return -std::log(value);
+      }
 
       void loss_function(const tensor_t &in_data, tensor_t &out_data) const override {
         size_t batch_size   = in_data.shape()[0];
@@ -48,13 +53,14 @@ namespace simpleCNN {
         size_t n          = out_data.size() / batch_size;
 
         for (size_t b = 0; b < batch_size; ++b) {
-          size_t t = target.host_at_index(b * n);
+          size_t t = target.host_at_index(b);
           for (size_t i = 0; i < n; ++i) {
+            size_t index = b * n + i;
             if (i == t) {
-              in_grad.host_at_index(b * n + i) = df(out_data.host_at_index(b * n + i));
+              in_grad.host_at_index(index) = df(out_data.host_at_index(index));
               continue;
             }
-            in_grad.host_at_index(b * n + i) = out_data.host_at_index(b * n + i);
+            in_grad.host_at_index(index) = out_data.host_at_index(index);
           }
         }
       }

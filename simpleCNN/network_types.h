@@ -21,9 +21,9 @@ namespace simpleCNN {
 
     virtual void backward(const tensor_t& labels) = 0;
 
-    virtual void update(Optimizer& opt) {
+    virtual void update(Optimizer& opt, const size_t batch_size) {
       for (auto l : nodes_) {
-        l->update(opt);
+        l->update(opt, batch_size);
       }
     }
 
@@ -31,6 +31,14 @@ namespace simpleCNN {
       for (auto l : nodes_) {
         l->setup(reset_weight);
       }
+    }
+
+    std::vector<tensor_t*> get_dB() {
+      std::vector<tensor_t *> dB;
+      for (auto l : nodes_) {
+        l->get_dB(dB);
+      }
+      return dB;
     }
 
     std::vector<tensor_t*> get_dW() {

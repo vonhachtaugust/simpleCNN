@@ -329,27 +329,16 @@ namespace simpleCNN {
      *
      * @param opt
      */
-    void update(Optimizer &opt) {
+    void update(Optimizer &opt, const size_t batch_size) {
       if (trainable()) {
-        for (size_t i = 0; i < in_channels_; ++i) {
-          auto type = in_type_[i].getComponentType();
-          if (type == component_t::WEIGHT) {
-            auto W = get_component_data(i, type);
-            auto dW = get_component_gradient(i, type);
+        auto W = ith_in_node(1)->get_data();
+        auto dW = ith_in_node(1)->get_gradient();
+        auto B = ith_in_node(2)->get_data();
+        auto dB = ith_in_node(2)->get_gradient();
 
-            average_deltas_and_regularize(*W, *dW);
-            opt.update(dW, W);
-          }
-          /*
-          if (type == component_t::BIAS) {
-            auto b = get_component_data(i, type);
-            auto db = get_component_gradient(i, type);
+        regularize(*dW, *W);
 
-            average_deltas(*db);
-            opt.update(db, b);
-          }
-          */
-        }
+        opt.update(dW, dB, W, B);
       }
     }
 
@@ -392,7 +381,17 @@ namespace simpleCNN {
 
     void get_dW(std::vector<tensor_t*>& dW) {
       if (trainable()) {
-        dW.push_back(ith_in_node(1)->get_gradient());
+        tensor_t* grads = ith_in_node(1)->get_gradient();
+        //average_deltas(*grads);
+        dW.push_back(grads);
+      }
+    }
+
+    void get_dB(std::vector<tensor_t*>& dB) {
+      if (trainable()) {
+        tensor_t* grads = ith_in_node(2)->get_gradient();
+        //average_deltas(*grads);
+        dB.push_back(grads);
       }
     }
 

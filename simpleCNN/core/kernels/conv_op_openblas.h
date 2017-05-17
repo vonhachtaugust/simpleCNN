@@ -114,10 +114,12 @@ namespace simpleCNN {
             auto start = curr_delta.host_iter(i, j, 0, 0);
             auto end   = start + params.output_height * params.output_width;
 
-            db.host_at(j, 0, 0, 0) = std::accumulate(start, end, float_t(0));
+            db.host_at(j, 0, 0, 0) += std::accumulate(start, end, float_t(0));
           }
         }
       }
+      average_deltas(dW, params.batch_size);
+      average_deltas(db, params.batch_size);
     }
 
     /**

@@ -20,11 +20,15 @@ namespace simpleCNN {
      * @param dp - parameter gradient values.
      * @param p - current parameter values, to be updated.
      */
-    virtual void update(const tensor_t* dp, tensor_t* p) = 0;
+    //virtual void update_weight(const tensor_t* dW, tensor_t* W) = 0;
+
+    //virtual void update_bias(const tensor_t* dB, tensor_t* B) = 0;
+
+    virtual void update(const tensor_t* dW, const tensor_t* dB, tensor_t* W, tensor_t* B) = 0;
   };
 
   /**
-   * Helper class to keep track of weight gradient history.
+   * Helper class to keep track of weight and bias gradient history.
    *
    * @tparam N : number of lists of values to remember history of.
    */
@@ -53,43 +57,50 @@ namespace simpleCNN {
   };
 
   template <typename T = float_t>
-  class Adam : public Stateful_optimizer<2> {
+  class Adam : public Stateful_optimizer<4> {
    public:
     Adam()
       : alpha(Hyperparameters::learning_rate),
-        b1(float_t(0.9)),
-        b2(float_t(0.999)),
-        b1_t(float_t(0.9)),
-        b2_t(float_t(0.999)),
-        eps(float_t(1e-8)) {}
+        eps(float_t(1e-8)),
+        beta1(float_t(0.9)),
+        beta2(float_t(0.999)),
+        beta1_t(float_t(0.9)),
+        beta2_t(float_t(0.999)) {}
 
-    void update(const tensor_t* dp, tensor_t* p) override {
-      assert(dp->size() == p->size());
-      tensor_t* mt = get<0>(p);
-      tensor_t* vt = get<1>(p);
+    void update(const tensor_t* dW, const tensor_t* dB, tensor_t* W, tensor_t* B) {
+      tensor_t* mt_w = get<0>(W);
+      tensor_t* vt_w = get<1>(W);
+      tensor_t* mt_b = get<2>(W);
+      tensor_t* vt_b = get<3>(W);
 
-      b1_t *= b1;
-      b2_t *= b2;
+      beta1_t *= beta1;
+      beta2_t *= beta2;
 
-      for (size_t i = 0; i < dp->size(); ++i) {
+      adam(dW, mt_w, vt_w, W);
+      adam(dB, mt_b, vt_b, B);
+    }
+
+    void adam(const tensor_t* dx, const tensor_t* mt, const tensor_t* vt, tensor_t* x) {
+      for (size_t i = 0; i < dx->size(); ++i) {
         auto& mt_i = mt->host_at_index(i);
         auto& vt_i = vt->host_at_index(i);
-        auto& dp_i = dp->host_at_index(i);
-        auto& p_i  = p->host_at_index(i);
+        auto& dx_i = dx->host_at_index(i);
+        auto& x_i  = x->host_at_index(i);
 
-        mt_i = b1 * mt_i + (float_t(1) - b1) * dp_i;
-        vt_i = b2 * vt_i + (float_t(1) - b2) * dp_i * dp_i;
+        mt_i = beta1 * mt_i + (float_t(1) - beta1) * dx_i;
+        vt_i = beta2 * vt_i + (float_t(1) - beta2) * dx_i * dx_i;
 
-        p_i -= alpha * (mt_i / (float_t(1) - b1_t)) / std::sqrt((vt_i / (float_t(1) - b2_t)) + eps);
+        float_t adaptive_lr = alpha * std::sqrt(1 - beta2_t) / (float_t(1) - beta1_t);
+        x_i -= adaptive_lr * mt_i / (std::sqrt(vt_i) + eps);
       }
     }
 
    private:
-    float_t alpha;  // learning rate
-    float_t b1;     // decay term
-    float_t b2;     // decay term
-    float_t b1_t;   // decay term power t
-    float_t b2_t;   // decay term power t
-    T eps;
+    float_t beta1; // decay term
+    float_t beta2; // decay term
+    float_t beta1_t; // decay term over time
+    float_t beta2_t; // decay term over time
+    float_t alpha; // learning rate
+    float_t eps;   // dummy term to avoid division by zero
   };
 }

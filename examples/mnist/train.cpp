@@ -50,7 +50,7 @@ static bool train_mnist(const size_t batch_size,
   size_t mnist_image_num = 60000;
   size_t in_width        = 32;
   size_t in_height       = 32;
-  size_t subset          = 1;
+  size_t subset          = 3;
 
   std::string path_to_data("/c3se/NOBACKUP/users/hacht/data/");
 

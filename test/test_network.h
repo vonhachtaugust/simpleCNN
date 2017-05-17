@@ -42,10 +42,10 @@ using adam    = Adam<float_t>;
 
     labels.host_at_index(0) = 0;
 
-    auto error = net.gradient_check(input, labels, batch_size);
+    auto error = net.gradient_check(input, labels);
 
     for (auto e : error) {
-      ASSERT_NEAR(e, 1E-7, 1E-4);
+      ASSERT_NEAR(e, 1E-4, 1E-4);
     }
 }
 
@@ -54,7 +54,7 @@ using adam    = Adam<float_t>;
   size_t in_w = 10;
   size_t in_h = 10;
   size_t in_ch = 1;
-  size_t bs = 1;
+  size_t bs = 2;
   size_t out_ch = 3;
   size_t fs = 5;
 
@@ -62,18 +62,42 @@ using adam    = Adam<float_t>;
   uniform_rand(input.host_begin(), input.host_end(), -1, 1);
 
   tensor_t labels({bs, 1, 1, 1});
-  vec_t test_labels = {0};
-  fill(test_labels, labels);
+
+  // w, h, in_c, batch
+  net << conv(in_w, in_h, in_ch, bs, fs, out_ch) << maxpool(6, 6, out_ch, bs) << fully(3 * 3 * out_ch, out_ch, bs) << softmax();
+
+  auto error = net.gradient_check(input, labels);
+
+  for (auto e : error) {
+    //print(e, "Error");
+    ASSERT_NEAR(e, 1E-2, 1E-2);
+  }
+}
+
+  TEST(Network, gradient_check_bias) {
+  Network<Sequential> net;
+  size_t in_w = 10;
+  size_t in_h = 10;
+  size_t in_ch = 1;
+  size_t bs = 10;
+  size_t out_ch = 3;
+  size_t fs = 5;
+
+  tensor_t input({bs, in_ch, in_h, in_w});
+  uniform_rand(input.host_begin(), input.host_end(), -1, 1);
+
+  tensor_t labels({bs, 1, 1, 1});
 
   // w, h, in_c, batch
 
   net << conv(in_w, in_h, in_ch, bs, fs, out_ch) << maxpool(6, 6, out_ch, bs) << fully(3 * 3 * out_ch, out_ch, bs) << softmax();
 
-  auto error = net.gradient_check(input, labels, bs);
-
+  auto error = net.gradient_check_bias(input, labels);
   for (auto e : error) {
-    ASSERT_NEAR(e, 1E-4, 1E-4);
+    //print(e, "Error");
+    ASSERT_NEAR(e, 1E-2, 1E-2);
   }
+
 }
 
 }
