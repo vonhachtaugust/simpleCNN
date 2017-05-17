@@ -21,9 +21,9 @@ namespace simpleCNN {
 
     virtual void backward(const tensor_t& labels) = 0;
 
-    virtual void update(Optimizer& opt, const size_t batch_size) {
+    virtual void update(Optimizer& opt) {
       for (auto l : nodes_) {
-        l->update(opt, batch_size);
+        l->update(opt);
       }
     }
 

@@ -314,7 +314,7 @@ namespace simpleCNN {
      *
      * @param opt
      */
-    void update(Optimizer &opt, const size_t batch_size) {
+    void update(Optimizer &opt) {
       if (trainable()) {
         auto W  = ith_in_node(1)->get_data();
         auto dW = ith_in_node(1)->get_gradient();
