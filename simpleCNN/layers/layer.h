@@ -130,6 +130,10 @@ namespace simpleCNN {
       throw simple_error("Error: Out component not allocated, or not specified properly.");
     }
 
+    void set_out_data(const tensor_t& data, const size_t index) {
+      *ith_out_node(index)->get_data() = data;
+    }
+
     /** End: Getters ---------------------------------------- */
 
     /** Start: Save/Load ------------------------------------ */
@@ -226,9 +230,9 @@ namespace simpleCNN {
      *
      * @return output of the network
      */
-    virtual tensor_t network_output() { throw simple_error("Error: Function not called on a loss layer type."); }
+    virtual tensor_t& network_output() { throw simple_error("Error: Function not called on a loss layer type."); }
 
-    virtual tensor_t network_target() { throw simple_error("Error: Function not called on a loss layer type."); }
+    virtual tensor_t& network_target() { throw simple_error("Error: Function not called on a loss layer type."); }
 
     tensor_t output() const {
       for (size_t i = 0; i < out_channels_; i++) {

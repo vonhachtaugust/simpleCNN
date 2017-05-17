@@ -54,9 +54,14 @@ namespace simpleCNN {
       void loss_gradient(const tensor_t &out_data, const tensor_t &target, tensor_t &in_grad) const override {
         size_t batch_size = out_data.shape()[0];
         size_t n          = out_data.size() / batch_size;
+        //print(out_data, "Outdata");
+        //print(target, "Targets");
+        //size_t val = *target.host_begin();
 
         for (size_t b = 0; b < batch_size; ++b) {
-          size_t t = target.host_at_index(b);
+          //float_t t = target.host_at_index(b);
+          size_t t = *(target.host_begin() + b);
+          //print(t, "Target");
           for (size_t i = 0; i < n; ++i) {
             size_t index = b * n + i;
             if (i == t) {
@@ -66,15 +71,19 @@ namespace simpleCNN {
             in_grad.host_at_index(index) = out_data.host_at_index(index);
           }
         }
+        //print(in_grad, "Input gradient");
       }
 
       float_t loss(const tensor_t &output, const tensor_t &target) const override {
         float_t loss_tot  = float_t(0);
         size_t batch_size = output.shape()[0];
         size_t n          = output.size() / batch_size;
+        //print(target, "Target");
+        //print(output, "Output");
 
         for (size_t b = 0; b < batch_size; ++b) {
-          size_t target_i = target.host_at_index(b);
+          //size_t target_i = target.host_at_index(b);
+          size_t target_i = *(target.host_begin() + b);
           size_t index    = b * n + target_i;
 
           loss_tot += f(output.host_at_index(index));

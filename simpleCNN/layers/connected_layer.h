@@ -76,7 +76,7 @@ namespace simpleCNN {
       in_grad[0]->reshape(shape);
     }
 
-    tensor_t network_output() override { return *Layer::out_component_data(component_t::OUT_DATA); };
+    tensor_t& network_output() override { return *Layer::out_component_data(component_t::OUT_DATA); };
 
     std::string layer_type() const override { return std::string("connected"); }
 

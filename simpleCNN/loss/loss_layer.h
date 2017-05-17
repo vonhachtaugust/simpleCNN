@@ -30,7 +30,10 @@ namespace simpleCNN {
 
     virtual void set_shape(const shape4d& shape) { shape_ = shape; }
 
-    void set_targets(const tensor_t& labels) override { *Layer::out_component_data(component_t::TARGET) = labels; }
+    void set_targets(const tensor_t& labels) override {
+      //*Layer::out_component_data(component_t::TARGET) = labels;
+      Layer::set_out_data(labels, 1);
+    }
 
     /**
      * Applies the loss function onto the input data. (aka. output data of the network)
@@ -67,13 +70,13 @@ namespace simpleCNN {
       size_t batch_length = output.size() / batch_size;
 
       float_t acc = float_t(0);
-      for (size_t i = 0; i < batch_size; ++i) {
+      for (size_t b = 0; b < batch_size; ++b) {
         size_t max_index    = -1;
         float_t max         = float_t(0);
-        size_t target_index = target.host_at_index(i);
+        size_t target_index = *(target.host_begin() + b);
 
         for (size_t j = 0; j < batch_length; ++j) {
-          size_t index = i * batch_length + j;
+          size_t index = b * batch_length + j;
 
           auto val = output.host_at_index(index);
           if (val > max) {
@@ -96,9 +99,9 @@ namespace simpleCNN {
     /**
      * @return loss function applied to the network output data.
      */
-    tensor_t network_output() override { return *Layer::out_component_data(component_t::OUT_DATA); };
+    tensor_t& network_output() override { return *Layer::out_component_data(component_t::OUT_DATA); };
 
-    tensor_t network_target() override { return *Layer::out_component_data(component_t::TARGET); }
+    tensor_t& network_target() override { return *Layer::out_component_data(component_t::TARGET); }
 
     /**
      * Function to compute network output into something interpretable, like probability distribution etc.
