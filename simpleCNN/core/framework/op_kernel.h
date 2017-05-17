@@ -50,7 +50,7 @@ namespace simpleCNN {
 
       explicit OpKernelContext(const data_ptrs_t& in_data, data_ptrs_t& out_data)
         : in_data_(in_data), out_data_(out_data) {
-          op_params_ = std::unique_ptr<OpParams>(new OpParams());
+        op_params_ = std::unique_ptr<OpParams>(new OpParams());
       }
 
       explicit OpKernelContext(const data_ptrs_t& in_data,

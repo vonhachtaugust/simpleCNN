@@ -65,7 +65,7 @@ namespace simpleCNN {
     /**
      * Next node to which this edge connect to
      **/
-    //const std::vector<nodeptr_t>& next() const { return next_; }
+    // const std::vector<nodeptr_t>& next() const { return next_; }
     const nodeptr_t next() { return next_; }
 
     /**
@@ -81,12 +81,9 @@ namespace simpleCNN {
     const shape4d& shape() const { return shape_; }
     /** ------------------------------------------------------- */
 
-
     void clear_gradients() { grad_.fill(float_t{0}); }
 
-    void add_next_node(nodeptr_t next) {
-      next_ = next;
-    }
+    void add_next_node(nodeptr_t next) { next_ = next; }
 
    private:
     shape4d shape_;

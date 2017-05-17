@@ -183,25 +183,25 @@ namespace simpleCNN {
     image.host_at(batch_number, depth, height, width) += val;
   }
 
-template <typename T = float_t>
-void col2im_insert_pixel(const matrix_t& result,
-                      int batch_number,
-                      tensor_t& image,
-                      int image_width,
-                      int image_height,
-                      int depth,
-                      int height,
-                      int width,
-                      int pad,
-                      T val) {
-  height -= pad;
-  width -= pad;
+  template <typename T = float_t>
+  void col2im_insert_pixel(const matrix_t& result,
+                           int batch_number,
+                           tensor_t& image,
+                           int image_width,
+                           int image_height,
+                           int depth,
+                           int height,
+                           int width,
+                           int pad,
+                           T val) {
+    height -= pad;
+    width -= pad;
 
-  if (height < 0 || width < 0 || height >= image_height || width >= image_width) {
-    return;
+    if (height < 0 || width < 0 || height >= image_height || width >= image_width) {
+      return;
+    }
+    image.host_at(batch_number, depth, height, width) = val;
   }
-  image.host_at(batch_number, depth, height, width) = val;
-}
 
   /*
    * Default values are for converting col to image as is, i.e. without
@@ -210,14 +210,14 @@ void col2im_insert_pixel(const matrix_t& result,
    */
   template <typename T = float_t>
   void col2im_insert_cpu(const matrix_t& result,
-                  int batch_number,
-                  tensor_t& image,
-                  int channels,
-                  int image_height,
-                  int image_width,
-                  int filter_size = 1,
-                  int stride      = 1,
-                  int pad         = 0) {
+                         int batch_number,
+                         tensor_t& image,
+                         int channels,
+                         int image_height,
+                         int image_width,
+                         int filter_size = 1,
+                         int stride      = 1,
+                         int pad         = 0) {
     int c, h, w;
     int height_col = (image_height + 2 * pad - filter_size) / stride + 1;
     int width_col  = (image_width + 2 * pad - filter_size) / stride + 1;
@@ -233,60 +233,60 @@ void col2im_insert_pixel(const matrix_t& result,
           int image_col = image_width_offset + w * stride;
           int col_index = w + width_col * h;
           T val         = result.host_at(c, col_index);
-          col2im_insert_pixel(result, batch_number, image, image_width, image_height, image_channel, image_row, image_col,
+          col2im_insert_pixel(result, batch_number, image, image_width, image_height, image_channel, image_row,
+                              image_col, pad, val);
+        }
+      }
+    }
+  }
+
+  /*
+   * Default values are for converting col to image as is, i.e. without
+   * modification
+   *
+   */
+  template <typename T = float_t>
+  void col2im_add_cpu(const matrix_t& result,
+                      int batch_number,
+                      tensor_t& image,
+                      int channels,
+                      int image_height,
+                      int image_width,
+                      int filter_size = 1,
+                      int stride      = 1,
+                      int pad         = 0) {
+    int c, h, w;
+    int height_col = (image_height + 2 * pad - filter_size) / stride + 1;
+    int width_col  = (image_width + 2 * pad - filter_size) / stride + 1;
+
+    int result_num_rows = channels * filter_size * filter_size;
+    for (c = 0; c < result_num_rows; ++c) {
+      int image_width_offset  = c % filter_size;  // fastest index
+      int image_height_offset = (c / filter_size) % filter_size;
+      int image_channel       = (c / filter_size / filter_size) /* % filter_size */;
+      for (h = 0; h < height_col; ++h) {
+        int image_row = image_height_offset + h * stride;
+        for (w = 0; w < width_col; ++w) {
+          int image_col = image_width_offset + w * stride;
+          int col_index = w + width_col * h;
+          T val         = result.host_at(c, col_index);
+          col2im_add_pixel(result, batch_number, image, image_width, image_height, image_channel, image_row, image_col,
                            pad, val);
         }
       }
     }
   }
 
-/*
- * Default values are for converting col to image as is, i.e. without
- * modification
- *
- */
-template <typename T = float_t>
-void col2im_add_cpu(const matrix_t& result,
-                       int batch_number,
-                       tensor_t& image,
-                       int channels,
-                       int image_height,
-                       int image_width,
-                       int filter_size = 1,
-                       int stride      = 1,
-                       int pad         = 0) {
-  int c, h, w;
-  int height_col = (image_height + 2 * pad - filter_size) / stride + 1;
-  int width_col  = (image_width + 2 * pad - filter_size) / stride + 1;
-
-  int result_num_rows = channels * filter_size * filter_size;
-  for (c = 0; c < result_num_rows; ++c) {
-    int image_width_offset  = c % filter_size;  // fastest index
-    int image_height_offset = (c / filter_size) % filter_size;
-    int image_channel       = (c / filter_size / filter_size) /* % filter_size */;
-    for (h = 0; h < height_col; ++h) {
-      int image_row = image_height_offset + h * stride;
-      for (w = 0; w < width_col; ++w) {
-        int image_col = image_width_offset + w * stride;
-        int col_index = w + width_col * h;
-        T val         = result.host_at(c, col_index);
-        col2im_add_pixel(result, batch_number, image, image_width, image_height, image_channel, image_row, image_col,
-                            pad, val);
-      }
-    }
-  }
-}
-
   template <typename T = float_t>
   void row2im_add_cpu(const matrix_t& result,
-                        tensor_t& image,
-                        int out_channels,
-                        int channels,
-                        int image_height,
-                        int image_width,
-                        int filter_size = 1,
-                        int stride      = 1,
-                        int pad         = 0) {
+                      tensor_t& image,
+                      int out_channels,
+                      int channels,
+                      int image_height,
+                      int image_width,
+                      int filter_size = 1,
+                      int stride      = 1,
+                      int pad         = 0) {
     int c, h, w, oc;
     int height_col = (image_height + 2 * pad - filter_size) / stride + 1;
     int width_col  = (image_width + 2 * pad - filter_size) / stride + 1;

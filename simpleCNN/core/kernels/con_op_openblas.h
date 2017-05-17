@@ -76,8 +76,8 @@ namespace simpleCNN {
                                   const core::Con_params& params) {
       tensor_t result({params.batch_size, dW.shape()[1], dW.shape()[2], dW.shape()[3]});
       for (size_t i = 0; i < params.batch_size; ++i) {
-        auto start_prev = prev_in.host_ptr(i, 0, 0, 0);
-        auto start_curr = curr_delta.host_ptr(i, 0, 0, 0);
+        auto start_prev   = prev_in.host_ptr(i, 0, 0, 0);
+        auto start_curr   = curr_delta.host_ptr(i, 0, 0, 0);
         auto start_result = result.host_ptr(i, 0, 0, 0);
 
         multiply(curr_delta, start_curr, prev_in, start_prev, start_result, false, true);
@@ -92,12 +92,12 @@ namespace simpleCNN {
       size_t length = result.size() / params.batch_size;
       for (size_t i = 0; i < params.batch_size; ++i) {
         for (size_t j = 0; j < length; ++j) {
-          size_t index =  i * length + j;
+          size_t index = i * length + j;
           dW.host_at_index(j) += result.host_at_index(index) / static_cast<float_t>(params.batch_size);
         }
       }
       average_deltas(db, params.batch_size);
-      //average_deltas(dW, params.batch_size);
+      // average_deltas(dW, params.batch_size);
     }
 
     /**

@@ -73,9 +73,7 @@ namespace simpleCNN {
       Layer::set_trainable(true);
     }
 
-    size_t fan_in_size() const override {
-      return params_.filter_width * params_.filter_height * params_.in_channels;
-    }
+    size_t fan_in_size() const override { return params_.filter_width * params_.filter_height * params_.in_channels; }
 
     /**
      * Loads a context object (parameters already specified) with data and executes

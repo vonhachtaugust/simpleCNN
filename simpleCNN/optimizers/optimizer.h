@@ -20,9 +20,9 @@ namespace simpleCNN {
      * @param dp - parameter gradient values.
      * @param p - current parameter values, to be updated.
      */
-    //virtual void update_weight(const tensor_t* dW, tensor_t* W) = 0;
+    // virtual void update_weight(const tensor_t* dW, tensor_t* W) = 0;
 
-    //virtual void update_bias(const tensor_t* dB, tensor_t* B) = 0;
+    // virtual void update_bias(const tensor_t* dB, tensor_t* B) = 0;
 
     virtual void update(const tensor_t* dW, const tensor_t* dB, tensor_t* W, tensor_t* B) = 0;
   };
@@ -36,7 +36,9 @@ namespace simpleCNN {
   class Stateful_optimizer : public Optimizer {
    public:
     void reset() override {
-      for (auto& e : state) { e.clear(); }
+      for (auto& e : state) {
+        e.clear();
+      }
     }
 
    protected:
@@ -96,11 +98,11 @@ namespace simpleCNN {
     }
 
    private:
-    float_t beta1; // decay term
-    float_t beta2; // decay term
-    float_t beta1_t; // decay term over time
-    float_t beta2_t; // decay term over time
-    float_t alpha; // learning rate
-    float_t eps;   // dummy term to avoid division by zero
+    float_t beta1;    // decay term
+    float_t beta2;    // decay term
+    float_t beta1_t;  // decay term over time
+    float_t beta2_t;  // decay term over time
+    float_t alpha;    // learning rate
+    float_t eps;      // dummy term to avoid division by zero
   };
 }

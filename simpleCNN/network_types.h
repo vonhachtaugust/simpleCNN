@@ -34,7 +34,7 @@ namespace simpleCNN {
     }
 
     std::vector<tensor_t*> get_dB() {
-      std::vector<tensor_t *> dB;
+      std::vector<tensor_t*> dB;
       for (auto l : nodes_) {
         l->get_dB(dB);
       }
@@ -42,7 +42,7 @@ namespace simpleCNN {
     }
 
     std::vector<tensor_t*> get_dW() {
-      std::vector<tensor_t *> dW;
+      std::vector<tensor_t*> dW;
       for (auto l : nodes_) {
         l->get_dW(dW);
       }
@@ -61,7 +61,7 @@ namespace simpleCNN {
     }
 
     virtual std::vector<tensor_t*> get_bias() {
-      std::vector<tensor_t *> bias;
+      std::vector<tensor_t*> bias;
 
       for (auto l : nodes_) {
         l->get_bias(bias);
@@ -78,19 +78,17 @@ namespace simpleCNN {
       return weights;
     }
 
-    void print_error() {
-      std::cout << nodes_.back()->error() << std::endl;
-    }
+    void print_error() { std::cout << nodes_.back()->error() << std::endl; }
 
-    template<typename OutputArchive>
-    void save_weight_and_bias(OutputArchive &oa) const {
+    template <typename OutputArchive>
+    void save_weight_and_bias(OutputArchive& oa) const {
       for (auto l : nodes_) {
         l->save(oa);
       }
     }
 
-    template<typename InputArchive>
-    void load_weight_and_bias(InputArchive &ia) const {
+    template <typename InputArchive>
+    void load_weight_and_bias(InputArchive& ia) const {
       for (auto l : nodes_) {
         l->load(ia);
       }

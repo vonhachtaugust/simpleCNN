@@ -12,7 +12,7 @@ namespace simpleCNN {
 
   struct Hyperparameters {
     constexpr static float_t regularization_constant = 1E-5;
-    constexpr static float_t learning_rate = 1E-4;
+    constexpr static float_t learning_rate           = 1E-4;
   };
 
   template <typename T = float_t, typename Allocator = aligned_allocator<T, 64>>
@@ -82,17 +82,16 @@ namespace simpleCNN {
   // ------------------------------------------------------------------- //
 
   inline bool is_high_endian() {
-      union {
-        uint32_t i;
-        char c[4];
-      } test_endian = { 0x01020304 };
+    union {
+      uint32_t i;
+      char c[4];
+    } test_endian = {0x01020304};
 
     return test_endian.c[0] == 1;
   }
 
-  uint32_t swap_uint32( uint32_t val )
-  {
-  val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
-  return (val << 16) | (val >> 16);
+  uint32_t swap_uint32(uint32_t val) {
+    val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);
+    return (val << 16) | (val >> 16);
   }
 }  // namespace simpleCNN

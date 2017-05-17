@@ -55,7 +55,7 @@ namespace simpleCNN {
     bool has_bias       = true;
 
     Convolutional_layer conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
-                               padding, has_bias);
+                             padding, has_bias);
     // In-data
     tensor_t image({1, in_channels, imageHeight, imageWidth});
 
@@ -172,7 +172,7 @@ namespace simpleCNN {
 
     tensor_t tensor({1, 3, 5, 5});
     col2im_insert_cpu(result, 0, tensor, tensor.dimension(dim_t::depth), tensor.dimension(dim_t::height),
-               tensor.dimension(dim_t::width));
+                      tensor.dimension(dim_t::width));
     // simple_info("Result as tensor: ");
     // std::cout << tensor << std::endl;
   }
@@ -246,7 +246,7 @@ namespace simpleCNN {
     bool has_bias       = true;
 
     Convolutional_layer conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
-                               padding, has_bias);
+                             padding, has_bias);
 
     tensor_t input_previous_layer({1, in_channels, imageHeight, imageWidth});
     vec_t input_data = {0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 2, 1, 0, 1, 1, 1, 1, 2, 2, 1, 0, 2, 0, 1,
@@ -315,7 +315,7 @@ namespace simpleCNN {
     bool has_bias       = true;
 
     Convolutional_layer conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
-                               padding, has_bias);
+                             padding, has_bias);
 
     tensor_t input_previous_layer({batch_size, in_channels, imageHeight, imageWidth});
     vec_t input_data = {0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 2, 1, 0, 1, 1, 1, 1, 2, 2, 1, 0, 2, 0, 1,
@@ -395,42 +395,40 @@ namespace simpleCNN {
   }
 
   TEST(Convolution, backprop_op_III) {
-  using conv = Convolutional_layer;
-  using classy = Connected_layer;
+    using conv   = Convolutional_layer;
+    using classy = Connected_layer;
 
-  size_t in_w = 5;
-  size_t in_h = 5;
-  size_t in_ch = 16;
-  size_t b = 1;
-  size_t f = 5;
-  size_t out_ch = 120;
+    size_t in_w   = 5;
+    size_t in_h   = 5;
+    size_t in_ch  = 16;
+    size_t b      = 1;
+    size_t f      = 5;
+    size_t out_ch = 120;
 
-  tensor_t input({b, in_ch, in_h, in_w});
-  tensor_t W({out_ch, in_ch, in_h, in_w});
-  tensor_t B({out_ch, 1, 1, 1});
+    tensor_t input({b, in_ch, in_h, in_w});
+    tensor_t W({out_ch, in_ch, in_h, in_w});
+    tensor_t B({out_ch, 1, 1, 1});
 
-  tensor_t dW({out_ch, in_ch, in_h, in_w});
-  tensor_t db({out_ch, 1, 1, 1});
+    tensor_t dW({out_ch, in_ch, in_h, in_w});
+    tensor_t db({out_ch, 1, 1, 1});
 
-  tensor_t output({b, out_ch, 1, 1});
-  tensor_t output_a({b, out_ch, 1, 1});
+    tensor_t output({b, out_ch, 1, 1});
+    tensor_t output_a({b, out_ch, 1, 1});
 
-  tensor_t in_grad({b, in_ch, in_h, in_w});
-  tensor_t out_grad({b, out_ch, 1, 1});
-  tensor_t out_grad_a({b, out_ch, 1, 1});
+    tensor_t in_grad({b, in_ch, in_h, in_w});
+    tensor_t out_grad({b, out_ch, 1, 1});
+    tensor_t out_grad_a({b, out_ch, 1, 1});
 
-  conv c(in_w, in_h, in_ch, b, f, out_ch);
+    conv c(in_w, in_h, in_ch, b, f, out_ch);
 
-  data_ptrs_t in_d = {&input, &W, &B};
-  data_ptrs_t out_d = {&output, &output_a};
-  data_ptrs_t in_g = {&in_grad, &dW, &db};
-  data_ptrs_t out_g = {&out_grad, &out_grad_a};
+    data_ptrs_t in_d  = {&input, &W, &B};
+    data_ptrs_t out_d = {&output, &output_a};
+    data_ptrs_t in_g  = {&in_grad, &dW, &db};
+    data_ptrs_t out_g = {&out_grad, &out_grad_a};
 
-  c.back_propagation(in_d, out_d, in_g, out_g);
-}
+    c.back_propagation(in_d, out_d, in_g, out_g);
+  }
 
-  TEST(Convolution, backprop_op_IIII) {
-  
-}
+  TEST(Convolution, backprop_op_IIII) {}
 
 }  // namespace simpleCNN

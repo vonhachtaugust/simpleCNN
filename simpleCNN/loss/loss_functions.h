@@ -191,10 +191,10 @@ namespace simpleCNN {
    */
 
   void loss_value(const tensor_t &output, const tensor_t &targets) {
-    //auto val = loss::loss_function(output);
-    //auto acc = accuracy(val, targets);
-    //auto l   = loss::loss(val, targets);
-    //std::cout << "Loss: " << l << " ; "
+    // auto val = loss::loss_function(output);
+    // auto acc = accuracy(val, targets);
+    // auto l   = loss::loss(val, targets);
+    // std::cout << "Loss: " << l << " ; "
     //          << "Acc: " << acc << std::endl;
   }
 

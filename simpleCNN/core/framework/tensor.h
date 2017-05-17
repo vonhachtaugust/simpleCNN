@@ -19,18 +19,7 @@ namespace simpleCNN {
   * Here, these vectors typically consists of one
   * DATA tensor, one WEIGHT tensor and a BIAS tensor.
   */
-  enum class component_t {
-    UNSPECIFIED,
-    IN_DATA,
-    OUT_DATA,
-    WEIGHT,
-    BIAS,
-    AUX,
-    MAX_INDEX,
-    OUT_GRAD,
-    IN_GRAD,
-    TARGET
-  };
+  enum class component_t { UNSPECIFIED, IN_DATA, OUT_DATA, WEIGHT, BIAS, AUX, MAX_INDEX, OUT_GRAD, IN_GRAD, TARGET };
 
   /**
   * In case of four dimensional tensor, use these
@@ -204,10 +193,11 @@ namespace simpleCNN {
       return *this;
     }
 
-
     Tensor& add(T value) {
       static_assert(!kConst, "Non-constant operation on constant Tensor");
-      for (auto iter = host_begin(); iter != host_end(); ++iter) { *iter += value; }
+      for (auto iter = host_begin(); iter != host_end(); ++iter) {
+        *iter += value;
+      }
     }
 
     void reshape(const std::array<size_t, kDimensions>& sz) {
@@ -287,9 +277,9 @@ namespace simpleCNN {
     Tensor subView(std::initializer_list<size_t> const& start, std::initializer_list<size_t> const& new_shape) {
       return subview_impl(start, new_shape);
     }
-    
+
     Tensor subView(const std::initializer_list<size_t> start, const std::array<size_t, kDimensions> new_shape) const {
-      return subview_impl(start, new_shape); 
+      return subview_impl(start, new_shape);
     }
 
     /**
@@ -333,11 +323,9 @@ namespace simpleCNN {
       std::copy(shape.begin(), shape.end(), shape_.begin());
     }
 
-    explicit Tensor(const TensorStoragePointer storage,
-                    const size_t offset,
-                    std::vector<size_t> const& shape) {
-      offset_ = offset;
-      size_ = product(shape);
+    explicit Tensor(const TensorStoragePointer storage, const size_t offset, std::vector<size_t> const& shape) {
+      offset_      = offset;
+      size_        = product(shape);
       storage_ptr_ = storage;
       std::copy(shape.begin(), shape.end(), shape_.begin());
     }
@@ -349,7 +337,7 @@ namespace simpleCNN {
      * @param squeeze_length        : maximum length by which a view can be made
      * @return                      : squeezed shape (made fit)
      */
-    template<typename Container>
+    template <typename Container>
     inline std::vector<size_t> squeeze(const Container& new_shape, const size_t squeeze_length) const {
       std::vector<size_t> squeezed(new_shape.size());
       std::copy(std::begin(new_shape), std::end(new_shape), squeezed.begin());
@@ -373,7 +361,8 @@ namespace simpleCNN {
      * are bigger than the current dimensions number. Also raises an exception
      * when the requested view size is not feasible.
      */
-    Tensor subview_impl(std::initializer_list<size_t> const& start, std::initializer_list<size_t> const& new_shape) const {
+    Tensor subview_impl(std::initializer_list<size_t> const& start,
+                        std::initializer_list<size_t> const& new_shape) const {
       if (start.size() > kDimensions || new_shape.size() > kDimensions) {
         throw simple_error("Overpassed number of existing dimensions.");
       }
@@ -392,12 +381,13 @@ namespace simpleCNN {
 
       return Tensor(storage_ptr_, new_offset, new_shape);
     }
-    
-    Tensor subview_impl(const std::initializer_list<size_t> start, const std::array<size_t, kDimensions> new_shape) const {
+
+    Tensor subview_impl(const std::initializer_list<size_t> start,
+                        const std::array<size_t, kDimensions> new_shape) const {
       if (start.size() > kDimensions || new_shape.size() > kDimensions) {
         throw simple_error("Overpassed number of existing dimensions.");
       }
-      
+
       const size_t new_offset = offset_ + compute_offset(start, shape_);
       if (new_offset + product(new_shape) > size_) {
         auto squeezed_shape = squeeze(new_shape, size_ - new_offset);
@@ -407,7 +397,7 @@ namespace simpleCNN {
         }
         throw simple_error("Cannot create activate view from this tensor");
       }
-      
+
       return Tensor(storage_ptr_, new_offset, new_shape);
     }
 

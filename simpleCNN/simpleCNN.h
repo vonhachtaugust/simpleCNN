@@ -9,8 +9,8 @@
 #include "node.h"
 
 #include "activations/activation_layer.h"
-#include "activations/softmax.h"
 #include "activations/relu.h"
+#include "activations/softmax.h"
 #include "activations/tanh.h"
 
 #include "layers/layer.h"
@@ -23,8 +23,8 @@
 
 #include "layers/connected_layer.h"
 #include "layers/convolutional_layer.h" /* Don't move this guy. */
-#include "layers/maxpooling_layer.h"
 #include "layers/dropout_layer.h"
+#include "layers/maxpooling_layer.h"
 
 #include "core/params/con_params.h"
 #include "core/params/conv_params.h"
@@ -51,11 +51,11 @@
 #include "util/aligned_allocator.h"
 #include "util/colored_print.h"
 #include "util/im2col2im.h"
+#include "util/math_functions.h"
 #include "util/random.h"
 #include "util/simple_error.h"
 #include "util/util.h"
 #include "util/weight_init.h"
-#include "util/math_functions.h"
 
 #include "io/parse_mnist.h"
 #include "io/serialize.h"

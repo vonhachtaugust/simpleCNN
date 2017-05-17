@@ -68,8 +68,8 @@ namespace simpleCNN {
                                   int x_padding,
                                   int y_padding,
                                   size_t start_index,
-                                  tensor_t* dst) {
-      const int width  = header.num_cols + 2 * x_padding;
+                                  tensor_t *dst) {
+      const int width = header.num_cols + 2 * x_padding;
       // const int height = header.num_rows + 2 * y_padding;
 
       std::vector<uint8_t> vec(header.num_cols * header.num_rows);
@@ -86,7 +86,7 @@ namespace simpleCNN {
     }
   }  // namespace parser_details
 
-  inline void parse_mnist_labels(const std::string& file, tensor_t* labels, const size_t subset = 1) {
+  inline void parse_mnist_labels(const std::string &file, tensor_t *labels, const size_t subset = 1) {
     std::ifstream ifs(file.c_str(), std::ios::in | std::ios::binary);
 
     if (ifs.bad() || ifs.fail()) {
@@ -96,7 +96,7 @@ namespace simpleCNN {
     parser_details::mnist_label_header header;
     parser_details::parse_mnist_header(ifs, header);
 
-    //labels->resize(header.num_items);
+    // labels->resize(header.num_items);
     for (uint32_t i = 0; i < (header.num_items / subset); ++i) {
       uint8_t label;
       ifs.read(reinterpret_cast<char *>(&label), 1);
@@ -104,8 +104,13 @@ namespace simpleCNN {
     }
   }
 
-  inline void parse_mnist_images(
-    const std::string &file, tensor_t *images, float_t scale_min, float_t scale_max, int x_padding, int y_padding, const size_t subset = 1) {
+  inline void parse_mnist_images(const std::string &file,
+                                 tensor_t *images,
+                                 float_t scale_min,
+                                 float_t scale_max,
+                                 int x_padding,
+                                 int y_padding,
+                                 const size_t subset = 1) {
     if (x_padding < 0 || y_padding < 0) {
       throw simple_error("Non-negative padding size required.");
     }

@@ -48,7 +48,7 @@ namespace simpleCNN {
                           data_ptrs_t& in_grad,
                           data_ptrs_t& out_grad) override {
       const tensor_t& curr_grad = *out_grad[0];
-      tensor_t& prev_grad = *in_grad[0];
+      tensor_t& prev_grad       = *in_grad[0];
 
       const size_t n = curr_grad.size();
       for (size_t i = 0; i < n; ++i) {

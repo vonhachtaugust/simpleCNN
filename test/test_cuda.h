@@ -27,8 +27,5 @@ namespace simpleCNN {
     }
   }
 
-  TEST(Cuda, simple_example) {
-    
-  
-}
-} // namespace simpleCNN
+  TEST(Cuda, simple_example) {}
+}  // namespace simpleCNN

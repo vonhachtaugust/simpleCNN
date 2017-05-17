@@ -31,59 +31,55 @@ namespace simpleCNN {
      * Condition met when: Variance: sqrt(2/n).
      *
      */
-  size_t num_samples = 10000;
-  float_t variance = 1.0f;
-  float_t mean = 0.0f;
-  float_t step_size = variance / (10.0f);
+    size_t num_samples = 10000;
+    float_t variance   = 1.0f;
+    float_t mean       = 0.0f;
+    float_t step_size  = variance / (10.0f);
 
-  std::vector<float_t> sample(num_samples);
+    std::vector<float_t> sample(num_samples);
 
-  auto start = sample.begin();
-  auto end = sample.end();
+    auto start = sample.begin();
+    auto end   = sample.end();
 
-  normal_dist(start, end, 0.0f, 1.0f);
+    normal_dist(start, end, 0.0f, 1.0f);
 
-  std::unordered_map<size_t, size_t> hist;
+    std::unordered_map<size_t, size_t> hist;
 
-  size_t max_index = 0;
-  for (size_t i = 0; i < num_samples; ++i) {
-    float_t low = -2;
-    size_t index = 0;
+    size_t max_index = 0;
+    for (size_t i = 0; i < num_samples; ++i) {
+      float_t low  = -2;
+      size_t index = 0;
 
-    while (sample[i] > low) {
-      low += step_size;
-      index++;
+      while (sample[i] > low) {
+        low += step_size;
+        index++;
+      }
+      hist[index]++;
+      max_index = (index > max_index) ? index : max_index;
     }
-    hist[index]++;
-    max_index = (index > max_index) ? index : max_index;
-  }
 
-  float_t mean_value = std::accumulate(start, end, float_t{0}) / float_t(sample.size());
+    float_t mean_value = std::accumulate(start, end, float_t{0}) / float_t(sample.size());
 
-
-  float_t variance_value = 0.0f;
-  for (auto s_i : sample) {
-    variance_value += (s_i - mean) * (s_i - mean);
-  }
-  variance_value /= float_t(sample.size());
-
-  //print(mean_value, "Mean; ");
-  //print(variance_value, "Variance; ");
-  // Are you feeling lucky?
-  ASSERT_NEAR(mean, mean_value, 1E-1);
-  ASSERT_NEAR(variance, variance_value, 1E-1);
-
-  /*for (size_t i = 0; i < num_samples; ++i) {
-    if (i > max_index) break;
-    std::cout << i << ": ";
-    for (size_t j = 0; j < hist[i]; ++j) {
-      std::cout << '*' << " ";
+    float_t variance_value = 0.0f;
+    for (auto s_i : sample) {
+      variance_value += (s_i - mean) * (s_i - mean);
     }
-    std::cout << std::endl;
-  }*/
+    variance_value /= float_t(sample.size());
 
+    // print(mean_value, "Mean; ");
+    // print(variance_value, "Variance; ");
+    // Are you feeling lucky?
+    ASSERT_NEAR(mean, mean_value, 1E-1);
+    ASSERT_NEAR(variance, variance_value, 1E-1);
 
-
-}
+    /*for (size_t i = 0; i < num_samples; ++i) {
+      if (i > max_index) break;
+      std::cout << i << ": ";
+      for (size_t j = 0; j < hist[i]; ++j) {
+        std::cout << '*' << " ";
+      }
+      std::cout << std::endl;
+    }*/
+  }
 
 }  // namespace simpleCNN

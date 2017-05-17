@@ -37,9 +37,7 @@ namespace simpleCNN {
       return {{params_.batch_size, 1, params_.in_dim, 1}, {1, 1, params_.out_dim, params_.in_dim}};
     }
 
-    shape_t out_shape() const override {
-      return {{params_.batch_size, 1, params_.out_dim, 1}};
-    }
+    shape_t out_shape() const override { return {{params_.batch_size, 1, params_.out_dim, 1}}; }
 
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
       // Reshape input to suit connected layer format.
@@ -49,17 +47,17 @@ namespace simpleCNN {
       ctx.setEngine(Layer::engine());
       // Reshape input to suit connected layer format.
 
-      //printc(in_data[0]->shape(), "Before reshape");
+      // printc(in_data[0]->shape(), "Before reshape");
       auto shape = in_data[0]->shape();
 
       Layer::reshape(*in_data[0], in_shape()[0]);
-      //printc(in_data[0]->shape(), "After reshape");
+      // printc(in_data[0]->shape(), "After reshape");
 
       kernel_fwd_->compute(ctx);
 
       // Reshape input back
       in_data[0]->reshape(shape);
-      //printc(in_data[0]->shape(), "After compute");
+      // printc(in_data[0]->shape(), "After compute");
     }
 
     void back_propagation(const data_ptrs_t& in_data,
@@ -76,12 +74,9 @@ namespace simpleCNN {
       kernel_bwd_->compute(ctx);
       in_data[0]->reshape(shape);
       in_grad[0]->reshape(shape);
-      }
+    }
 
-    tensor_t network_output() override {
-      return *Layer::out_component_data(component_t::OUT_DATA);
-    };
-
+    tensor_t network_output() override { return *Layer::out_component_data(component_t::OUT_DATA); };
 
     std::string layer_type() const override { return std::string("connected"); }
 

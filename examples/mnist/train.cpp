@@ -103,8 +103,8 @@ static bool train_mnist(const size_t batch_size,
       << fully(120, 10, minibatch_size) << softmax();
 
   adam a;
-  net.train<adam>(a, train_images, train_labels, minibatch_size, epochs, on_enumerate_minibatch, on_enumerate_epoch, weight_and_bias_file,
-                  loss_file, accuracy_file, true);
+  net.train<adam>(a, train_images, train_labels, minibatch_size, epochs, on_enumerate_minibatch, on_enumerate_epoch,
+                  weight_and_bias_file, loss_file, accuracy_file, true);
 
   return true;
 }

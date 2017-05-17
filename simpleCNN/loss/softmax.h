@@ -11,9 +11,12 @@ namespace simpleCNN {
       std::string layer_type() const override { return "Softmax-loss-layer"; }
 
       template <typename T>
-      T df(T value) const { return value - T(1); }
+      T df(T value) const {
+        return value - T(1);
+      }
 
-      template <typename T> T f(const T &value) const {
+      template <typename T>
+      T f(const T &value) const {
         if (value == 0) {
           throw simple_error("Value equals zero, loss is infinity");
         }
@@ -72,7 +75,7 @@ namespace simpleCNN {
 
         for (size_t b = 0; b < batch_size; ++b) {
           size_t target_i = target.host_at_index(b);
-          size_t index = b * n + target_i;
+          size_t index    = b * n + target_i;
 
           loss_tot += f(output.host_at_index(index));
         }

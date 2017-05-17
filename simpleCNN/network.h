@@ -75,8 +75,8 @@ namespace simpleCNN {
       net_.backward(labels);
       auto dW = net_.get_dW();
 
-      //printvt(ng, "Numerical gradient");
-      //printvt_ptr(dW, "Backprop gradient");
+      // printvt(ng, "Numerical gradient");
+      // printvt_ptr(dW, "Backprop gradient");
 
       return relative_error(dW, ng);
     }
@@ -89,8 +89,8 @@ namespace simpleCNN {
       net_.backward(labels);
       auto dB = net_.get_dB();
 
-      //printvt(ng, "Numerical gradient");
-      //printvt_ptr(dB, "Backprop gradient");
+      // printvt(ng, "Numerical gradient");
+      // printvt_ptr(dB, "Backprop gradient");
 
       return relative_error(dB, ng);
     }
@@ -127,8 +127,8 @@ namespace simpleCNN {
     }
 
     std::vector<tensor_t> computeNumericalGradient_bias(const tensor_t& input, const tensor_t& labels) {
-      std::vector<tensor_t *> bias = net_.get_bias();
-      size_t batch_size = input.shape()[0];
+      std::vector<tensor_t*> bias = net_.get_bias();
+      size_t batch_size           = input.shape()[0];
       std::vector<tensor_t> num_grads;
 
       float_t e = 1E-3;
@@ -247,7 +247,7 @@ namespace simpleCNN {
       set_netphase(net_phase::train);
       opt.reset();
       stop_training_ = false;
-      //time_t t       = clock();
+      // time_t t       = clock();
 
       std::vector<float_t> loss;
       std::vector<float_t> accuracy;
