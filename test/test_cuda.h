@@ -10,7 +10,10 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <cublas_v2.h>
-#include "../third_party/cudnn/include/cudnn.h"
+
+#ifdef USE_CUDNN
+  #include "../third_party/cudnn/include/cudnn.h"
+#endif
 
 #include "time.h"
 
@@ -98,12 +101,14 @@ DEFINE_int32(gpu, 0, "The GPU ID to use");
     cuda_free(x_gpu);
   }
 
+#ifdef USE_CUDNN
+
   TEST(Cuda, cudnnConvolution) {
   cudnnHandle_t cudnnHandle;
 
 
 
-
-
 }
+
+#endif
 }  // namespace simpleCNN

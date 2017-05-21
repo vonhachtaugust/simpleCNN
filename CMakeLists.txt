@@ -72,11 +72,34 @@ endif()
 # CUDA
 find_package(CUDA REQUIRED)
 if(CUDA_FOUND)
-
     message(STATUS "Found CUDA: ${CUDA_LIBRARIES}")
     list(APPEND REQUIRED_LIBRARIES ${CUDA_LIBRARIES})
 else()
     message(STATUS "Cannot find required package CUDA. Please set CUDA_INCLUDE_DIR")
+endif()
+
+
+set(HAVE_CUDNN_H "/third_party/cudnn/include/cudnn.h")
+set(HAVE_CUDNN_SO "/third_party/cudnn/lib64/libcudnn.so")
+
+if (NOT HAVE_CUDNN_H)
+    message(FATAL_ERROR "Could not find cudnn.h")
+else()
+    message(STATUS "Found cudnn.h: ${HAVE_CUDNN_H}")
+    if (NOT HAVE_CUDNN_SO)
+        message(FATAL_ERROR "Could not find libcudnn.so")
+    else()
+        message(STATUS "Found lubcudnn.so: ${HAVE_CUDNN_SO}")
+
+        set(CUDNN_LIBRARY_DIRS "${PROJECT_SOURCE_DIR}/third_party/cudnn/lib64/third_party/cudnn/lib64")
+        set(CUDNN_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/third_party/cudnn/include/third_party/cudnn/include")
+        set(CUDNN_LIBRARIES "${PROJECT_SOURCE_DIR}/third_party/cudnn/lib64")
+
+        add_definitions(-DUSE_CUDNN)
+        include_directories(${CUDNN_INCLUDE_DIRS})
+        link_directories(${CUDNN_LIBRARY_DIRS})
+        list(APPEND REQUIRED_LIBRARIES ${CUDNN_LIBRARIES}/libcudnn.so)
+    endif()
 endif()
 
 #####
