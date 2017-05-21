@@ -53,7 +53,7 @@ namespace simpleCNN {
 
     class Constant : public Scalable {
      public:
-      Constant() : Scalable(float_t{0}) {}
+      Constant() : Scalable(float_t(0)) {}
       explicit Constant(float_t value) : Scalable(value) {}
 
       void fill(tensor_t* weight, size_t fan_in, size_t fan_out) override {

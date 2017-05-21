@@ -73,7 +73,7 @@ namespace simpleCNN {
                          params.filter_width);
       for (size_t i = 0; i < params.batch_size; ++i) {
         im2col_cpu(curr_delta, i, mCurr_delta, params.out_channels, params.output_height, params.output_width,
-                   params.filter_size(), 1, params.filter_size() - 1);
+                   params.filter_size(), 1, (params.filter_size() - 1) / size_t(2) );
         sgemm(mWeights, mCurr_delta, mResult_delta, false, false);
         col2im_insert_cpu(mResult_delta, i, prev_delta, params.in_channels, params.input_height, params.input_width);
       }
@@ -107,7 +107,7 @@ namespace simpleCNN {
 
         sgemm(mPrev_in, mCurr_delta, mResult_dW, false, true);
 
-        // Add up dW instead of merge later. Average value is used later and the division is performed at that point.
+        // Add up dW instead of merge later. Average value is used later (optimizer) and the division is performed at that point.
         row2im_add_cpu(mResult_dW, dW, params.out_channels, params.in_channels, params.filter_height,
                        params.filter_width);
         if (params.has_bias) {
@@ -119,8 +119,8 @@ namespace simpleCNN {
           }
         }
       }
-      average_deltas(dW, params.batch_size);
-      average_deltas(db, params.batch_size);
+      //average_deltas(dW, params.batch_size);
+      //average_deltas(db, params.batch_size);
     }
 
     /**

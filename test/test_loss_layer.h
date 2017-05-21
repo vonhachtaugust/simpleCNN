@@ -13,7 +13,9 @@ namespace simpleCNN {
     vec_t data = {1, 2, 3, 1, 2, 3};
     fill(data, weight);
 
-    float_t result = regularization<float_t>(weight);
+    std::vector<tensor_t *> weights = {&weight};
+
+    float_t result = regularization<float_t>(weights);
     ASSERT_EQ(result, 28);
   }
 

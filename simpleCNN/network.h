@@ -14,7 +14,7 @@ namespace simpleCNN {
 
   typedef int label_t;
 
-  enum class content_type { weights_and_bias, loss, accuracy };
+  enum class content_type { weights };
 
   enum class file_format { binary };
 
@@ -23,16 +23,25 @@ namespace simpleCNN {
    public:
     explicit Network() : stop_training_(false) {}
 
-    void print_weights_and_bias() {
-      auto w = net_.get_weights();
-      auto b = net_.get_bias();
-      printvt_ptr(w, "Weights");
-      printvt_ptr(b, "Bias");
+    void save_results(std::vector<float_t>& mean_and_std) {
+      std::string date = get_time_stamp();
+
+      std::string tl_file = "training_loss_" + date + ".txt";
+      std::string vl_file = "validation_loss_" + date + ".txt";
+      std::string ta_file = "training_accuracy_" + date + ".txt";
+      std::string va_file = "validation_accuracy_" + date + ".txt";
+      std::string wf = "weights_" + date + ".txt";
+      std::string mstd = "run_data_" + date + ".txt";
+
+      save_content_to_file(wf, content_type::weights);
+      save_data_to_file<float_t>(tl_file, training_loss_);
+      save_data_to_file<float_t>(vl_file, validation_loss_);
+      save_data_to_file<float_t>(ta_file, training_accuracy_);
+      save_data_to_file<float_t>(va_file, validation_accuracy_);
+      save_data_to_file<float_t>(mstd, mean_and_std);
     }
 
-    void load_from_file(const std::string& filename,
-                        content_type what,
-                        file_format format = file_format::binary) const {
+    void load_content_from_file(const std::string& filename, content_type what) const {
       std::ifstream ifs(filename.c_str(), std::ios::binary);
 
       if (ifs.fail() || ifs.bad()) {
@@ -42,7 +51,7 @@ namespace simpleCNN {
       from_archive(ifs, what);
     }
 
-    void save_to_file(const std::string& filename, content_type what, file_format format = file_format::binary) const {
+    void save_content_to_file(const std::string& filename, content_type what) const {
       std::ofstream ofs(filename.c_str(), std::ios::binary);
 
       if (ofs.fail() || ofs.bad()) {
@@ -54,15 +63,15 @@ namespace simpleCNN {
 
     template <typename OutputArchive>
     void to_archive(OutputArchive& ar, content_type what) const {
-      if (what == content_type::weights_and_bias) {
-        net_.save_weight_and_bias(ar);
+      if (what == content_type::weights) {
+        net_.save_weights(ar);
       }
     }
 
     template <typename InputArchive>
     void from_archive(InputArchive& ar, content_type what) const {
-      if (what == content_type::weights_and_bias) {
-        net_.load_weight_and_bias(ar);
+      if (what == content_type::weights) {
+        net_.load_weights(ar);
       }
     }
 
@@ -75,8 +84,8 @@ namespace simpleCNN {
       net_.backward(labels);
       auto dW = net_.get_dW();
 
-      // printvt(ng, "Numerical gradient");
-      // printvt_ptr(dW, "Backprop gradient");
+      //printvt(ng, "Numerical gradient");
+      //printvt_ptr(dW, "Backprop gradient");
 
       return relative_error(dW, ng);
     }
@@ -89,8 +98,8 @@ namespace simpleCNN {
       net_.backward(labels);
       auto dB = net_.get_dB();
 
-      // printvt(ng, "Numerical gradient");
-      // printvt_ptr(dB, "Backprop gradient");
+      //printvt(ng, "Numerical gradient");
+      //printvt_ptr(dB, "Backprop gradient");
 
       return relative_error(dB, ng);
     }
@@ -227,24 +236,23 @@ namespace simpleCNN {
 
     template <typename optimizer, typename OnBatchEnumerate, typename OnEpochEnumerate>
     bool train(optimizer& opt,
-               const tensor_t& input,
+               const tensor_t& training_images,
                const tensor_t& train_labels,
+               const tensor_t& validation_images,
+               const tensor_t& validation_labels,
                const size_t batch_size,
                const size_t epoch,
                OnBatchEnumerate on_batch_enumerate,
                OnEpochEnumerate on_epoch_enumerate,
-               const std::string weight_and_bias_file,
-               const std::string loss_filename,
-               const std::string accuracy_filename,
+               const bool store_result = true,
                const bool reset_weight = false) {
-      if (input.size() < train_labels.size()) {
+      if (training_images.size() < train_labels.size()) {
         return false;
       }
-      if (input.size() < batch_size || train_labels.size() < batch_size) {
+      if (training_images.size() < batch_size || train_labels.size() < batch_size) {
         return false;
       }
       net_.setup(reset_weight);
-      set_netphase(net_phase::train);
       opt.reset();
       stop_training_ = false;
       // time_t t       = clock();
@@ -253,19 +261,27 @@ namespace simpleCNN {
       std::vector<float_t> accuracy;
 
       for (size_t i = 0; i < epoch && !stop_training_; ++i) {
-        for (size_t j = 0; j < input.shape()[0] && !stop_training_; j += batch_size) {
-          auto minibatch = input.subView({j}, {batch_size, input.dimension(dim_t::depth),
-                                               input.dimension(dim_t::height), input.dimension(dim_t::width)});
-          auto minilabels = train_labels.subView({j}, {batch_size, 1, 1, 1});
-          train_once(opt, minibatch, minilabels, loss, accuracy);
-          // on_batch_enumerate(t);
-        }
-        // on_epoch_enumerate(i);
-      }
+        size_t index = 0;
 
-      save_to_file(weight_and_bias_file, content_type::weights_and_bias);
-      save_data_to_file<float_t>(loss_filename, loss);
-      save_data_to_file<float_t>(accuracy_filename, accuracy);
+        for (size_t j = 0; j < training_images.shape()[0] && !stop_training_; j += batch_size) {
+          auto minibatch = training_images.subView({j}, {batch_size, training_images.dimension(dim_t::depth),
+                                               training_images.dimension(dim_t::height), training_images.dimension(dim_t::width)});
+          auto minilabels = train_labels.subView({j}, {batch_size, 1, 1, 1});
+          train_once(opt, minibatch, minilabels, store_result, batch_size);
+
+          //auto minivi = training_images.subView({index}, {batch_size, validation_images.dimension(dim_t::depth), validation_images.dimension(dim_t::height), validation_images.dimension(dim_t::width)});
+          //auto minivl = train_labels.subView({index}, {batch_size, 1, 1, 1});
+          valid_once(minibatch, minilabels, store_result);
+
+          //if (index >= validation_images.shape()[0] - batch_size) {
+          //  index = 0;
+          //} else {
+          //  index += batch_size;
+          //}
+          //on_batch_enumerate(t);
+        }
+        on_epoch_enumerate(i);
+      }
 
       return true;
     }
@@ -277,6 +293,14 @@ namespace simpleCNN {
     }
 
    private:
+    void valid_once(const tensor_t& validation_batch,
+                    const tensor_t& validation_labels,
+                    const bool store_results) {
+      set_netphase(net_phase::test);
+      net_.forward_pass(validation_batch);
+      net_.record_validation_progress(validation_loss_, validation_accuracy_, store_results);
+    }
+
     /**
      * Trains on one minibatch, i.e. runs forward and backward propagation to
      * calculate
@@ -288,11 +312,13 @@ namespace simpleCNN {
     void train_once(optimizer& opt,
                     const tensor_t& minibatch,
                     const tensor_t& labels,
-                    std::vector<float_t>& loss,
-                    std::vector<float_t>& accuracy) {
+                    const bool store_results,
+                    const size_t batch_size) {
+      set_netphase(net_phase::train);
       net_.forward_pass(minibatch);
-      net_.backward_pass(labels, loss, accuracy);
-      net_.update(opt);
+      net_.backward(labels);
+      net_.record_training_progress(training_loss_, training_accuracy_, store_results);
+      net_.update(opt, batch_size);
     }
 
     template <typename layer>
@@ -301,6 +327,11 @@ namespace simpleCNN {
     NetType net_;
     net_phase phase_;
     bool stop_training_;
+
+    std::vector<float_t> training_loss_;
+    std::vector<float_t> validation_loss_;
+    std::vector<float_t> training_accuracy_;
+    std::vector<float_t> validation_accuracy_;
   };
 
   template <typename layer>

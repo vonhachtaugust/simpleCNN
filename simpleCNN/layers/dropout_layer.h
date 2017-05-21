@@ -38,7 +38,7 @@ namespace simpleCNN {
       } else {
         for (size_t i = 0; i < n; ++i) {
           // Approximate the output by expected input value.
-          out.host_at_index(i) = in.host_at_index(i) * prob_;
+          out.host_at_index(i) = in.host_at_index(i) * (float_t(1) - prob_);
         }
       }
     }

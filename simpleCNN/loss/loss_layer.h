@@ -61,8 +61,8 @@ namespace simpleCNN {
       loss_gradient(*out_data[0], *out_data[1], *in_grad[0]);
     }
 
-    float_t error(const tensor_t& output, const tensor_t& target) const override {
-      return loss(output, target); /* + Hyperparameters::regularization_constant * regularization<float_t>(); */
+    float_t error(const tensor_t& output, const tensor_t& target, const std::vector<tensor_t*>& weights) const override {
+      return loss(output, target)  + Hyperparameters::regularization_constant * regularization<float_t>(weights);
     }
 
     float_t accuracy(const tensor_t& output, const tensor_t& target) const override {
@@ -72,7 +72,7 @@ namespace simpleCNN {
       float_t acc = float_t(0);
       for (size_t b = 0; b < batch_size; ++b) {
         size_t max_index    = -1;
-        float_t max         = float_t(0);
+        float_t max         = float_t(-1); // sometimes max is zero...
         size_t target_index = *(target.host_begin() + b);
 
         for (size_t j = 0; j < batch_length; ++j) {
@@ -86,13 +86,15 @@ namespace simpleCNN {
         }
 
         if (max_index == -1) {
-          throw simple_error("Error: No max index was found");
+          continue;
+          //throw simple_error("Error: No max index was found");
         }
 
         if (max_index == target_index) {
           acc += float_t(1);
         }
       }
+      //print(acc, "Accuracy");
       return acc / static_cast<float_t>(batch_size);
     }
 

@@ -72,6 +72,7 @@ endif()
 # CUDA
 find_package(CUDA REQUIRED)
 if(CUDA_FOUND)
+
     message(STATUS "Found CUDA: ${CUDA_LIBRARIES}")
     list(APPEND REQUIRED_LIBRARIES ${CUDA_LIBRARIES})
 else()

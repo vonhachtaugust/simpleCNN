@@ -34,10 +34,19 @@ namespace simpleCNN {
     net1.init_network();
 
     auto path = "test.txt";
-    net1.save_to_file(path, content_type::weights_and_bias);
+    //net1.save_content_to_file(path, content_type::weights);
 
-    net2.load_from_file(path, content_type::weights_and_bias);
+    //net2.load_content_from_file(path, content_type::weights);
 
     // TODO: Check both network have equal weights.
   }
+
+  TEST(Save, name_base_on_clock) {
+  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+  std::time_t time = std::chrono::system_clock::to_time_t(start);
+  std::string d = std::ctime(&time);
+  std::string c = d.substr(0, d.size() - 1);
+  std::replace_if(c.begin(), c.end(), isspace, '-');
+  }
+
 }

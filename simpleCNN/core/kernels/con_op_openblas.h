@@ -93,10 +93,10 @@ namespace simpleCNN {
       for (size_t i = 0; i < params.batch_size; ++i) {
         for (size_t j = 0; j < length; ++j) {
           size_t index = i * length + j;
-          dW.host_at_index(j) += result.host_at_index(index) / static_cast<float_t>(params.batch_size);
+          dW.host_at_index(j) += result.host_at_index(index); // / static_cast<float_t>(params.batch_size);
         }
       }
-      average_deltas(db, params.batch_size);
+      //average_deltas(db, params.batch_size);
       // average_deltas(dW, params.batch_size);
     }
 

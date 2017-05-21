@@ -102,4 +102,74 @@ namespace simpleCNN {
       auto minibatch = total.subView({j}, {batch_size, 1, in_h, in_w});
     }
   }
+
+  TEST(Tensor, split_training_validation) {
+    size_t num_images = 10;
+    size_t in_h       = 3;
+    size_t in_w       = 3;
+    float_t ratio     = 0.8;
+
+    tensor_t images({num_images, 1, in_h, in_w});
+    tensor_t labels({num_images, 1, 1, 1});
+
+    for (size_t i = 0; i < num_images; ++i) {
+      for (size_t j = 0; j < in_h * in_w; ++j) {
+        size_t index = i * in_h * in_w + j;
+
+        images.host_at_index(index) = i * in_h * in_w + j + 1;
+      }
+      labels.host_at_index(i) = i + 1;
+    }
+
+    size_t training_size = num_images * ratio;
+    size_t valid_size    = std::floor(num_images * (1 - ratio) + 0.5);
+
+    tensor_t train_images({training_size, 1, in_h, in_w});
+    tensor_t train_labels({training_size, 1, 1, 1});
+    tensor_t valid_images({valid_size, 1, in_h, in_w});
+    tensor_t valid_labels({valid_size, 1, 1, 1});
+
+    split_training_validation(images, train_images, valid_images, ratio);
+    split_training_validation(labels, train_labels, valid_labels, ratio);
+
+    vec_t train_data;
+    for (size_t i = 0; i < training_size * in_h * in_w; ++i) {
+      train_data.push_back(i + 1);
+    }
+
+    vec_t valid_data;
+    for (size_t i = training_size * in_h * in_w; i < num_images; ++i) {
+      valid_data.push_back(i + 1);
+    }
+
+    vec_t train_label_data;
+    for (size_t i = 0; i < training_size; ++i) {
+      train_label_data.push_back(i + 1);
+    }
+
+    vec_t valid_label_data;
+    for (size_t i = training_size; i < num_images; ++i) {
+      valid_label_data.push_back(i + 1);
+    }
+
+    auto i = train_images.host_begin();
+    for (auto d : train_data) {
+      ASSERT_EQ(d, *i++);
+    }
+
+    auto it = valid_images.host_begin();
+    for (auto d : valid_data) {
+      ASSERT_EQ(d, *it++);
+    }
+
+    auto ite = train_labels.host_begin();
+    for (auto d : train_label_data) {
+      ASSERT_EQ(d, *ite++);
+    }
+
+    auto iter = valid_labels.host_begin();
+    for (auto d : valid_label_data) {
+      ASSERT_EQ(d, *iter++);
+    }
+  }
 }

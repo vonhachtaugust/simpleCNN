@@ -23,7 +23,7 @@ namespace simpleCNN {
     float_t prev_value;
     for (auto d : data) {
       delta.host_at_index(i) = d;
-      opt.update(&delta, &p, &delta, &p);
+      opt.update(&delta, &p, &delta, &p, 10);
       if (i > 0) {
         // print(prev_value, "Prev:" + std::to_string(i));
         // print(*p.host_begin(), "Curr: " + std::to_string(i));

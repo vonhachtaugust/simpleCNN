@@ -69,7 +69,8 @@ namespace simpleCNN {
     return means;
   }
 
-  void zero_mean_unit_variance(tensor_t& x, bool save = false, std::string filename = "") {
+  std::vector<float_t> zero_mean_unit_variance(tensor_t& x) {
+    std::vector<float_t> result;
     auto m = means(x);
     auto s = standard_deviation(x, m);
 
@@ -87,11 +88,10 @@ namespace simpleCNN {
         x.host_at_index(index) /= std;
       }
     }
+    result.push_back(mean);
+    result.push_back(std);
 
-    if (save) {
-      std::vector<float_t> result = {mean, std};
-      save_data_to_file<float_t>(filename, result);
-    }
+    return result;
   }
 
   void zero_mean_unit_variance(tensor_t& x, std::string filename) {
@@ -122,8 +122,17 @@ namespace simpleCNN {
    * @return
    */
   template <typename T>
-  T regularization(const tensor_t& weight) {
-    return dot(weight, &(*weight.host_begin()), weight, &(*weight.host_begin()));
+  T regularization(const std::vector<tensor_t*>& weight) {
+    float_t dot_sum = float_t(0);
+    
+    for (size_t i = 0; i < weight.size(); ++i) {
+      auto w = weight[i];
+      
+      dot_sum += dot(*w, &(*w->host_begin()), *w, &(*w->host_begin()));
+    }
+    
+    //return dot(weight, &(*weight.host_begin()), weight, &(*weight.host_begin()));
+    return dot_sum;
   }
 
   float_t l2norm(const tensor_t& a, const tensor_t& b) {
@@ -159,8 +168,10 @@ namespace simpleCNN {
       auto diff = l2norm_diff(*A[i], B[i]);
       auto val  = diff / sum;
       if (isnan(val)) {
-        print(sum);
-        print(diff);
+        if (sum == 0 && diff == 0) {
+          val = 0;
+          continue;
+        }
         throw simple_error("Error: sum or diff was nan");
       }
 
@@ -169,18 +180,4 @@ namespace simpleCNN {
     return errors;
   }
 
-  void average_deltas(tensor_t& dx, const size_t batch_size) {
-    float_t norm = float_t(1) / static_cast<float_t>(batch_size);
-
-    size_t n = dx.size();
-    for (size_t i = 0; i < n; ++i) {
-      dx.host_at_index(i) *= norm;  // average
-    }
-  }
-
-  void regularize(const tensor_t& W, tensor_t& dW) {
-    for (size_t i = 0; i < dW.size(); ++i) {
-      dW.host_at_index(i) += Hyperparameters::regularization_constant * W.host_at_index(i);
-    }
-  }
 }

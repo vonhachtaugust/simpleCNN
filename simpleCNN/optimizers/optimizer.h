@@ -24,7 +24,7 @@ namespace simpleCNN {
 
     // virtual void update_bias(const tensor_t* dB, tensor_t* B) = 0;
 
-    virtual void update(const tensor_t* dW, const tensor_t* dB, tensor_t* W, tensor_t* B) = 0;
+    virtual void update(const tensor_t* dW, const tensor_t* dB, tensor_t* W, tensor_t* B, const size_t batch_size) = 0;
   };
 
   /**
@@ -69,7 +69,7 @@ namespace simpleCNN {
         beta1_t(float_t(0.9)),
         beta2_t(float_t(0.999)) {}
 
-    void update(const tensor_t* dW, const tensor_t* dB, tensor_t* W, tensor_t* B) {
+    void update(const tensor_t* dW, const tensor_t* dB, tensor_t* W, tensor_t* B, const size_t batch_size) {
       tensor_t* mt_w = get<0>(W);
       tensor_t* vt_w = get<1>(W);
       tensor_t* mt_b = get<2>(W);
@@ -78,22 +78,29 @@ namespace simpleCNN {
       beta1_t *= beta1;
       beta2_t *= beta2;
 
-      adam(dW, mt_w, vt_w, W);
-      adam(dB, mt_b, vt_b, B);
+      adam(dW, mt_w, vt_w, W, batch_size, true);
+      adam(dB, mt_b, vt_b, B, batch_size, false);
     }
 
-    void adam(const tensor_t* dx, const tensor_t* mt, const tensor_t* vt, tensor_t* x) {
+    void adam(const tensor_t* dx, const tensor_t* mt, const tensor_t* vt, tensor_t* x, const size_t batch_size, const bool weight_decay) {
       for (size_t i = 0; i < dx->size(); ++i) {
         auto& mt_i = mt->host_at_index(i);
         auto& vt_i = vt->host_at_index(i);
         auto& dx_i = dx->host_at_index(i);
         auto& x_i  = x->host_at_index(i);
 
+        dx_i /= float_t(batch_size);
+
         mt_i = beta1 * mt_i + (float_t(1) - beta1) * dx_i;
         vt_i = beta2 * vt_i + (float_t(1) - beta2) * dx_i * dx_i;
 
         float_t adaptive_lr = alpha * std::sqrt(1 - beta2_t) / (float_t(1) - beta1_t);
-        x_i -= adaptive_lr * mt_i / (std::sqrt(vt_i) + eps);
+
+        if (weight_decay) {
+          x_i -= adaptive_lr * mt_i / (std::sqrt(vt_i) + eps) + Hyperparameters::regularization_constant * x_i;
+        } else {
+          x_i -= adaptive_lr * mt_i / (std::sqrt(vt_i) + eps);
+        }
       }
     }
 

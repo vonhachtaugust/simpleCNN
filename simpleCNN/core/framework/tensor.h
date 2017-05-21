@@ -185,6 +185,9 @@ namespace simpleCNN {
 
     StorageIterator host_end() const { return storage_ptr_->host_data(size()); }
 
+    /**
+     * Should incorporate offset somehow.
+     */
     T& host_at_index(size_t index) const { return storage_ptr_->host_value(index); }
 
     Tensor& fill(T value) {

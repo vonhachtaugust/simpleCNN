@@ -18,7 +18,7 @@ namespace simpleCNN {
     auto m = means(test_subject);
     auto s = standard_deviation(test_subject, m);
 
-    zero_mean_unit_variance(test_subject, true, filename);
+    zero_mean_unit_variance(test_subject);
 
     auto m_new = means(test_subject);
     auto s_new = standard_deviation(test_subject, m);

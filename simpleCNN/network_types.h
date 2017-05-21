@@ -13,17 +13,50 @@ namespace simpleCNN {
     typedef std::vector<Layer*>::iterator iterator;
     typedef std::vector<Layer*>::const_iterator const_iterator;
 
+    /**
+     * If output layers data is required.
+     *
+     * @param input
+     * @return
+     */
     virtual tensor_t forward(const tensor_t& input) = 0;
 
+    /**
+     * If no output is required.
+     *
+     * @param input
+     */
     virtual void forward_pass(const tensor_t& input) = 0;
 
+    /**
+     * If recording the loss is required, e.g. gradient check.
+     *
+     * @param input
+     * @param labels
+     * @return
+     */
     virtual float_t forward_loss(const tensor_t& input, const tensor_t& labels) = 0;
 
     virtual void backward(const tensor_t& labels) = 0;
 
-    virtual void update(Optimizer& opt) {
+    /**
+     * Method for storing the training loss, validation loss and accuracy.
+     *
+     * @param loss
+     * @param accuracy
+     * @param store_results
+     */
+    virtual void record_training_progress(std::vector<float_t>& training_loss,
+                                          std::vector<float_t>& training_accuracy,
+                                          const bool store_results) const = 0;
+
+    virtual void record_validation_progress(std::vector<float_t>& validation_loss,
+                                            std::vector<float_t>& validation_accuracy,
+                                            const bool store_results) const = 0;
+
+    virtual void update(Optimizer& opt, const size_t batch_size) {
       for (auto l : nodes_) {
-        l->update(opt);
+        l->update(opt, batch_size);
       }
     }
 
@@ -33,6 +66,7 @@ namespace simpleCNN {
       }
     }
 
+    /** For testing ----------------------------                           */
     std::vector<tensor_t*> get_dB() {
       std::vector<tensor_t*> dB;
       for (auto l : nodes_) {
@@ -54,13 +88,7 @@ namespace simpleCNN {
       return dW;
     }
 
-    void print_dW() {
-      for (auto l : nodes_) {
-        l->print_dW();
-      }
-    }
-
-    virtual std::vector<tensor_t*> get_bias() {
+    std::vector<tensor_t*> get_bias() {
       std::vector<tensor_t*> bias;
 
       for (auto l : nodes_) {
@@ -69,7 +97,7 @@ namespace simpleCNN {
       return bias;
     }
 
-    virtual std::vector<tensor_t*> get_weights() {
+    std::vector<tensor_t*> get_weights() {
       std::vector<tensor_t*> weights;
 
       for (auto l : nodes_) {
@@ -78,17 +106,17 @@ namespace simpleCNN {
       return weights;
     }
 
-    void print_error() { std::cout << nodes_.back()->error() << std::endl; }
+    /** For testing ----------------------------                           */
 
     template <typename OutputArchive>
-    void save_weight_and_bias(OutputArchive& oa) const {
+    void save_weights(OutputArchive& oa) const {
       for (auto l : nodes_) {
         l->save(oa);
       }
     }
 
     template <typename InputArchive>
-    void load_weight_and_bias(InputArchive& ia) const {
+    void load_weights(InputArchive& ia) const {
       for (auto l : nodes_) {
         l->load(ia);
       }
@@ -138,18 +166,36 @@ namespace simpleCNN {
       }
     }
 
-    void backward_pass(const tensor_t& labels, std::vector<float_t>& loss, std::vector<float_t>& accuracy) {
-      nodes_.back()->set_targets(labels);
-
-      for (auto l = nodes_.rbegin(); l != nodes_.rend(); ++l) {
-        (*l)->backward();
+    void record_training_progress(std::vector<float_t>& training_loss,
+                                  std::vector<float_t>& training_accuracy,
+                                  const bool store_results) const override {
+      if (!store_results) {
+        return;
       }
 
-      auto err = nodes_.back()->error();
-      loss.push_back(err);
+      std::vector<tensor_t *> weights;
+      for (auto l : nodes_) {
+        l->get_weights(weights);
+      }
 
-      auto acc = nodes_.back()->accuracy();
-      accuracy.push_back(acc);
+      training_loss.push_back(nodes_.back()->error(weights));
+      training_accuracy.push_back(nodes_.back()->accuracy());
+    }
+
+    void record_validation_progress(std::vector<float_t>& validation_loss,
+                                    std::vector<float_t>& validation_accuracy,
+                                    const bool store_results) const override {
+      if (!store_results) {
+        return;
+      }
+
+      std::vector<tensor_t *> weights;
+      for (auto l : nodes_) {
+        l->get_weights(weights);
+      }
+
+      validation_loss.push_back(nodes_.back()->error(weights));
+      validation_accuracy.push_back(nodes_.back()->accuracy());
     }
 
     tensor_t forward(const tensor_t& input) override {
@@ -169,7 +215,12 @@ namespace simpleCNN {
         nodes_[i]->forward();
       }
 
-      return nodes_.back()->error();
+      std::vector<tensor_t *> weights;
+      for (auto l : nodes_) {
+        l->get_weights(weights);
+      }
+
+      return nodes_.back()->error(weights);
     }
 
     void forward_pass(const tensor_t& input) override {

@@ -232,6 +232,30 @@ namespace simpleCNN {
     }
   }
 
+  void copy_to(const tensor_t& from, tensor_t& to, const size_t start_index_from, const size_t start_index_to) {
+    size_t batch_length = from.size() / from.shape()[0];
+
+    for (size_t i = 0; i < batch_length; ++i) {
+      to.host_at_index(start_index_to * batch_length + i) = from.host_at_index(start_index_from * batch_length + i);
+    }
+  }
+
+  void split_training_validation(const tensor_t& from,
+                                 tensor_t& to_training,
+                                 tensor_t& to_validation,
+                                 const float_t ratio) {
+    size_t num_images  = from.shape()[0];
+    size_t split_index = num_images * ratio;
+
+    for (size_t i = 0; i < num_images; ++i) {
+      if (i < split_index) {
+        copy_to(from, to_training, i, i);
+      } else {
+        copy_to(from, to_validation, i, i - split_index);
+      }
+    }
+  }
+
   /**
      * OpenBLAS efficient matrix multiplication. This version supports
      * floating point precision only, double precision also exists but is not going to be used here.

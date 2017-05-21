@@ -130,10 +130,6 @@ namespace simpleCNN {
       throw simple_error("Error: Out component not allocated, or not specified properly.");
     }
 
-    void set_out_data(const tensor_t& data, const size_t index) {
-      *ith_out_node(index)->get_data() = data;
-    }
-
     /** End: Getters ---------------------------------------- */
 
     /** Start: Save/Load ------------------------------------ */
@@ -143,17 +139,16 @@ namespace simpleCNN {
       if (!trainable()) {
         return;
       }
-
       os << std::setprecision(precision);
 
-      auto layer_weights = weights();
-      auto layer_bias    = bias();
+      auto w = weights();
+      auto b    = bias();
 
-      for (auto iter = layer_weights.host_begin(); iter != layer_weights.host_end(); ++iter) {
+      for (auto iter = w.host_begin(); iter != w.host_end(); ++iter) {
         os << *iter << " ";
       }
 
-      for (auto iter = layer_bias.host_begin(); iter != layer_bias.host_end(); ++iter) {
+      for (auto iter = b.host_begin(); iter != b.host_end(); ++iter) {
         os << *iter << " ";
       }
     }
@@ -165,14 +160,14 @@ namespace simpleCNN {
 
       is >> std::setprecision(precision);
 
-      auto layer_weights = weights();
-      auto layer_bias    = bias();
+      auto w = weights();
+      auto b    = bias();
 
-      for (auto iter = layer_weights.host_begin(); iter != layer_weights.host_end(); ++iter) {
+      for (auto iter = w.host_begin(); iter != w.host_end(); ++iter) {
         is >> *iter;
       }
 
-      for (auto iter = layer_bias.host_begin(); iter != layer_bias.host_end(); ++iter) {
+      for (auto iter = b.host_begin(); iter != b.host_end(); ++iter) {
         is >> *iter;
       }
 
@@ -205,23 +200,40 @@ namespace simpleCNN {
 
     void set_out_data(const tensor_t &data, component_t ct) { *out_component_data(ct) = data; }
 
+
+    void set_out_data(const tensor_t& data, const size_t index) {
+      *ith_out_node(index)->get_data() = data;
+    }
+
+
     /**
      * Override by the loss layer to return the gradients with respect to the loss function.
      *
      * @param output        : output tensor from the forward pass.
      */
 
+
     virtual void set_targets(const tensor_t &labels) { throw simple_error("Error: Last layer is not a loss layer."); }
 
-    float_t error() { return error(network_output(), network_target()); }
+    /**
+     * Calls the implemented error function of the loss layer.
+     *
+     * @return loss
+     */
+    float_t error(const std::vector<tensor_t*>& weights) { return error(network_output(), network_target(), weights); }
 
+    /**
+     * Calls the implemented accuracy function of the loss layer.
+     *
+     * @return
+     */
     float_t accuracy() { return accuracy(network_output(), network_target()); }
 
     virtual float_t accuracy(const tensor_t &output, const tensor_t &target) const {
       throw simple_error("Error: Last layer is not a loss layer");
     }
 
-    virtual float_t error(const tensor_t &output, const tensor_t &target) const {
+    virtual float_t error(const tensor_t &output, const tensor_t &target, const std::vector<tensor_t*>& weights) const {
       throw simple_error("Error: Last layer is not a loss layer");
     }
 
@@ -234,20 +246,14 @@ namespace simpleCNN {
 
     virtual tensor_t& network_target() { throw simple_error("Error: Function not called on a loss layer type."); }
 
-    tensor_t output() const {
+    tensor_t& output() const {
       for (size_t i = 0; i < out_channels_; i++) {
         if (out_type_[i].getComponentType() == component_t::OUT_DATA) {
           return *(const_cast<Layer *>(this))->ith_out_node(i)->get_data();
         }
       }
-      throw simple_error("ERROR: No out-component found");
+      throw simple_error("Error: No out-component found");
     }
-
-    void set_out_grad(const tensor_t &gradient) {
-      *(const_cast<Layer *>(this))->ith_out_node(0)->get_gradient() = gradient;
-    }
-
-    tensor_t output() { return *ith_out_node(0)->get_data(); }
 
     /** End: Setters ---------------------------------------- */
 
@@ -299,35 +305,19 @@ namespace simpleCNN {
       }
     }
 
-    void print_gradients() {
-      if (trainable()) {
-        for (size_t i = 0; i < in_channels_; ++i) {
-          auto type = in_type_[i].getComponentType();
-          if (type == component_t::WEIGHT) {
-            auto W  = get_component_data(i, type);
-            auto dW = get_component_gradient(i, type);
-            print(*W, "W");
-            print(*dW, "dW");
-          }
-        }
-      }
-    }
-
     /**
      * Error weights and bias are affecting the same adam class.
      *
      * @param opt
      */
-    void update(Optimizer &opt) {
+    void update(Optimizer &opt, const size_t batch_size) {
       if (trainable()) {
         auto W  = ith_in_node(1)->get_data();
         auto dW = ith_in_node(1)->get_gradient();
         auto B  = ith_in_node(2)->get_data();
         auto dB = ith_in_node(2)->get_gradient();
 
-        regularize(*dW, *W);
-
-        opt.update(dW, dB, W, B);
+        opt.update(dW, dB, W, B, batch_size);
       }
     }
 
@@ -362,24 +352,26 @@ namespace simpleCNN {
       }
     }
 
-    void print_dW() {
-      if (trainable()) {
-        print(*ith_in_node(1)->get_gradient(), "dW");
-      }
-    }
-
+    /**
+     * For numerical gradient testing
+     *
+     * @param dW        : weight gradients
+     */
     void get_dW(std::vector<tensor_t *> &dW) {
       if (trainable()) {
         tensor_t *grads = ith_in_node(1)->get_gradient();
-        // average_deltas(*grads);
         dW.push_back(grads);
       }
     }
 
+    /**
+     * For numerical gradient testing
+     *
+     * @param dB        : bias gradients
+     */
     void get_dB(std::vector<tensor_t *> &dB) {
       if (trainable()) {
         tensor_t *grads = ith_in_node(2)->get_gradient();
-        // average_deltas(*grads);
         dB.push_back(grads);
       }
     }

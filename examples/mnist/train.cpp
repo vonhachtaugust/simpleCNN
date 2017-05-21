@@ -41,85 +41,126 @@ void display_filtermaps(const tensor_t& output, const size_t in_height, const si
 }
 
 static bool train_mnist(const size_t batch_size,
-                        const size_t epoch,
-                        const std::string weight_and_bias_file,
-                        const std::string loss_file,
-                        const std::string accuracy_file) {
+                        const size_t epoch) {
+  /** Mnist specific parameters  */
   size_t mnist_image_row = 28;
   size_t mnist_image_col = 28;
   size_t mnist_image_num = 60000;
-  size_t in_width        = 32;
-  size_t in_height       = 32;
-  size_t subset          = 3;
+  size_t in_width        = 28;
+  size_t in_height       = 28;
+  size_t subset          = 1;
 
+  /** Path to the mnist data files */
   std::string path_to_data("/c3se/NOBACKUP/users/hacht/data/");
 
-  tensor_t train_labels({mnist_image_num / subset, 1, 1, 1});
-  tensor_t train_images({mnist_image_num / subset, 1, in_height, in_width});
+  /** Parse mnist */
+  tensor_t labels({mnist_image_num / subset, 1, 1, 1});
+  tensor_t images({mnist_image_num / subset, 1, in_height, in_width});
+
   float_t min = -1.0f;
   float_t max = 1.0f;
-  train_images.fill(min);
+  images.fill(min);
 
-  parse_mnist_images(path_to_data + "train-images.idx3-ubyte", &train_images, min, max, 2, 2, subset);
-  parse_mnist_labels(path_to_data + "train-labels.idx1-ubyte", &train_labels, subset);
+  parse_mnist_images(path_to_data + "train-images.idx3-ubyte", &images, min, max, 0, 0, subset);
+  parse_mnist_labels(path_to_data + "train-labels.idx1-ubyte", &labels, subset);
 
-  // Display ----------------------------------------------------- //
+  /** Pre-processing */
+  std::vector<float_t> mean_and_std = zero_mean_unit_variance(images);
+  size_t minibatch_size = batch_size;
+  size_t epochs         = epoch;
+  mean_and_std.push_back(float_t(batch_size));
+  mean_and_std.push_back(float_t(epoch));
+
+  /** Split data into a training and validation set */
+  float_t training_validation_split_ratio = 0.75;
+  size_t training_set_size = (mnist_image_num / subset) * training_validation_split_ratio;
+  size_t validation_set_size = std::floor((mnist_image_num / subset) * (1 - training_validation_split_ratio) + 0.5);
+
+  tensor_t train_images({training_set_size, 1, in_height, in_width});
+  tensor_t train_labels({training_set_size, 1, 1, 1});
+  tensor_t validation_images({validation_set_size, 1, in_height, in_width});
+  tensor_t validation_labels({validation_set_size, 1, 1, 1});
+
+  split_training_validation(images, train_images, validation_images, training_validation_split_ratio);
+  split_training_validation(labels, train_labels, validation_labels, training_validation_split_ratio);
+
+  /** Display ----------------------------------------------------- */
+
+  // Remember to remove zero mean unit variance
 
   /*
   namedWindow("Display window", WINDOW_AUTOSIZE);
   Mat image(in_height, in_width, CV_8UC1);
 
-  for (size_t sample = 0; sample < 100; ++sample) {
+  for (size_t sample = 0; sample < training_set_size; ++sample) {
     uchar* p = image.data;
     for (size_t n = 0; n < in_height * in_width; ++n) {
       auto val = train_images.host_at_index(sample * in_height * in_width + n);
       p[n] = val;
     }
 
-    print(train_labels.host_at_index(sample));
+    print(train_labels.host_at_index(sample), "train: " + std::to_string(sample));
     imshow("Display window", image);
     waitKey(0);
-  } */
+  }
 
-  // -------------------------------------------------------------- //
+  for (size_t sample = 0; sample < validation_set_size; ++sample) {
+    uchar* p = image.data;
+    for (size_t n = 0; n < in_height * in_width; ++n) {
+      auto val = validation_images.host_at_index(sample * in_height * in_width + n);
+      p[n] = val;
+    }
 
-  // Zero mean unit variance
+    print(validation_labels.host_at_index(sample), "valid: " + std::to_string(sample));
+    imshow("Display window", image);
+    waitKey(0);
+  }
+   */
 
-  zero_mean_unit_variance(train_images, true, "mean_std16052017.txt");
-  size_t minibatch_size = batch_size;
-  size_t epochs         = epoch;
+  /** -------------------------------------------------------------- */
 
-  // create callback
+  /** Call-back for clocking */
   auto on_enumerate_minibatch = [&](time_t t) {
     std::cout << (float_t)(clock() - t) / CLOCKS_PER_SEC << "s elapsed." << std::endl;
   };
 
-  auto on_enumerate_epoch = [&](size_t epoch) { std::cout << epoch << std::endl; };
+  auto on_enumerate_epoch = [&](size_t epoch) { std::cout << epoch + 1 << std::endl; };
 
+  /** Define network architecture and optimizer */
   network net;
-  net << conv(32, 32, 1, minibatch_size, 5, 6) << relu() << maxpool(28, 28, 6, minibatch_size)
-      << conv(14, 14, 6, minibatch_size, 5, 16) << relu() << maxpool(10, 10, 16, minibatch_size)
-      << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout({minibatch_size, 120, 1, 1}, 0.5)
-      << fully(120, 10, minibatch_size) << softmax();
-
+  //net << conv(32, 32, 1, minibatch_size, 5, 6) << relu() << maxpool(28, 28, 6, minibatch_size)
+  //    << conv(14, 14, 6, minibatch_size, 5, 16) << relu() << maxpool(10, 10, 16, minibatch_size)
+  //    << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout({minibatch_size, 120, 1, 1}, 0.5)
+  //    << fully(120, 10, minibatch_size) << softmax();
+  net << conv(28, 28, 1, minibatch_size, 5, 32, 1, 2, true) << relu() << maxpool(28, 28, 32, minibatch_size)
+      << conv(14, 14, 32, minibatch_size, 5, 64, 1, 2, true) << relu() << maxpool(14, 14, 64, minibatch_size)
+      << fully(7 * 7 * 64, 1024, minibatch_size) << relu() << dropout({minibatch_size, 1024, 1, 1}, 0.75)
+      << fully(1024, 10, minibatch_size) << softmax();
   adam a;
-  net.train<adam>(a, train_images, train_labels, minibatch_size, epochs, on_enumerate_minibatch, on_enumerate_epoch,
-                  weight_and_bias_file, loss_file, accuracy_file, true);
+
+  /** Train and save results */
+  net.train<adam>(a, train_images, train_labels, validation_images, validation_labels, minibatch_size, epochs, on_enumerate_minibatch, on_enumerate_epoch, true);
+  net.save_results(mean_and_std);
 
   return true;
 }
 
+
 int main(int argc, char* argv[]) {
-  if (argc < 6) {
-    print("To few arguments, expected five.");
+  size_t expect = 3;
+  if (argc < expect) {
+    print("To few arguments, expected " + std::to_string(expect));
     return -1;
   }
 
+  /** program expects a batch size and an epoch size as command line argument */
   size_t batch_size = atoi(argv[1]);
   size_t epoch      = atoi(argv[2]);
 
-  if (train_mnist(batch_size, epoch, argv[3], argv[4], argv[5])) {
+  /** Let's go! */
+  if (train_mnist(batch_size, epoch)) {
     return 0;
   }
+
   return -1;
 }
