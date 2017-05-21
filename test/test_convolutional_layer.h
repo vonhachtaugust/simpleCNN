@@ -238,7 +238,7 @@ namespace simpleCNN {
     size_t outWidth     = 3;
     size_t outHeight    = 3;
     size_t in_channels  = 3;  // 3 color channel
-    size_t batch_size   = 1;
+    size_t batch_size   = 2;
     size_t filterSize   = 3;
     size_t out_channels = 2;  // := number of filters
     size_t padding      = 1;
@@ -248,14 +248,18 @@ namespace simpleCNN {
     Convolutional_layer conv(imageWidth, imageHeight, in_channels, batch_size, filterSize, out_channels, stride,
                              padding, has_bias);
 
-    tensor_t input_previous_layer({1, in_channels, imageHeight, imageWidth});
+    tensor_t input_previous_layer({batch_size, in_channels, imageHeight, imageWidth});
     vec_t input_data = {0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 2, 1, 0, 1, 1, 1, 1, 2, 2, 1, 0, 2, 0, 1,
+                        1, 0, 2, 2, 1, 0, 0, 1, 1, 2, 0, 0, 0, 1, 2, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0,
+                        2, 1, 2, 0, 1, 0, 0, 1, 2, 2, 1, 1, 1, 0, 2, 2, 0, 1, 2, 1, 2, 0, 2, 1, 2,
+                        0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 2, 1, 0, 1, 1, 1, 1, 2, 2, 1, 0, 2, 0, 1,
                         1, 0, 2, 2, 1, 0, 0, 1, 1, 2, 0, 0, 0, 1, 2, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0,
                         2, 1, 2, 0, 1, 0, 0, 1, 2, 2, 1, 1, 1, 0, 2, 2, 0, 1, 2, 1, 2, 0, 2, 1, 2};
     fill(input_data, input_previous_layer);
 
-    tensor_t curr_delta({1, 2, 3, 3});
-    vec_t curr_delta_data = {0, -4, 1, -3, -3, -6, 0, -4, -3, 4, 1, 2, -1, 3, 9, 1, 3, 4};
+    tensor_t curr_delta({batch_size, 2, 3, 3});
+    vec_t curr_delta_data = {0, -4, 1, -3, -3, -6, 0, -4, -3, 4, 1, 2, -1, 3, 9, 1, 3, 4,
+                             0, -4, 1, -3, -3, -6, 0, -4, -3, 4, 1, 2, -1, 3, 9, 1, 3, 4};
     fill(curr_delta_data, curr_delta);
 
     // Setup custom weights and bias
@@ -274,7 +278,7 @@ namespace simpleCNN {
     // Fill with values (depends on weight::init class)
     conv.init_weight();
 
-    tensor_t prev_delta({1, in_channels, imageHeight, imageWidth});
+    tensor_t prev_delta({batch_size, in_channels, imageHeight, imageWidth});
     tensor_t dW({out_channels, in_channels, filterSize, filterSize});
     tensor_t dB({out_channels, 1, 1, 1});
 
@@ -286,6 +290,8 @@ namespace simpleCNN {
 
     conv.back_propagation(input, output, in_grads, out_grads);
 
+    //print(dW, "dW");
+    //print(dB, "dB");
     /*
     simple_info("input gradients: ");
     std::cout << *in_grads[0] << std::endl;

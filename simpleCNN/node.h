@@ -91,5 +91,9 @@ namespace simpleCNN {
     tensor_t grad_;
     nodeptr_t prev_;
     nodeptr_t next_;
+
+#ifdef USE_CUDNN
+    float_t* data_gpu_;
+#endif
   };
 }  // namespace simpleCNN

@@ -12,6 +12,11 @@
 #include "../core/kernels/conv_grad_op.h"
 #include "../core/kernels/conv_op.h"
 
+#ifdef USE_CUDNN
+  #include "../util/cuda_utils.h"
+#include "../core/kernels/conv_op_cuda.h"
+#endif
+
 namespace simpleCNN {
   class Convolutional_layer : public Layer {
    public:
@@ -35,6 +40,29 @@ namespace simpleCNN {
                             stride,
                             padding,
                             has_bias) {}
+
+    Convolutional_layer(size_t input_width,
+                        size_t input_height,
+                        size_t in_channels,
+                        size_t batch_size,
+                        size_t filter_size,
+                        size_t out_channels,
+                        size_t stride,
+                        size_t padding,
+                        bool has_bias,
+                        core::backend_t backend_t)
+        : Convolutional_layer(input_width,
+                              input_height,
+                              in_channels,
+                              batch_size,
+                              filter_size,
+                              filter_size,
+                              out_channels,
+                              stride,
+                              stride,
+                              padding,
+                              has_bias,
+                              backend_t) {}
     /**
     * Constructing a convolutional layer.
     *
@@ -167,7 +195,12 @@ namespace simpleCNN {
       if (backend_type == core::backend_t::internal) {
         kernel_fwd_.reset(new simpleCNN::ConvOp(ctx));
         kernel_bwd_.reset(new simpleCNN::ConvGradOp(ctx));
-      } else {
+      } else if(backend_type == core::backend_t::gpu) {
+        params_.initalize_gpu_descriptors();
+        kernel_fwd_.reset(new simpleCNN::ConvCudaForwardOp(ctx));
+        kernel_bwd_.reset(new simpleCNN::ConvCudaBackwardOp(ctx));
+      }
+      else {
         throw simple_error("No supported engine: ");
       }
     }

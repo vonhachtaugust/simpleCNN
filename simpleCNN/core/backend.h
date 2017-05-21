@@ -9,7 +9,7 @@
 
 namespace simpleCNN {
   namespace core {
-    enum class backend_t { internal };
+    enum class backend_t { internal, gpu };
 
     inline backend_t default_engine() { return backend_t::internal; }
 

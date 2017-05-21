@@ -8,6 +8,7 @@
 #include "../core/kernels/con_op.h"
 #include "../core/params/con_params.h"
 #include "layer.h"
+#include "../core/kernels/con_op_cuda.h"
 
 namespace simpleCNN {
   class Connected_layer : public Layer {
@@ -45,19 +46,15 @@ namespace simpleCNN {
 
       auto ctx = core::OpKernelContext(in_data, out_data);
       ctx.setEngine(Layer::engine());
+
       // Reshape input to suit connected layer format.
-
-      // printc(in_data[0]->shape(), "Before reshape");
       auto shape = in_data[0]->shape();
-
       Layer::reshape(*in_data[0], in_shape()[0]);
-      // printc(in_data[0]->shape(), "After reshape");
 
       kernel_fwd_->compute(ctx);
 
       // Reshape input back
       in_data[0]->reshape(shape);
-      // printc(in_data[0]->shape(), "After compute");
     }
 
     void back_propagation(const data_ptrs_t& in_data,
@@ -94,6 +91,10 @@ namespace simpleCNN {
       if (backend_type == core::backend_t::internal) {
         kernel_fwd_.reset(new simpleCNN::ConOp(ctx));
         kernel_bwd_.reset(new simpleCNN::ConGradOp(ctx));
+      } else if(backend_type == core::backend_t::gpu) {
+        params_.initialize_gpu_descriptors();
+        kernel_fwd_.reset(new simpleCNN::ConCudaForwardOp(ctx));
+        kernel_bwd_.reset(new simpleCNN::ConCudaBackwardGradOp(ctx));
       } else {
         throw simple_error("No supported engine: ");
       }

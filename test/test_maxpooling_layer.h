@@ -36,7 +36,7 @@ namespace simpleCNN {
     //                      maxpool.out_component_data(component_t::AUX)};
 
     data_ptrs_t input  = {&img};
-    data_ptrs_t output = {&out, &out};
+    data_ptrs_t output = {&out};
     maxpool.forward_propagation(input, output);
     // simple_info("Out data: ");
     // std::cout << out << std::endl;
@@ -69,7 +69,7 @@ namespace simpleCNN {
     tensor_t out({batch_size, in_channels, pooling_size_y, pooling_size_x});
 
     data_ptrs_t input  = {&img};
-    data_ptrs_t output = {&out, &out};
+    data_ptrs_t output = {&out};
     maxpool.forward_propagation(input, output);
     // simple_info("Out data: ");
     // std::cout << out << std::endl;

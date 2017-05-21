@@ -122,7 +122,6 @@ namespace simpleCNN {
   }
 
   TEST(Connected, backprop_op) {
-    /*
     size_t in_dim     = 4;
     size_t out_dim    = 2;
     size_t batch_size = 1;
@@ -159,7 +158,7 @@ namespace simpleCNN {
     data_ptrs_t input    = {&in, con.in_component_data(component_t::WEIGHT), con.in_component_data(component_t::BIAS)};
     data_ptrs_t output   = {};
     data_ptrs_t in_grad  = {&prev_grad, &dW, &db};
-    data_ptrs_t out_grad = {&curr_grad, &curr_grad};
+    data_ptrs_t out_grad = {&curr_grad};
 
     con.back_propagation(input, output, in_grad, out_grad);
 
@@ -167,6 +166,10 @@ namespace simpleCNN {
     // print(*in_grad[1], "dW");
     // print(*in_grad[2], "db");
 
+    //print(dW, "dW");
+    //print(db, "dB");
+
+    /*
     vec_t cdw = {1, -1, 2, -2, -2, 2, -1, 1};
     auto iter = dW.host_begin();
 

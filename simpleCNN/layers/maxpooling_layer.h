@@ -8,6 +8,7 @@
 #include "../core/framework/op_kernel.h"
 #include "../core/kernels/max_grad_op.h"
 #include "../core/kernels/max_op.h"
+#include "../core/kernels/max_op_cuda.h"
 
 namespace simpleCNN {
   class Maxpooling_layer : public Layer {
@@ -25,7 +26,7 @@ namespace simpleCNN {
                      core::backend_t backend_type = core::default_engine())
       : Maxpooling_layer(
           in_width, in_height, in_channels, batch_size, pooling_size, pooling_size, stride, stride, backend_type) {}
-
+    
     /**
      * Constructing maxpooling layer
      *
@@ -117,6 +118,10 @@ namespace simpleCNN {
       if (backend_type == core::backend_t::internal) {
         kernel_fwd_.reset(new simpleCNN::MaxpoolingOp(ctx));
         kernel_bwd_.reset(new simpleCNN::MaxpoolingGradOp(ctx));
+      } else if(backend_type == core::backend_t::gpu) {
+        params_.initalize_gpu_descriptors();
+        kernel_fwd_.reset(new simpleCNN::MaxpoolingCudaForwardOp(ctx));
+        kernel_bwd_.reset(new simpleCNN::MaxpoolingCudaBackwardOp(ctx));
       } else {
         throw simple_error("No supported engine: ");
       }

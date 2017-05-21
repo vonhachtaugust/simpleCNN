@@ -81,12 +81,13 @@ namespace simpleCNN {
     curr_delta.fill(1.0f);
 
     relu r;
+    r.set_in_shape({1, 1, test_data.size(), 1});
 
     r.forward_activation(forward, forward_a);
     r.backward_activation(backward, curr_delta, backward_a);
 
-    // print(forward_a);
-    // print(backward_a);
+    print(forward_a);
+    print(backward_a);
 
     vec_t corr = {1, 0, 0, 0, 0, 0, 0};
     for (size_t i = 0; i < forward_a.size(); ++i) {

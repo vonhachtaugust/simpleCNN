@@ -1,51 +1,53 @@
 //
-// Created by hacht on 5/20/17.
+// Created by hacht on 5/21/17.
 //
 
 #pragma once
 
-#include "../params/conv_params.h"
-#include "conv_op_openblas.h"
+#include "../framework/op_kernel.h"
+#include "../params/con_params.h"
 
 namespace simpleCNN {
-  class ConvCudaForwardOp : public core::OpKernel {
+
+  class ConCudaForwardOp : public core::OpKernel {
    public:
-    explicit ConvCudaForwardOp(const core::OpKernelConstruction& context) : core::OpKernel(context) {}
+    explicit ConCudaForwardOp(const core::OpKernelConstruction& context) : core::OpKernel(context) {}
 
     void compute(const core::OpKernelContext& context) override {
 #ifdef USE_CUDNN
-      core::Conv_params* conv_params_ptr = static_cast<core::Conv_params*>(core::OpKernel::params_);
-      const auto& params                 = conv_params_ptr->conv();
+      core::Con_params* connected_params_ptr = static_cast<core::Con_params*>(core::OpKernel::params_);
+      const auto& params                     = connected_params_ptr->connected_params();
 
       const tensor_t& in_data = context.input(0);
       const tensor_t& weight  = context.input(1);
       const tensor_t& bias    = context.input(2);
       tensor_t& out_data      = context.output(0);
 
-      /** Initalize device memory */
+      /** Initialize device memory */
       float_t* in_data_gpu  = cuda_make_array(&(*in_data.host_begin()), in_data.size());
       float_t* weight_gpu   = cuda_make_array(&(*weight.host_begin()), weight.size());
       float_t* out_data_gpu = cuda_make_array(&(*out_data.host_begin()), out_data.size());
 
       /** Forward propagate */
       float_t one = 1;
-      checkCUDNN(cudnnConvolutionForward(params.cudnnHandle, &one, params.srcTensorDesc, in_data_gpu, params.weightDesc,
-                                         weight_gpu, params.convDesc, params.fw_algo, params.workspace,
-                                         params.workspace_size, &one, params.dstTensorDesc, out_data_gpu));
+      checkCudaErrors(cublasSgemm(params.cublasHandle, CUBLAS_OP_T, CUBLAS_OP_N, params.out_dim, params.batch_size,
+                                  params.in_dim, &one, weight_gpu, params.in_dim, in_data_gpu, params.in_dim, &one,
+                                  out_data_gpu, params.out_dim));
 
       /** Add bias */
       if (params.has_bias) {
         float_t* bias_gpu = cuda_make_array(&(*bias.host_begin()), bias.size());
 
-        checkCUDNN(cudnnAddTensor(params.cudnnHandle, &one, params.biasDesc, bias_gpu, &one, params.dstTensorDesc,
-                                  out_data_gpu));
+        checkCudaErrors(cublasSgemm(params.cublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, params.out_dim, params.batch_size,
+                                    one, &one, bias_gpu, params.out_dim, params.onevec, one, &one, out_data_gpu,
+                                    params.out_dim));
         cuda_free(bias_gpu);
       }
 
-      /** Pull result from device to host */
+      /** Pull result from device */
       cuda_pull_array(out_data_gpu, &(*out_data.host_begin()), out_data.size());
 
-      /** Release allocated gpu memory */
+      /** Release allocated gpu mmemory */
       cuda_free(in_data_gpu);
       cuda_free(out_data_gpu);
       cuda_free(weight_gpu);
@@ -53,14 +55,14 @@ namespace simpleCNN {
     }
   };
 
-  class ConvCudaBackwardOp : public core::OpKernel {
+  class ConCudaBackwardGradOp : public core::OpKernel {
    public:
-    explicit ConvCudaBackwardOp(const core::OpKernelConstruction& context) : core::OpKernel(context) {}
+    explicit ConCudaBackwardGradOp(const core::OpKernelConstruction& context) : core::OpKernel(context) {}
 
     void compute(const core::OpKernelContext& context) override {
 #ifdef USE_CUDNN
-      core::Conv_params* conv_params_ptr = static_cast<core::Conv_params*>(core::OpKernel::params_);
-      const auto& params                 = conv_params_ptr->conv();
+      core::Con_params* connected_params_ptr = static_cast<core::Con_params*>(core::OpKernel::params_);
+      const auto& params                     = connected_params_ptr->connected_params();
 
       const tensor_t& prev_in = context.input(0);
       const tensor_t& weight  = context.input(1);
@@ -78,10 +80,12 @@ namespace simpleCNN {
 
       /** Backward propagate */
       float_t one = 1;
-      checkCUDNN(cudnnConvolutionBackwardFilter(
-        params.cudnnHandle, &one, params.srcTensorDesc, prev_in_gpu, params.ddstTensorDesc, curr_delta_gpu,
-        params.convDesc, params.bf_algo, params.workspace, params.workspace_size, &one, params.dweightDesc, dW_gpu));
+      // Weights
+      checkCudaErrors(cublasSgemm(params.cublasHandle, CUBLAS_OP_N, CUBLAS_OP_T, params.in_dim, params.out_dim,
+                                  params.batch_size, &one, prev_in_gpu, params.in_dim, curr_delta_gpu, params.out_dim,
+                                  &one, dW_gpu, params.in_dim));
 
+      // scale due to batch size
       float_t alpha = float_t(1) / static_cast<float_t>(params.batch_size);
       checkCudaErrors(cublasSscal(params.cublasHandle,
                                   dW.size(),
@@ -89,16 +93,16 @@ namespace simpleCNN {
                                   dW_gpu,
                                   one));
 
-      checkCUDNN(cudnnConvolutionBackwardData(
-        params.cudnnHandle, &one, params.weightDesc, weight_gpu, params.ddstTensorDesc, curr_delta_gpu, params.convDesc,
-        params.bd_algo, params.workspace, params.workspace_size, &one, params.dsrcTensorDesc, prev_delta_gpu));
+      // Data
+      checkCudaErrors(cublasSgemm(params.cublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, params.in_dim, params.batch_size,
+                                  params.out_dim, &one, weight_gpu, params.in_dim, curr_delta_gpu, params.out_dim, &one,
+                                  prev_delta_gpu, params.in_dim));
 
-      /** Backprop bias */
       if (params.has_bias) {
         float_t* db_gpu = cuda_make_array(&(*db.host_begin()), db.size());
 
-        checkCUDNN(cudnnConvolutionBackwardBias(params.cudnnHandle, &one, params.dstTensorDesc, curr_delta_gpu, &one,
-                                                params.biasDesc, db_gpu));
+        checkCudaErrors(cublasSgemv(params.cublasHandle, CUBLAS_OP_N, params.out_dim, params.batch_size, &one,
+                                    curr_delta_gpu, params.out_dim, params.onevec, one, &one, db_gpu, one));
 
         checkCudaErrors(cublasSscal(params.cublasHandle,
                                     db.size(),
@@ -109,7 +113,7 @@ namespace simpleCNN {
         cuda_free(db_gpu);
       }
 
-      /** Pull result from device to host */
+      /** Pull result from device */
       cuda_pull_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
       cuda_pull_array(dW_gpu, &(*dW.host_begin()), dW.size());
 
