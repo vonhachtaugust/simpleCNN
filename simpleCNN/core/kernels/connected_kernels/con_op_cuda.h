@@ -145,11 +145,6 @@ namespace simpleCNN {
       tensor_t& curr_delta    = context.output_grad(0);
 
       /** Initialize device memory */
-      //float_t* prev_in_gpu    = cuda_make_array(&(*prev_in.host_begin()), prev_in.size());
-      //float_t* weight_gpu     = cuda_make_array(&(*weight.host_begin()), weight.size());
-      //float_t* dW_gpu         = cuda_make_array(&(*dW.host_begin()), dW.size());
-      //float_t* prev_delta_gpu = cuda_make_array(&(*prev_delta.host_begin()), prev_delta.size());
-      //float_t* curr_delta_gpu = cuda_make_array(&(*curr_delta.host_begin()), curr_delta.size());
       cuda_push_array(prev_in_gpu, &(*prev_in.host_begin()), prev_in.size());
       cuda_push_array(weight_gpu, &(*weight.host_begin()), weight.size());
       cuda_push_array(dW_gpu, &(*dW.host_begin()), dW.size());
@@ -164,8 +159,8 @@ namespace simpleCNN {
                                   &one, dW_gpu, params.in_dim));
 
       // scale due to batch size
-      float_t alpha = float_t(1) / static_cast<float_t>(params.batch_size);
-      checkCudaErrors(cublasSscal(cublas_handle(), dW.size(), &alpha, dW_gpu, one));
+      //float_t alpha = float_t(1) / static_cast<float_t>(params.batch_size);
+      //checkCudaErrors(cublasSscal(cublas_handle(), dW.size(), &alpha, dW_gpu, one));
 
       // Data
       checkCudaErrors(cublasSgemm(cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N, params.in_dim, params.batch_size,
@@ -173,28 +168,20 @@ namespace simpleCNN {
                                   prev_delta_gpu, params.in_dim));
 
       if (params.has_bias) {
-        //float_t* db_gpu = cuda_make_array(&(*db.host_begin()), db.size());
         cuda_push_array(db_gpu, &(*db.host_begin()), db.size());
         checkCudaErrors(cublasSgemv(cublas_handle(), CUBLAS_OP_N, params.out_dim, params.batch_size, &one,
                                     curr_delta_gpu, params.out_dim, onevec, one, &one, db_gpu, one));
 
-        checkCudaErrors(cublasSscal(cublas_handle(), db.size(), &alpha, db_gpu, one));
+        //checkCudaErrors(cublasSscal(cublas_handle(), db.size(), &alpha, db_gpu, one));
 
         checkCudaErrors(cudaDeviceSynchronize());
         cuda_pull_array(db_gpu, &(*db.host_begin()), db.size());
-        //cuda_free(db_gpu);
       }
 
       /** Pull result from device */
       checkCudaErrors(cudaDeviceSynchronize());
       cuda_pull_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
       cuda_pull_array(dW_gpu, &(*dW.host_begin()), dW.size());
-
-      /** Release allocated gpu memory */
-      //cuda_free(prev_delta_gpu);
-      //cuda_free(weight_gpu);
-      //cuda_free(dW_gpu);
-      //cuda_free(curr_delta_gpu);
 #else
       throw simple_error("Running on gpu when not built with gpu support");
 #endif

@@ -120,6 +120,7 @@ namespace simpleCNN {
           }
         }
       }
+      // All that is done in weight update...
       // average_deltas(dW, params.batch_size);
       // average_deltas(db, params.batch_size);
     }

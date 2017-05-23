@@ -289,8 +289,8 @@ namespace simpleCNN {
 
     conv.back_propagation(input, output, in_grads, out_grads);
 
-    // print(dW, "dW");
-    // print(dB, "dB");
+    //print(dW, "dW");
+    //print(dB, "dB");
     /*
     simple_info("input gradients: ");
     std::cout << *in_grads[0] << std::endl;

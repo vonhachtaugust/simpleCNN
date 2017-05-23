@@ -33,6 +33,8 @@ class ActivationCudaForwardOp : public core::OpKernel {
     checkCUDNN(cudnnSetTensor4dDescriptor(dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, params.shape[0], params.shape[1],
                                           params.shape[2], params.shape[3]));
 
+    checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * product(params.shape)));
+    checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * product(params.shape)));
 
     if (params.activation_function == core::activation_t::relu) {
     checkCUDNN(cudnnCreateActivationDescriptor(&Activation));
@@ -45,6 +47,9 @@ class ActivationCudaForwardOp : public core::OpKernel {
 
   ~ActivationCudaForwardOp() {
 #ifdef USE_CUDNN
+    cuda_free(input_gpu);
+    cuda_free(output_gpu);
+
     checkCUDNN(cudnnDestroyActivationDescriptor(Activation));
     checkCUDNN(cudnnDestroyTensorDescriptor(srcTensorDesc));
     checkCUDNN(cudnnDestroyTensorDescriptor(dstTensorDesc));
@@ -57,9 +62,9 @@ class ActivationCudaForwardOp : public core::OpKernel {
     const tensor_t& input = context.input(0);
     tensor_t& output      = context.output(0);
 
-    /** Initialize device memory */
-    float_t* input_gpu    = cuda_make_array(&(*input.host_begin()), input.size());
-    float_t* output_gpu = cuda_make_array(&(*output.host_begin()), output.size());
+    /** Push to device memory */
+    cuda_push_array(input_gpu, &(*input.host_begin()), input.size());
+    cuda_push_array(output_gpu, &(*output.host_begin()), output.size());
 
     /** Forward propagate */
     float_t one = 1;
@@ -67,18 +72,17 @@ class ActivationCudaForwardOp : public core::OpKernel {
                                       srcTensorDesc, input_gpu, &one,
                                       dstTensorDesc, output_gpu));
 
-    /** Pull result from device */
+    /** Pull from device memory */
     checkCudaErrors(cudaDeviceSynchronize());
     cuda_pull_array(output_gpu, &(*output.host_begin()), output.size());
-
-    /** Release allocated gpu memory */
-    cuda_free(input_gpu);
-    cuda_free(output_gpu);
 #endif
   }
 
  private:
 #ifdef USE_CUDNN
+  float_t* input_gpu = nullptr;
+  float_t* output_gpu = nullptr;
+
   cudnnTensorDescriptor_t srcTensorDesc;
   cudnnTensorDescriptor_t dstTensorDesc;
   cudnnActivationDescriptor_t Activation;
@@ -112,6 +116,10 @@ class ActivationCudaBackwardOp : public core::OpKernel {
     checkCUDNN(cudnnSetTensor4dDescriptor(ddstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, params.shape[0], params.shape[1],
                                           params.shape[2], params.shape[3]));
 
+    checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * product(params.shape)));
+    checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * product(params.shape)));
+    checkCudaErrors(cudaMalloc((void**)&curr_delta_gpu, sizeof(float_t) * product(params.shape)));
+    checkCudaErrors(cudaMalloc((void**)&prev_delta_gpu, sizeof(float_t) * product(params.shape)));
 
     if (params.activation_function == core::activation_t::relu) {
       checkCUDNN(cudnnCreateActivationDescriptor(&Activation));
@@ -122,6 +130,21 @@ class ActivationCudaBackwardOp : public core::OpKernel {
 #endif
   }
 
+  ~ActivationCudaBackwardOp() {
+#ifdef USE_CUDNN
+    cuda_free(input_gpu);
+    cuda_free(output_gpu);
+    cuda_free(curr_delta_gpu);
+    cuda_free(prev_delta_gpu);
+
+    checkCUDNN(cudnnDestroyTensorDescriptor(srcTensorDesc));
+    checkCUDNN(cudnnDestroyTensorDescriptor(dstTensorDesc));
+    checkCUDNN(cudnnDestroyTensorDescriptor(dsrcTensorDesc));
+    checkCUDNN(cudnnDestroyTensorDescriptor(ddstTensorDesc));
+    checkCUDNN(cudnnDestroyActivationDescriptor(Activation));
+#endif
+  }
+
   void compute(const core::OpKernelContext &context) override {
 #ifdef USE_CUDNN
     const tensor_t &input = context.input(0);
@@ -129,11 +152,11 @@ class ActivationCudaBackwardOp : public core::OpKernel {
     const tensor_t &curr_delta    = context.output_grad(0);
     tensor_t &prev_delta    = context.input_grad(0);
 
-    /** Initialize device memory */
-    float_t* input_gpu     = cuda_make_array(&(*input.host_begin()), input.size());
-    float_t* output_gpu  = cuda_make_array(&(*output.host_begin()), output.size());
-    float_t* curr_delta_gpu = cuda_make_array(&(*curr_delta.host_begin()), curr_delta.size());
-    float_t* prev_delta_gpu = cuda_make_array(&(*prev_delta.host_begin()), prev_delta.size());
+    /** Push to device memory */
+    cuda_push_array(input_gpu, &(*input.host_begin()), input.size());
+    cuda_push_array(output_gpu, &(*output.host_begin()), output.size());
+    cuda_push_array(curr_delta_gpu, &(*curr_delta.host_begin()), curr_delta.size());
+    cuda_push_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
 
     /** Backward propagate */
     float_t one = 1;
@@ -142,20 +165,19 @@ class ActivationCudaBackwardOp : public core::OpKernel {
         output_gpu, ddstTensorDesc, curr_delta_gpu, srcTensorDesc, input_gpu,
         &one, dsrcTensorDesc, prev_delta_gpu));
 
-    /**  Pull result from device */
+    /**  Pull from device memory */
     checkCudaErrors(cudaDeviceSynchronize());
     cuda_pull_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
-
-    /** Release allocated gpu memory */
-    cuda_free(input_gpu);
-    cuda_free(output_gpu);
-    cuda_free(curr_delta_gpu);
-    cuda_free(prev_delta_gpu);
 #endif
   }
 
  private:
 #ifdef USE_CUDNN
+  float_t* input_gpu = nullptr;
+  float_t* output_gpu = nullptr;
+  float_t* curr_delta_gpu = nullptr;
+  float_t* prev_delta_gpu = nullptr;
+
   cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
   cudnnTensorDescriptor_t dsrcTensorDesc, ddstTensorDesc;
   cudnnActivationDescriptor_t Activation;

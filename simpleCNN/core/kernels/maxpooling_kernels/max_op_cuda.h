@@ -26,11 +26,17 @@ namespace simpleCNN {
       checkCUDNN(cudnnCreatePoolingDescriptor(&poolDesc));
       checkCUDNN(cudnnSetPooling2dDescriptor(poolDesc, CUDNN_POOLING_MAX, CUDNN_PROPAGATE_NAN, params.pooling_size_y,
                                              params.pooling_size_x, 0, 0, params.stride_y, params.stride_x));
+
+      checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * params.batch_size * params.out_channels * params.output_height * params.output_width));
 #endif
     }
 
     ~MaxpoolingCudaForwardOp() {
 #ifdef USE_CUDNN
+      cuda_free(input_gpu);
+      cuda_free(output_gpu);
+
       checkCUDNN(cudnnDestroyTensorDescriptor(srcTensorDesc));
       checkCUDNN(cudnnDestroyTensorDescriptor(dstTensorDesc));
       checkCUDNN(cudnnDestroyPoolingDescriptor(poolDesc));
@@ -45,22 +51,18 @@ namespace simpleCNN {
       const tensor_t& in_data = context.input(0);
       tensor_t& out_data      = context.output(0);
 
-      /** Initalize device memory */
-      float_t* in_data_gpu  = cuda_make_array(&(*in_data.host_begin()), in_data.size());
-      float_t* out_data_gpu = cuda_make_array(&(*out_data.host_begin()), out_data.size());
+      /** Push to device memory */
+      cuda_push_array(input_gpu, &(*in_data.host_begin()), in_data.size());
+      cuda_push_array(output_gpu, &(*out_data.host_begin()), out_data.size());
 
       /** Forward propagate */
       float_t one = 1;
-      checkCUDNN(cudnnPoolingForward(cudnn_handle(), poolDesc, &one, srcTensorDesc, in_data_gpu, &one, dstTensorDesc,
-                                     out_data_gpu));
+      checkCUDNN(cudnnPoolingForward(cudnn_handle(), poolDesc, &one, srcTensorDesc, input_gpu, &one, dstTensorDesc,
+                                     output_gpu));
 
-      /** Pull result from device */
+      /** Pull from device memory */
       checkCudaErrors(cudaDeviceSynchronize());
-      cuda_pull_array(out_data_gpu, &(*out_data.host_begin()), out_data.size());
-
-      /** Release allocated gpu memory */
-      cuda_free(in_data_gpu);
-      cuda_free(out_data_gpu);
+      cuda_pull_array(output_gpu, &(*out_data.host_begin()), out_data.size());
 #else
       throw simple_error("Running on gpu when not built with gpu support");
 #endif
@@ -68,6 +70,9 @@ namespace simpleCNN {
 
    private:
 #ifdef USE_CUDNN
+    float_t* input_gpu = nullptr;
+    float_t* output_gpu = nullptr;
+
     cudnnTensorDescriptor_t srcTensorDesc;
     cudnnTensorDescriptor_t dstTensorDesc;
     cudnnPoolingDescriptor_t poolDesc;
@@ -99,11 +104,21 @@ namespace simpleCNN {
       checkCUDNN(cudnnCreatePoolingDescriptor(&poolDesc));
       checkCUDNN(cudnnSetPooling2dDescriptor(poolDesc, CUDNN_POOLING_MAX, CUDNN_PROPAGATE_NAN, params.pooling_size_y,
                                              params.pooling_size_x, 0, 0, params.stride_y, params.stride_x));
+
+      checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * params.batch_size * params.out_channels * params.output_height * params.output_width));
+      checkCudaErrors(cudaMalloc((void**)&prev_delta_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&curr_delta_gpu, sizeof(float_t) * params.batch_size * params.out_channels * params.output_height * params.output_width));
 #endif
     }
 
     ~MaxpoolingCudaBackwardOp() {
 #ifdef USE_CUDNN
+      cuda_free(input_gpu);
+      cuda_free(output_gpu);
+      cuda_free(prev_delta_gpu);
+      cuda_free(curr_delta_gpu);
+
       checkCUDNN(cudnnDestroyTensorDescriptor(srcTensorDesc));
       checkCUDNN(cudnnDestroyTensorDescriptor(dsrcTensorDesc));
       checkCUDNN(cudnnDestroyTensorDescriptor(dstTensorDesc));
@@ -122,27 +137,21 @@ namespace simpleCNN {
       const tensor_t& curr_delta = context.output_grad(0);
       tensor_t& prev_delta       = context.input_grad(0);
 
-      /** Initalize device memory */
-      float_t* in_data_gpu    = cuda_make_array(&*(in_data.host_begin()), in_data.size());
-      float_t* out_data_gpu   = cuda_make_array(&(*out_data.host_begin()), out_data.size());
-      float_t* curr_delta_gpu = cuda_make_array(&(*curr_delta.host_begin()), curr_delta.size());
-      float_t* prev_delta_gpu = cuda_make_array(&(*prev_delta.host_begin()), prev_delta.size());
+      /** Push to device memory */
+      cuda_push_array(input_gpu, &(*in_data.host_begin()), in_data.size());
+      cuda_push_array(output_gpu, &(*out_data.host_begin()), out_data.size());
+      cuda_push_array(curr_delta_gpu, &(*curr_delta.host_begin()), curr_delta.size());
+      cuda_push_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
 
       /** Backward propagate */
       float_t one = 1;
-      checkCUDNN(cudnnPoolingBackward(cudnn_handle(), poolDesc, &one, dstTensorDesc, out_data_gpu, ddstTensorDesc,
-                                      curr_delta_gpu, srcTensorDesc, in_data_gpu, &one, dsrcTensorDesc,
+      checkCUDNN(cudnnPoolingBackward(cudnn_handle(), poolDesc, &one, dstTensorDesc, output_gpu, ddstTensorDesc,
+                                      curr_delta_gpu, srcTensorDesc, input_gpu, &one, dsrcTensorDesc,
                                       prev_delta_gpu));
 
-      /** Pull result from device */
+      /** Pull from device memory*/
       checkCudaErrors(cudaDeviceSynchronize());
       cuda_pull_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
-
-      /** Release allocated gpu memory */
-      cuda_free(in_data_gpu);
-      cuda_free(out_data_gpu);
-      cuda_free(curr_delta_gpu);
-      cuda_free(prev_delta_gpu);
 #else
       throw simple_error("Running on gpu when not built with gpu support");
 #endif
@@ -150,6 +159,11 @@ namespace simpleCNN {
 
    private:
 #ifdef USE_CUDNN
+    float_t* input_gpu = nullptr;
+    float_t* output_gpu = nullptr;
+    float_t* curr_delta_gpu = nullptr;
+    float_t* prev_delta_gpu = nullptr;
+
     cudnnTensorDescriptor_t srcTensorDesc;
     cudnnTensorDescriptor_t dstTensorDesc;
     cudnnTensorDescriptor_t dsrcTensorDesc;

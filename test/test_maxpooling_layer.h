@@ -40,6 +40,8 @@ namespace simpleCNN {
     maxpool.forward_propagation(input, output);
     // simple_info("Out data: ");
     // std::cout << out << std::endl;
+    //print(img, "Image");
+    //print(out, "Output");
 
     auto outIter        = out.host_begin();
     vec_t correctOutput = {6, 8, 3, 4, 6, 8, 3, 4, 6, 8, 3, 4, 6, 8, 3, 4};

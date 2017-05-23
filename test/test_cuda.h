@@ -277,8 +277,8 @@ namespace simpleCNN {
 
     c.back_propagation(input, output, in_grads, out_grads);
 
-    // print(dW, "dW");
-    // print(dB, "dB");
+    //print(dW, "dW");
+    //print(dB, "dB");
   }
 
   TEST(Cuda, max_forwardprop) {
@@ -301,6 +301,9 @@ namespace simpleCNN {
     data_ptrs_t input  = {&img};
     data_ptrs_t output = {&out};
     m.forward_propagation(input, output);
+
+    //print(img, "Input");
+    //print(out, "output");
 
     auto outIter        = out.host_begin();
     vec_t correctOutput = {6, 8, 3, 4, 6, 8, 3, 4, 6, 8, 3, 4, 6, 8, 3, 4};
@@ -457,7 +460,8 @@ namespace simpleCNN {
 
     tensor_t forward({1, 1, size, 1});
     tensor_t backward({1, 1, size, 1});
-    uniform_rand(forward.host_begin(), forward.host_end(), -1, 1);
+    vec_t test_data{1, -1, 0, -5, -3, 0, -1};
+    fill(test_data, forward);
 
     r.set_in_data(forward, component_t::IN_DATA);
     r.set_out_data(backward, component_t::OUT_DATA);
@@ -465,7 +469,7 @@ namespace simpleCNN {
     r.forward();
 
     tensor_t curr_delta(backward.shape_v());
-    curr_delta.fill(1.0f);
+    fill(test_data, curr_delta);
     tensor_t prev_delta(backward.shape_v());
     r.set_out_grad(curr_delta, component_t::OUT_GRAD);
     r.set_in_grad(prev_delta, component_t::IN_GRAD);
@@ -475,11 +479,11 @@ namespace simpleCNN {
     //print(backward);
     //print(prev_delta);
 
-    // vec_t corr = {1, 0, 0, 0, 0, 0, 0};
-    // for (size_t i = 0; i < forward_a.size(); ++i) {
-    //    ASSERT_EQ(forward_a.host_at_index(i), corr[i]);
-    //  ASSERT_EQ(backward_a.host_at_index(i), corr[i]);
-    //}
+    vec_t corr = {1, 0, 0, 0, 0, 0, 0};
+    for (size_t i = 0; i < corr.size(); ++i) {
+      ASSERT_NEAR(prev_delta.host_at_index(i), corr[i], 1E-8);
+      ASSERT_NEAR(backward.host_at_index(i), corr[i], 1E-8);
+    }
   }
 
   TEST(Cuda, network_test) {
