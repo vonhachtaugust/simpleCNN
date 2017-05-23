@@ -427,6 +427,10 @@ namespace simpleCNN {
 
     f.back_propagation(input, output, in_grad, out_grad);
 
+    //print(prev_grad, "Prev delta");
+    //print(dW, "dW");
+    //print(db, "db");
+
     // print(*in_grad[0], "Previous gradients");
     // print(*in_grad[1], "dW");
     // print(*in_grad[2], "db");
@@ -434,17 +438,17 @@ namespace simpleCNN {
     // print(dW, "dW");
     // print(db, "dB");
 
-    // vec_t cdw = {1, -1, 2, -2, -2, 2, -1, 1};
-    // auto iter = dW.host_begin();
-    // for (const auto& w : cdw) {
-    //  ASSERT_EQ(*iter++, w);
-    //}
+    vec_t cdw = {1, 2, -2, -1, -1, -2, 2, 1};
+    auto iter = dW.host_begin();
+    for (const auto& w : cdw) {
+      ASSERT_EQ(*iter++, w);
+    }
 
-    // vec_t cdb  = {1, -1};
-    // auto biter = db.host_begin();
-    // for (const auto& b : cdb) {
-    //      ASSERT_EQ(*biter++, b);
-    //}
+    vec_t cdb  = {1, -1};
+    auto biter = db.host_begin();
+    for (const auto& b : cdb) {
+         ASSERT_EQ(*biter++, b);
+    }
   }
 
   TEST(Cuda, relu_test) {
@@ -494,7 +498,7 @@ namespace simpleCNN {
     uniform_rand(in.host_begin(), in.host_end(), -1.0f, 1.0f);
 
     tensor_t output = net.test(in);
-    print(output, "Output");
+    //print(output, "Output");
   }
 
   TEST(Cuda, drop_fprop) {
