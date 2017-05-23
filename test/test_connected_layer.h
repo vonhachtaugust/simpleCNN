@@ -166,8 +166,8 @@ namespace simpleCNN {
     // print(*in_grad[1], "dW");
     // print(*in_grad[2], "db");
 
-    //print(dW, "dW");
-    //print(db, "dB");
+    // print(dW, "dW");
+    // print(db, "dB");
 
     /*
     vec_t cdw = {1, -1, 2, -2, -2, 2, -1, 1};

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../../layers/maxpooling_layer.h"
+#include "../../../layers/maxpooling_layer.h"
 //#include "../../util/util.h"
 //#include "../framework/tensor_utils.h"
 

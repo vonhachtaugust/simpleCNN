@@ -57,52 +57,6 @@ namespace simpleCNN {
         std::cout << stride_x << "\t" << stride_y << std::endl;
         throw simple_error("Error: Stride sizes are different, therefore stride is undefined");
       }
-
-#ifdef USE_CUDNN
-      cudnnHandle_t cudnnHandle;
-      cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc, dsrcTensorDesc, ddstTensorDesc;
-      cudnnPoolingDescriptor_t poolDesc;
-
-      void initalize_gpu_descriptors() {
-        cudnnHandle  = cudnn_handle();
-
-        checkCUDNN(cudnnCreateTensorDescriptor(&srcTensorDesc));
-        checkCUDNN(cudnnSetTensor4dDescriptor(srcTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch_size,
-                                              in_channels, input_height, input_width));
-        checkCUDNN(cudnnCreateTensorDescriptor(&dsrcTensorDesc));
-        checkCUDNN(cudnnSetTensor4dDescriptor(dsrcTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch_size,
-                                              in_channels, input_height, input_width));
-
-        checkCUDNN(cudnnCreateTensorDescriptor(&dstTensorDesc));
-        checkCUDNN(cudnnSetTensor4dDescriptor(dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch_size,
-                                              out_channels, output_height, output_width));
-
-        checkCUDNN(cudnnCreateTensorDescriptor(&ddstTensorDesc));
-        checkCUDNN(cudnnSetTensor4dDescriptor(ddstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch_size,
-                                              out_channels, output_height, output_width));
-
-        checkCUDNN(cudnnCreatePoolingDescriptor(&poolDesc));
-        checkCUDNN(cudnnSetPooling2dDescriptor(poolDesc, CUDNN_POOLING_MAX, CUDNN_PROPAGATE_NAN, pooling_size_y,
-                                               pooling_size_x, 0, 0, stride_y, stride_x));
-        initialized_gpu = true;
-      }
-
-      ~Maxpooling_params() {
-        if (initialized_gpu) {
-          // checkCUDNN(cudnnDestroy(cudnnHandle));
-          checkCUDNN(cudnnDestroyTensorDescriptor(srcTensorDesc));
-          checkCUDNN(cudnnDestroyTensorDescriptor(dsrcTensorDesc));
-          checkCUDNN(cudnnDestroyTensorDescriptor(dstTensorDesc));
-          checkCUDNN(cudnnDestroyTensorDescriptor(ddstTensorDesc));
-          checkCUDNN(cudnnDestroyPoolingDescriptor(poolDesc));
-        }
-      }
-
-#endif
-     private:
-#ifdef  USE_CUDNN
-      bool initialized_gpu = false;
-#endif
     };
   }  // namespace core
 }  // namespace simpleCNN

@@ -124,14 +124,14 @@ namespace simpleCNN {
   template <typename T>
   T regularization(const std::vector<tensor_t*>& weight) {
     float_t dot_sum = float_t(0);
-    
+
     for (size_t i = 0; i < weight.size(); ++i) {
       auto w = weight[i];
-      
+
       dot_sum += dot(*w, &(*w->host_begin()), *w, &(*w->host_begin()));
     }
-    
-    //return dot(weight, &(*weight.host_begin()), weight, &(*weight.host_begin()));
+
+    // return dot(weight, &(*weight.host_begin()), weight, &(*weight.host_begin()));
     return dot_sum;
   }
 
@@ -179,5 +179,4 @@ namespace simpleCNN {
     }
     return errors;
   }
-
 }

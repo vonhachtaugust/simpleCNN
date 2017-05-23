@@ -5,19 +5,16 @@
 #pragma once
 
 #ifdef USE_CUDNN
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
+#include <cuda.h>
 #include <cuda_device_runtime_api.h>
 #include <cuda_fp16.h>
-#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 
-
-#include "../../third_party/cudnn/include/cudnn.h"
 #include <cublas_v2.h>
+#include "../../third_party/cudnn/include/cudnn.h"
 
 #include "simple_error.h"
-
-
 
 namespace simpleCNN {
 
@@ -94,14 +91,11 @@ namespace simpleCNN {
     return handle[i];
   }
 
-
-
-  cublasHandle_t blas_handle()
-  {
+  cublasHandle_t cublas_handle() {
     static int init[16] = {0};
     static cublasHandle_t handle[16];
     int i = cuda_get_device();
-    if(!init[i]) {
+    if (!init[i]) {
       cublasCreate(&handle[i]);
       init[i] = 1;
     }

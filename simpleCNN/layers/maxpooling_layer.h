@@ -6,9 +6,9 @@
 
 #include "../core/backend.h"
 #include "../core/framework/op_kernel.h"
-#include "../core/kernels/max_grad_op.h"
-#include "../core/kernels/max_op.h"
-#include "../core/kernels/max_op_cuda.h"
+#include "../core/kernels/maxpooling_kernels/max_grad_op.h"
+#include "../core/kernels/maxpooling_kernels/max_op.h"
+#include "../core/kernels/maxpooling_kernels/max_op_cuda.h"
 
 namespace simpleCNN {
   class Maxpooling_layer : public Layer {
@@ -26,7 +26,7 @@ namespace simpleCNN {
                      core::backend_t backend_type = core::default_engine())
       : Maxpooling_layer(
           in_width, in_height, in_channels, batch_size, pooling_size, pooling_size, stride, stride, backend_type) {}
-    
+
     /**
      * Constructing maxpooling layer
      *
@@ -94,7 +94,7 @@ namespace simpleCNN {
                                size_t pooling_size_y,
                                size_t stride_x,
                                size_t stride_y,
-                               core::backend_t = core::default_engine()) {
+                               core::backend_t backend_type = core::default_engine()) {
       params_.input_width  = in_width;
       params_.input_height = in_height;
       params_.in_channels  = in_channels;
@@ -109,7 +109,9 @@ namespace simpleCNN {
       params_.output_height = params_.conv_out_length(in_height, pooling_size_y, stride_y, 0);
       params_.out_channels  = in_channels;
 
-      params_.max_index = tensor_t({batch_size, in_channels, params_.output_height, params_.output_width});
+      if (backend_type == core::backend_t::internal) {
+        params_.max_index = tensor_t({batch_size, in_channels, params_.output_height, params_.output_width});
+      }
     }
 
     void init_backend(const core::backend_t backend_type) {
@@ -118,8 +120,7 @@ namespace simpleCNN {
       if (backend_type == core::backend_t::internal) {
         kernel_fwd_.reset(new simpleCNN::MaxpoolingOp(ctx));
         kernel_bwd_.reset(new simpleCNN::MaxpoolingGradOp(ctx));
-      } else if(backend_type == core::backend_t::gpu) {
-        params_.initalize_gpu_descriptors();
+      } else if (backend_type == core::backend_t::gpu) {
         kernel_fwd_.reset(new simpleCNN::MaxpoolingCudaForwardOp(ctx));
         kernel_bwd_.reset(new simpleCNN::MaxpoolingCudaBackwardOp(ctx));
       } else {

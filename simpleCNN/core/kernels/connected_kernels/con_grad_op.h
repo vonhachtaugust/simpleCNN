@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../params/con_params.h"
+#include "../../params/con_params.h"
 #include "con_op_openblas.h"
 
 namespace simpleCNN {

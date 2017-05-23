@@ -82,14 +82,21 @@ namespace simpleCNN {
       adam(dB, mt_b, vt_b, B, batch_size, false);
     }
 
-    void adam(const tensor_t* dx, const tensor_t* mt, const tensor_t* vt, tensor_t* x, const size_t batch_size, const bool weight_decay) {
+    void adam(const tensor_t* dx,
+              const tensor_t* mt,
+              const tensor_t* vt,
+              tensor_t* x,
+              const size_t batch_size,
+              const bool weight_decay) {
       for (size_t i = 0; i < dx->size(); ++i) {
         auto& mt_i = mt->host_at_index(i);
         auto& vt_i = vt->host_at_index(i);
         auto& dx_i = dx->host_at_index(i);
         auto& x_i  = x->host_at_index(i);
 
+#ifndef USE_CUDNN
         dx_i /= float_t(batch_size);
+#endif
 
         mt_i = beta1 * mt_i + (float_t(1) - beta1) * dx_i;
         vt_i = beta2 * vt_i + (float_t(1) - beta2) * dx_i * dx_i;

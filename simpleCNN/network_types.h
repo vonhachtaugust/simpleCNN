@@ -5,7 +5,6 @@
 #pragma once
 
 #include "layers/layer.h"
-#include "optimizers/optimizer.h"
 
 namespace simpleCNN {
   class Network_type {
@@ -173,7 +172,7 @@ namespace simpleCNN {
         return;
       }
 
-      std::vector<tensor_t *> weights;
+      std::vector<tensor_t*> weights;
       for (auto l : nodes_) {
         l->get_weights(weights);
       }
@@ -189,7 +188,7 @@ namespace simpleCNN {
         return;
       }
 
-      std::vector<tensor_t *> weights;
+      std::vector<tensor_t*> weights;
       for (auto l : nodes_) {
         l->get_weights(weights);
       }
@@ -215,7 +214,7 @@ namespace simpleCNN {
         nodes_[i]->forward();
       }
 
-      std::vector<tensor_t *> weights;
+      std::vector<tensor_t*> weights;
       for (auto l : nodes_) {
         l->get_weights(weights);
       }

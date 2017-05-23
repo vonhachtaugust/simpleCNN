@@ -13,6 +13,7 @@
 
 namespace simpleCNN {
   namespace core {
+
     class OpKernel;
 
     class OpKernelConstruction {
@@ -77,7 +78,7 @@ namespace simpleCNN {
 
       backend_t engine() const { return op_params_->engine; }
 
-     private:
+      private:
       data_ptrs_t in_data_;
       data_ptrs_t out_data_;
       data_ptrs_t out_grad_;

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <iomanip>
 #include "../util/simple_error.h"
 
 namespace simpleCNN {

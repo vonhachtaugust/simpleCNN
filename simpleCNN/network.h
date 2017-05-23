@@ -5,10 +5,12 @@
 #pragma once
 
 #include <fstream>
-#include "../third_party/cereal/archives/binary.hpp"
-#include "../third_party/cereal/cereal.hpp"
 #include "loss/loss_functions.h"
+#include "optimizers/optimizer.h"
+#include "util/math_functions.h"
 #include "network_types.h"
+#include "util/util.h"
+#include "io/serialize.h"
 
 namespace simpleCNN {
 
@@ -30,8 +32,9 @@ namespace simpleCNN {
       std::string vl_file = "validation_loss_" + date + ".txt";
       std::string ta_file = "training_accuracy_" + date + ".txt";
       std::string va_file = "validation_accuracy_" + date + ".txt";
-      std::string wf = "weights_" + date + ".txt";
-      std::string mstd = "run_data_" + date + ".txt";
+      std::string wf      = "weights_" + date + ".txt";
+      std::string mstd    = "run_data_" + date + ".txt";
+      std::string hyper   = "hparas_dr_reg_lr_" + date + ".txt";
 
       save_content_to_file(wf, content_type::weights);
       save_data_to_file<float_t>(tl_file, training_loss_);
@@ -84,8 +87,8 @@ namespace simpleCNN {
       net_.backward(labels);
       auto dW = net_.get_dW();
 
-      //printvt(ng, "Numerical gradient");
-      //printvt_ptr(dW, "Backprop gradient");
+      // printvt(ng, "Numerical gradient");
+      // printvt_ptr(dW, "Backprop gradient");
 
       return relative_error(dW, ng);
     }
@@ -98,8 +101,8 @@ namespace simpleCNN {
       net_.backward(labels);
       auto dB = net_.get_dB();
 
-      //printvt(ng, "Numerical gradient");
-      //printvt_ptr(dB, "Backprop gradient");
+      // printvt(ng, "Numerical gradient");
+      // printvt_ptr(dB, "Backprop gradient");
 
       return relative_error(dB, ng);
     }
@@ -255,7 +258,7 @@ namespace simpleCNN {
       net_.setup(reset_weight);
       opt.reset();
       stop_training_ = false;
-      // time_t t       = clock();
+      time_t t       = clock();
 
       std::vector<float_t> loss;
       std::vector<float_t> accuracy;
@@ -264,21 +267,23 @@ namespace simpleCNN {
         size_t index = 0;
 
         for (size_t j = 0; j < training_images.shape()[0] && !stop_training_; j += batch_size) {
-          auto minibatch = training_images.subView({j}, {batch_size, training_images.dimension(dim_t::depth),
-                                               training_images.dimension(dim_t::height), training_images.dimension(dim_t::width)});
+          auto minibatch = training_images.subView(
+            {j}, {batch_size, training_images.dimension(dim_t::depth), training_images.dimension(dim_t::height),
+                  training_images.dimension(dim_t::width)});
           auto minilabels = train_labels.subView({j}, {batch_size, 1, 1, 1});
           train_once(opt, minibatch, minilabels, store_result, batch_size);
 
-          //auto minivi = training_images.subView({index}, {batch_size, validation_images.dimension(dim_t::depth), validation_images.dimension(dim_t::height), validation_images.dimension(dim_t::width)});
-          //auto minivl = train_labels.subView({index}, {batch_size, 1, 1, 1});
-          valid_once(minibatch, minilabels, store_result);
+          // auto minivi = training_images.subView({index}, {batch_size, validation_images.dimension(dim_t::depth),
+          // validation_images.dimension(dim_t::height), validation_images.dimension(dim_t::width)});
+          // auto minivl = train_labels.subView({index}, {batch_size, 1, 1, 1});
+          // valid_once(minibatch, minilabels, store_result);
 
-          //if (index >= validation_images.shape()[0] - batch_size) {
+          // if (index >= validation_images.shape()[0] - batch_size) {
           //  index = 0;
           //} else {
           //  index += batch_size;
           //}
-          //on_batch_enumerate(t);
+          on_batch_enumerate(t);
         }
         on_epoch_enumerate(i);
       }
@@ -293,9 +298,7 @@ namespace simpleCNN {
     }
 
    private:
-    void valid_once(const tensor_t& validation_batch,
-                    const tensor_t& validation_labels,
-                    const bool store_results) {
+    void valid_once(const tensor_t& validation_batch, const tensor_t& validation_labels, const bool store_results) {
       set_netphase(net_phase::test);
       net_.forward_pass(validation_batch);
       net_.record_validation_progress(validation_loss_, validation_accuracy_, store_results);

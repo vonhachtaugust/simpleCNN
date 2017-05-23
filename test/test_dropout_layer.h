@@ -13,7 +13,8 @@ namespace simpleCNN {
     size_t batch_size = 2;
     size_t col        = 3;
 
-    Dropout_layer dNet({batch_size, 1, col, 1}, 0.5);
+    Dropout_layer dNet(0.5);
+    dNet.set_in_shape({batch_size, 1, col, 1});
 
     tensor_t input({batch_size, 1, col, 1});
     tensor_t output({batch_size, 1, col, 1});
@@ -36,7 +37,8 @@ namespace simpleCNN {
     size_t batch_size = 2;
     size_t col        = 3;
 
-    Dropout_layer dNet({batch_size, 1, col, 1}, 0.5);
+    Dropout_layer dNet(0.5);
+    dNet.set_in_shape({batch_size, 1, col, 1});
 
     tensor_t input({batch_size, 1, col, 1});
     tensor_t output({batch_size, 1, col, 1});

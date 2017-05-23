@@ -4,10 +4,12 @@
 
 #pragma once
 
-#include "../core/framework/tensor.h"
+#include <algorithm>
 #include <chrono>
 #include <ctime>
-#include <algorithm>
+#include <cmath>
+
+#include "../core/framework/tensor.h"
 
 namespace simpleCNN {
 
@@ -15,7 +17,7 @@ namespace simpleCNN {
 
   struct Hyperparameters {
     constexpr static float_t regularization_constant = 1E-3;
-    constexpr static float_t learning_rate           = 1E-4;
+    constexpr static float_t learning_rate           = 1E-2;
   };
 
   template <typename T = float_t, typename Allocator = aligned_allocator<T, 64>>
@@ -100,9 +102,9 @@ namespace simpleCNN {
 
   std::string get_time_stamp() {
     std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-    std::time_t time = std::chrono::system_clock::to_time_t(start);
-    std::string d = std::ctime(&time);
-    std::string c = d.substr(0, d.size() - 1);
+    std::time_t time                                         = std::chrono::system_clock::to_time_t(start);
+    std::string d                                            = std::ctime(&time);
+    std::string c                                            = d.substr(0, d.size() - 1);
 
     std::replace_if(c.begin(), c.end(), isspace, '_');
     return c;

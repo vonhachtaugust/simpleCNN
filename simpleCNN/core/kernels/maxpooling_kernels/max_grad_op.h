@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../params/max_params.h"
+#include "../../params/max_params.h"
 #include "max_op_internal.h"
 
 namespace simpleCNN {

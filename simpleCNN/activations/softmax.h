@@ -10,7 +10,7 @@ namespace simpleCNN {
      public:
       std::string layer_type() const override { return "softmax-activation-layer"; }
 
-      void forward_activation(const tensor_t &affine, tensor_t &activated) const override {
+      void forward_activation(const tensor_t& affine, tensor_t& activated) const override {
         size_t batch_size   = affine.shape()[0];
         size_t batch_length = affine.size() / batch_size;
 
@@ -38,13 +38,16 @@ namespace simpleCNN {
         }
       }
 
-      void backward_activation(const tensor_t &affine, const tensor_t &curr_delta, tensor_t &activated) const override {
+      void backward_activation(const tensor_t& affine, const tensor_t& curr_delta, tensor_t& activated) const override {
         throw simple_not_implemented_error();
       }
 
-      void forward_activation_gpu(const tensor_t& affine, tensor_t& activated) const override {};
+      void forward_activation_gpu(const tensor_t& affine, tensor_t& activated) const override{};
 
-      void backward_activation_gpu(const tensor_t& affine, const tensor_t& activated, const tensor_t& curr_delta, tensor_t& prev_delta) const override {};
+      void backward_activation_gpu(const tensor_t& affine,
+                                   const tensor_t& activated,
+                                   const tensor_t& curr_delta,
+                                   tensor_t& prev_delta) const override{};
 
       std::pair<float_t, float_t> scale() const override { return std::make_pair(float_t(0), float_t(1)); };
     };

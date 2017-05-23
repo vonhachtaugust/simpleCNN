@@ -32,10 +32,12 @@ namespace simpleCNN {
         }
       };
 
-      void forward_activation_gpu(const tensor_t& affine, tensor_t& activated) const override {};
+      void forward_activation_gpu(const tensor_t& affine, tensor_t& activated) const override{};
 
-      void backward_activation_gpu(const tensor_t& affine, const tensor_t& activated, const tensor_t& curr_delta, tensor_t& prev_delta) const override {};
-
+      void backward_activation_gpu(const tensor_t& affine,
+                                   const tensor_t& activated,
+                                   const tensor_t& curr_delta,
+                                   tensor_t& prev_delta) const override{};
 
       std::pair<float_t, float_t> scale() const override { return std::make_pair(float_t(-1), float_t(1)); };
     };

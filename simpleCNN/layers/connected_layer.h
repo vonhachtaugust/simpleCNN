@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "../core/kernels/con_grad_op.h"
-#include "../core/kernels/con_op.h"
+#include "../core/kernels/connected_kernels/con_grad_op.h"
+#include "../core/kernels/connected_kernels/con_op.h"
+#include "../core/kernels/connected_kernels/con_op_cuda.h"
 #include "../core/params/con_params.h"
 #include "layer.h"
-#include "../core/kernels/con_op_cuda.h"
 
 namespace simpleCNN {
   class Connected_layer : public Layer {
@@ -91,8 +91,7 @@ namespace simpleCNN {
       if (backend_type == core::backend_t::internal) {
         kernel_fwd_.reset(new simpleCNN::ConOp(ctx));
         kernel_bwd_.reset(new simpleCNN::ConGradOp(ctx));
-      } else if(backend_type == core::backend_t::gpu) {
-        params_.initialize_gpu_descriptors();
+      } else if (backend_type == core::backend_t::gpu) {
         kernel_fwd_.reset(new simpleCNN::ConCudaForwardOp(ctx));
         kernel_bwd_.reset(new simpleCNN::ConCudaBackwardGradOp(ctx));
       } else {

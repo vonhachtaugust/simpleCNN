@@ -8,12 +8,10 @@
 #include "network_types.h"
 #include "node.h"
 
-#include "activations/activation_layer.h"
-#include "activations/relu.h"
-#include "activations/softmax.h"
-#include "activations/tanh.h"
 
 #include "layers/layer.h"
+
+#include "activations/activation_layer.h"
 
 #include "core/framework/device.h"
 #include "core/framework/op_kernel.h"
@@ -22,7 +20,7 @@
 #include "core/framework/tensor_utils.h"
 
 #include "layers/connected_layer.h"
-#include "layers/convolutional_layer.h" /* Don't move this guy. */
+#include "layers/convolutional_layer.h"
 #include "layers/dropout_layer.h"
 #include "layers/maxpooling_layer.h"
 
@@ -30,16 +28,32 @@
 #include "core/params/conv_params.h"
 #include "core/params/max_params.h"
 #include "core/params/params.h"
+#include "core/params/activation_params.h"
 
-#include "core/kernels/con_grad_op.h"
-#include "core/kernels/con_op.h"
-#include "core/kernels/con_op_openblas.h"
-#include "core/kernels/conv_grad_op.h"
-#include "core/kernels/conv_op.h"
-#include "core/kernels/conv_op_openblas.h"
-#include "core/kernels/max_grad_op.h"
-#include "core/kernels/max_op.h"
-#include "core/kernels/max_op_internal.h"
+#include "core/kernels/activation_kernels/activation_op.h"
+#include "core/kernels/activation_kernels/activation_op_cuda.h"
+#include "core/kernels/activation_kernels/activation_op_internal.h"
+
+#include "core/kernels/dropout_kernels/dropout_op.h"
+#include "core/kernels/dropout_kernels/dropout_op_cuda.h"
+#include "core/kernels/dropout_kernels/dropout_op_internal.h"
+
+#include "core/kernels/connected_kernels/con_grad_op.h"
+#include "core/kernels/connected_kernels/con_op.h"
+#include "core/kernels/connected_kernels/con_op_openblas.h"
+#include "core/kernels/connected_kernels/con_op_cuda.h"
+
+#include "core/kernels/convolution_kernels/conv_grad_op.h"
+#include "core/kernels/convolution_kernels/conv_op.h"
+#include "core/kernels/convolution_kernels/conv_op_openblas.h"
+#include "core/kernels/convolution_kernels/conv_op_cuda.h"
+
+#include "core/kernels/maxpooling_kernels/max_grad_op.h"
+#include "core/kernels/maxpooling_kernels/max_op.h"
+#include "core/kernels/maxpooling_kernels/max_op_internal.h"
+#include "core/kernels/maxpooling_kernels/max_op_cuda.h"
+
+#include "core/kernels/cuda_util_kernels.h"
 
 #include "core/backend.h"
 

@@ -142,7 +142,7 @@ namespace simpleCNN {
       os << std::setprecision(precision);
 
       auto w = weights();
-      auto b    = bias();
+      auto b = bias();
 
       for (auto iter = w.host_begin(); iter != w.host_end(); ++iter) {
         os << *iter << " ";
@@ -161,7 +161,7 @@ namespace simpleCNN {
       is >> std::setprecision(precision);
 
       auto w = weights();
-      auto b    = bias();
+      auto b = bias();
 
       for (auto iter = w.host_begin(); iter != w.host_end(); ++iter) {
         is >> *iter;
@@ -200,18 +200,17 @@ namespace simpleCNN {
 
     void set_out_data(const tensor_t &data, component_t ct) { *out_component_data(ct) = data; }
 
+    void set_in_grad(const tensor_t& data, component_t ct) { *ith_in_node(0)->get_gradient() = data; }
 
-    void set_out_data(const tensor_t& data, const size_t index) {
-      *ith_out_node(index)->get_data() = data;
-    }
+    void set_out_grad(const tensor_t& data, component_t ct) { *ith_out_node(0)->get_gradient() = data; }
 
+    void set_out_data(const tensor_t &data, const size_t index) { *ith_out_node(index)->get_data() = data; }
 
     /**
      * Override by the loss layer to return the gradients with respect to the loss function.
      *
      * @param output        : output tensor from the forward pass.
      */
-
 
     virtual void set_targets(const tensor_t &labels) { throw simple_error("Error: Last layer is not a loss layer."); }
 
@@ -220,7 +219,7 @@ namespace simpleCNN {
      *
      * @return loss
      */
-    float_t error(const std::vector<tensor_t*>& weights) { return error(network_output(), network_target(), weights); }
+    float_t error(const std::vector<tensor_t *> &weights) { return error(network_output(), network_target(), weights); }
 
     /**
      * Calls the implemented accuracy function of the loss layer.
@@ -233,7 +232,9 @@ namespace simpleCNN {
       throw simple_error("Error: Last layer is not a loss layer");
     }
 
-    virtual float_t error(const tensor_t &output, const tensor_t &target, const std::vector<tensor_t*>& weights) const {
+    virtual float_t error(const tensor_t &output,
+                          const tensor_t &target,
+                          const std::vector<tensor_t *> &weights) const {
       throw simple_error("Error: Last layer is not a loss layer");
     }
 
@@ -242,11 +243,11 @@ namespace simpleCNN {
      *
      * @return output of the network
      */
-    virtual tensor_t& network_output() { throw simple_error("Error: Function not called on a loss layer type."); }
+    virtual tensor_t &network_output() { throw simple_error("Error: Function not called on a loss layer type."); }
 
-    virtual tensor_t& network_target() { throw simple_error("Error: Function not called on a loss layer type."); }
+    virtual tensor_t &network_target() { throw simple_error("Error: Function not called on a loss layer type."); }
 
-    tensor_t& output() const {
+    tensor_t &output() const {
       for (size_t i = 0; i < out_channels_; i++) {
         if (out_type_[i].getComponentType() == component_t::OUT_DATA) {
           return *(const_cast<Layer *>(this))->ith_out_node(i)->get_data();
@@ -333,11 +334,17 @@ namespace simpleCNN {
       for (size_t i = 0; i < in_channels_; i++) {
         component_t type_ = in_type_[i].getComponentType();
         switch (type_) {
-          case component_t::WEIGHT:
-            weight_init_->fill(get_component_data(i, type_), fan_in_size(), fan_out_size());
+          case component_t::WEIGHT: {
+            tensor_t *weights = get_component_data(i, type_);
+            weight_init_->fill(weights, fan_in_size(), fan_out_size());
             break;
-          case component_t::BIAS: bias_init_->fill(get_component_data(i, type_), fan_in_size(), fan_out_size()); break;
-          default: break;
+          }
+          case component_t::BIAS: {
+            tensor_t *bias = get_component_data(i, type_);
+            bias_init_->fill(bias, fan_in_size(), fan_out_size());
+            break;
+          }
+          default: { break; }
         }
       }
       initialized_ = true;
@@ -499,7 +506,7 @@ namespace simpleCNN {
       this->setup(false);
 
       /** Activation layer shape is equal to previous layer shape */
-      if (in_shape.size() == 0) {
+      if (in_shape.size() == 0 || product(in_shape) == 0) {
         next->set_in_shape(out_shape);
         in_shape = out_shape;
       }

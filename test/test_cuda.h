@@ -11,6 +11,7 @@
 
 namespace simpleCNN {
 
+#ifdef USE_CUDNN
   TEST(Cuda, print_device_info) {
     int nDevices;
 
@@ -65,8 +66,6 @@ namespace simpleCNN {
 
     cuda_free(x_gpu);
   }
-
-#ifdef USE_CUDNN
 
   TEST(Cuda, cudnnConvolution) {
     size_t padding = 1;
@@ -195,6 +194,31 @@ namespace simpleCNN {
     for (auto d : correct_output) {
       ASSERT_EQ(d, *iter++);
     }
+  }
+
+  TEST(Cuda, forward_prop_II) {
+    size_t w       = 28;
+    size_t h       = 28;
+    size_t ich     = 1;
+    size_t bs      = 1;
+    size_t och     = 32;
+    size_t fs      = 5;
+    size_t stride  = 1;
+    size_t padding = 2;
+
+    using conv = Convolutional_layer;
+    conv c(w, h, ich, bs, fs, och, stride, padding, true, core::backend_t::gpu);
+
+    tensor_t in({bs, ich, h, w});
+    tensor_t out({bs, och, h, w});
+    uniform_rand(in.host_begin(), in.host_end(), -1.0f, 1.0f);
+
+    c.setup(true);
+
+    c.set_in_data(in, component_t::IN_DATA);
+    c.set_out_data(out, component_t::OUT_DATA);
+
+    c.forward();
   }
 
   TEST(Cuda, backward_prop) {
@@ -407,59 +431,100 @@ namespace simpleCNN {
     // print(*in_grad[1], "dW");
     // print(*in_grad[2], "db");
 
-    //print(dW, "dW");
-    //print(db, "dB");
+    // print(dW, "dW");
+    // print(db, "dB");
 
-    //vec_t cdw = {1, -1, 2, -2, -2, 2, -1, 1};
-    //auto iter = dW.host_begin();
-    //for (const auto& w : cdw) {
+    // vec_t cdw = {1, -1, 2, -2, -2, 2, -1, 1};
+    // auto iter = dW.host_begin();
+    // for (const auto& w : cdw) {
     //  ASSERT_EQ(*iter++, w);
     //}
 
-    //vec_t cdb  = {1, -1};
-    //auto biter = db.host_begin();
-    //for (const auto& b : cdb) {
-//      ASSERT_EQ(*biter++, b);
+    // vec_t cdb  = {1, -1};
+    // auto biter = db.host_begin();
+    // for (const auto& b : cdb) {
+    //      ASSERT_EQ(*biter++, b);
     //}
   }
 
   TEST(Cuda, relu_test) {
-  using relu = activation::ReLU;
+    size_t size = 6;
+    Activation_layer r({1, 1, size, 1}, core::activation_t::relu, core::backend_t::gpu);
 
-  vec_t test_data{1, -1, 0, -5, -3, 0, -1};
-  tensor_t forward({1, 1, test_data.size(), 1});
-  tensor_t backward({1, 1, test_data.size(), 1});
+    tensor_t forward({1, 1, size, 1});
+    tensor_t backward({1, 1, size, 1});
+    uniform_rand(forward.host_begin(), forward.host_end(), -1, 1);
 
-  //fill(test_data, forward);
-  //fill(test_data, backward);
+    r.set_in_data(forward, component_t::IN_DATA);
+    r.set_out_data(backward, component_t::OUT_DATA);
 
-  uniform_rand(forward.host_begin(), forward.host_end(), -1, 1);
-  uniform_rand(backward.host_begin(), backward.host_end(), -1, 1);
+    r.forward();
 
-  //print(forward);
-  //print(backward);
+    tensor_t curr_delta(backward.shape_v());
+    curr_delta.fill(1.0f);
+    tensor_t prev_delta(backward.shape_v());
+    r.set_out_grad(curr_delta, component_t::OUT_GRAD);
+    r.set_in_grad(prev_delta, component_t::IN_GRAD);
 
-  tensor_t forward_a(forward.shape_v());
-  tensor_t backward_a(backward.shape_v());
+    r.backward();
 
-  tensor_t curr_delta(backward.shape_v());
-  curr_delta.fill(1.0f);
+    //print(backward);
+    //print(prev_delta);
 
-  tensor_t prev_delta(backward.shape_v());
+    // vec_t corr = {1, 0, 0, 0, 0, 0, 0};
+    // for (size_t i = 0; i < forward_a.size(); ++i) {
+    //    ASSERT_EQ(forward_a.host_at_index(i), corr[i]);
+    //  ASSERT_EQ(backward_a.host_at_index(i), corr[i]);
+    //}
+  }
 
-  relu r({1, 1, test_data.size(), 1}, core::backend_t::gpu);
+  TEST(Cuda, network_test) {
+    size_t in_dim     = 4;
+    size_t out_dim    = 2;
+    size_t batch_size = 1;
 
-  r.forward_activation_gpu(forward, forward_a);
-  r.backward_activation_gpu(forward, forward_a, curr_delta, prev_delta);
+    Network<Sequential> net;
 
-  //print(forward_a);
-  //print(prev_delta);
+    using fully = Connected_layer;
+    net << fully(in_dim, out_dim, batch_size, true, core::backend_t::gpu);
 
-  //vec_t corr = {1, 0, 0, 0, 0, 0, 0};
-  //for (size_t i = 0; i < forward_a.size(); ++i) {
-//    ASSERT_EQ(forward_a.host_at_index(i), corr[i]);
-  //  ASSERT_EQ(backward_a.host_at_index(i), corr[i]);
-  //}
+    tensor_t in({batch_size, 1, in_dim, 1});
+    tensor_t out({batch_size, 1, out_dim, 1});
+
+    uniform_rand(in.host_begin(), in.host_end(), -1.0f, 1.0f);
+
+    tensor_t output = net.test(in);
+    print(output, "Output");
+  }
+
+  TEST(Cuda, drop_fprop) {
+  size_t bs = 2;
+  size_t c = 3;
+
+  Dropout_layer dr(0.75, core::backend_t::gpu);
+  dr.set_in_shape({bs, 1, c, 1});
+
+  tensor_t input({bs, 1, c, 1});
+  tensor_t output({bs, 1, c, 1});
+
+  uniform_rand(input.host_begin(), input.host_end(), -1.0f, 1.0f);
+  dr.set_in_data(input, component_t::IN_DATA);
+  dr.set_out_data(output, component_t::OUT_DATA);
+
+  dr.forward();
+
+  //print(input, "Input");
+  //print(output, "Output");
+
+
+  dr.set_out_grad(input, component_t::OUT_GRAD);
+  dr.set_in_grad(output, component_t::IN_GRAD);
+
+  dr.backward();
+
+  //print(input, "Input");
+  //print(output, "Output");
+
 }
 
 #endif

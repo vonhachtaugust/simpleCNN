@@ -21,7 +21,7 @@ namespace simpleCNN {
       }
 
       void loss_function(const tensor_t &in_data, tensor_t &out_data) const override {
-        //print(in_data, "In data");
+        // print(in_data, "In data");
         size_t batch_size   = in_data.shape()[0];
         size_t batch_length = in_data.size() / batch_size;
 
@@ -33,7 +33,7 @@ namespace simpleCNN {
           auto start = in_data.host_begin() + start_index;
           auto end   = start + batch_length;
           auto ns    = *std::max_element(start, end);
-          //print(ns, "Numerical stabilizer");
+          // print(ns, "Numerical stabilizer");
 
           /** Get normalization constant */
           float_t sum = float_t(0);
@@ -41,7 +41,7 @@ namespace simpleCNN {
             auto val = in_data.host_at_index(start_index + j);
             sum += std::exp(val - ns);
           }
-          //print(sum, "Norm constant");
+          // print(sum, "Norm constant");
 
           /** Compute softmax probabilities */
           for (size_t n = 0; n < batch_length; ++n) {
@@ -49,7 +49,7 @@ namespace simpleCNN {
             out_data.host_at_index(start_index + n) = std::exp(val - ns) / sum;
           }
         }
-        //print(out_data, "Out data");
+        // print(out_data, "Out data");
       }
 
       void loss_gradient(const tensor_t &out_data, const tensor_t &target, tensor_t &in_grad) const override {
@@ -69,8 +69,8 @@ namespace simpleCNN {
       }
 
       float_t loss(const tensor_t &output, const tensor_t &target) const override {
-        //print(output, "output");
-        //print(target, "target");
+        // print(output, "output");
+        // print(target, "target");
         float_t loss_tot  = float_t(0);
         size_t batch_size = output.shape()[0];
         size_t n          = output.size() / batch_size;

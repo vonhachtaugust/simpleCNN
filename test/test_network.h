@@ -14,8 +14,8 @@ namespace simpleCNN {
   using maxpool = Maxpooling_layer;
   using fully   = Connected_layer;
   using network = Network<Sequential>;
+  using relu    = Activation_layer;
   using softmax = loss::Softmax;
-  using relu    = activation::ReLU;
   using adam    = Adam<float_t>;
 
   TEST(Network, Move_semantics) {
@@ -42,7 +42,7 @@ namespace simpleCNN {
 
     labels.host_at_index(0) = 0;
 
-    //auto error = net.gradient_check(input, labels);
+    // auto error = net.gradient_check(input, labels);
 
     /*for (auto e : error) {
       ASSERT_NEAR(e, 1E-4, 1E-4);
@@ -106,28 +106,27 @@ namespace simpleCNN {
   }
 
   TEST(Network, graident_check_mnist_network_II) {
-  /* Too heavy to test while debug
-  Network<Sequential> net;
-  net << conv(28, 28, 1, 1, 5, 2, 1, 2, true) << relu() << maxpool(28, 28, 2, 1)
-      << conv(14, 14, 2, 1, 5, 2, 1, 2, true) << relu() << maxpool(14, 14, 2, 1)
-      << fully(7 * 7 * 2, 20, 1) << relu() << fully(20, 10, 1) << softmax();
+    /* Too heavy to test while debug
+    Network<Sequential> net;
+    net << conv(28, 28, 1, 1, 5, 2, 1, 2, true) << relu() << maxpool(28, 28, 2, 1)
+        << conv(14, 14, 2, 1, 5, 2, 1, 2, true) << relu() << maxpool(14, 14, 2, 1)
+        << fully(7 * 7 * 2, 20, 1) << relu() << fully(20, 10, 1) << softmax();
 
 
-  tensor_t input({1, 1, 28, 28});
-  uniform_rand(input.host_begin(), input.host_end(), -1, 1);
+    tensor_t input({1, 1, 28, 28});
+    uniform_rand(input.host_begin(), input.host_end(), -1, 1);
 
-  tensor_t labels({1, 1, 1, 1});
+    tensor_t labels({1, 1, 1, 1});
 
-  auto error1 = net.gradient_check(input, labels);
-  auto error2 = net.gradient_check_bias(input, labels);
-  for (auto e : error1) {
-    ASSERT_NEAR(e, 1E-3, 1E-3);
+    auto error1 = net.gradient_check(input, labels);
+    auto error2 = net.gradient_check_bias(input, labels);
+    for (auto e : error1) {
+      ASSERT_NEAR(e, 1E-3, 1E-3);
+    }
+
+    for (auto e : error2) {
+      ASSERT_NEAR(e, 1E-3, 1E-3);
+    }
+     */
   }
-
-  for (auto e : error2) {
-    ASSERT_NEAR(e, 1E-3, 1E-3);
-  }
-   */
-}
-
 }

@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "../framework/op_kernel.h"
-#include "../params/con_params.h"
+#include "../../framework/op_kernel.h"
+#include "../../params/con_params.h"
 #include "con_op_openblas.h"
 
 namespace simpleCNN {
