@@ -33,8 +33,8 @@ namespace simpleCNN {
 
       /** Convolution specification */
       checkCUDNN(cudnnCreateConvolutionDescriptor(&convDesc));
-      checkCUDNN(cudnnSetConvolution2dDescriptor_v5(convDesc, params.padding, params.padding, params.vertical_stride,
-                                                 params.horizontal_stride, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+      checkCUDNN(cudnnSetConvolution2dDescriptor(convDesc, params.padding, params.padding, params.vertical_stride,
+                                                 params.horizontal_stride, 1, 1, CUDNN_CROSS_CORRELATION));
 
       /** Forward prop specification */
       checkCUDNN(cudnnGetConvolutionForwardAlgorithm(cudnn_handle(), srcTensorDesc, weightDesc, convDesc, dstTensorDesc,
@@ -67,6 +67,7 @@ namespace simpleCNN {
 
       if (bias_gpu) {
         cuda_free(bias_gpu);
+        checkCUDNN(cudnnDestroyTensorDescriptor(biasDesc));
       }
 
       cuda_free(input_gpu);
@@ -75,7 +76,6 @@ namespace simpleCNN {
 
       checkCUDNN(cudnnDestroyTensorDescriptor(srcTensorDesc));
       checkCUDNN(cudnnDestroyTensorDescriptor(dstTensorDesc));
-      checkCUDNN(cudnnDestroyTensorDescriptor(biasDesc));
       checkCUDNN(cudnnDestroyFilterDescriptor(weightDesc));
       checkCUDNN(cudnnDestroyConvolutionDescriptor(convDesc));
 #endif
@@ -93,19 +93,17 @@ namespace simpleCNN {
 
       /** Push to device memory */
       cuda_push_array(input_gpu, &(*in_data.host_begin()), in_data.size());
-      cuda_push_array(output_gpu, &(*out_data.host_begin()), out_data.size());
       cuda_push_array(weight_gpu, &(*weight.host_begin()), weight.size());
 
       /** Forward propagate */
-      float_t one = 1;
-      checkCUDNN(cudnnConvolutionForward(cudnn_handle(), &one, srcTensorDesc, input_gpu, weightDesc, weight_gpu,
-                                         convDesc, fw_algo, workspace, workspace_size, &one, dstTensorDesc,
+      checkCUDNN(cudnnConvolutionForward(cudnn_handle(), &alpha, srcTensorDesc, input_gpu, weightDesc, weight_gpu,
+                                         convDesc, fw_algo, workspace, workspace_size, &beta, dstTensorDesc,
                                          output_gpu));
 
       /** Add bias */
       if (params.has_bias) {
         cuda_push_array(bias_gpu, &(*bias.host_begin()), bias.size());
-        checkCUDNN(cudnnAddTensor(cudnn_handle(), &one, biasDesc, bias_gpu, &one, dstTensorDesc, output_gpu));
+        checkCUDNN(cudnnAddTensor(cudnn_handle(), &alpha, biasDesc, bias_gpu, &alpha, dstTensorDesc, output_gpu));
       }
 
       /** Pull from device memory */
@@ -122,6 +120,10 @@ namespace simpleCNN {
     float_t* output_gpu = nullptr;
     float_t* weight_gpu = nullptr;
     float_t* bias_gpu = nullptr;
+
+    float_t alpha = 1.0f;
+    float_t beta = 0.0f;
+
 
     cudnnTensorDescriptor_t srcTensorDesc;
     cudnnTensorDescriptor_t dstTensorDesc;
@@ -225,6 +227,7 @@ namespace simpleCNN {
 
       if (db_gpu) {
         cuda_free(db_gpu);
+        checkCUDNN(cudnnDestroyTensorDescriptor(dbiasDesc));
       }
 
       cuda_free(prev_in_gpu);
@@ -237,7 +240,6 @@ namespace simpleCNN {
       checkCUDNN(cudnnDestroyTensorDescriptor(dsrcTensorDesc));
       checkCUDNN(cudnnDestroyTensorDescriptor(dstTensorDesc));
       checkCUDNN(cudnnDestroyTensorDescriptor(ddstTensorDesc));
-      checkCUDNN(cudnnDestroyTensorDescriptor(dbiasDesc));
       checkCUDNN(cudnnDestroyFilterDescriptor(weightDesc));
       checkCUDNN(cudnnDestroyFilterDescriptor(dweightDesc));
       checkCUDNN(cudnnDestroyConvolutionDescriptor(convDesc));
@@ -259,29 +261,25 @@ namespace simpleCNN {
       /** Psuh to device memory */
       cuda_push_array(prev_in_gpu, &(*prev_in.host_begin()), prev_in.size());
       cuda_push_array(weight_gpu, &(*weight.host_begin()), weight.size());
-      cuda_push_array(dW_gpu, &(*dW.host_begin()), dW.size());
-      cuda_push_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
       cuda_push_array(curr_delta_gpu, &(*curr_delta.host_begin()), curr_delta.size());
 
 
       /** Backward propagate */
-      float_t one = 1;
-      checkCUDNN(cudnnConvolutionBackwardFilter(cudnn_handle(), &one, srcTensorDesc, prev_in_gpu, ddstTensorDesc,
-                                                curr_delta_gpu, convDesc, bf_algo, workspace, workspace_size, &one,
+      checkCUDNN(cudnnConvolutionBackwardFilter(cudnn_handle(), &alpha, srcTensorDesc, prev_in_gpu, ddstTensorDesc,
+                                                curr_delta_gpu, convDesc, bf_algo, workspace, workspace_size, &beta,
                                                 dweightDesc, dW_gpu));
 
-      //float_t alpha = float_t(1) / static_cast<float_t>(params.batch_size);
-      //checkCudaErrors(cublasSscal(cublas_handle(), dW.size(), &alpha, dW_gpu, one));
+      //float_t scale = float_t(1) / static_cast<float_t>(params.batch_size);
+      //checkCudaErrors(cublasSscal(cublas_handle(), dW.size(), &scale, dW_gpu, 1));
 
-      checkCUDNN(cudnnConvolutionBackwardData(cudnn_handle(), &one, weightDesc, weight_gpu, ddstTensorDesc,
-                                              curr_delta_gpu, convDesc, bd_algo, workspace, workspace_size, &one,
+      checkCUDNN(cudnnConvolutionBackwardData(cudnn_handle(), &alpha, weightDesc, weight_gpu, ddstTensorDesc,
+                                              curr_delta_gpu, convDesc, bd_algo, workspace, workspace_size, &beta,
                                               dsrcTensorDesc, prev_delta_gpu));
 
       /** Backprop bias */
       if (params.has_bias) {
-        cuda_push_array(db_gpu, &(*db.host_begin()), db.size());
-        checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle(), &one, dstTensorDesc, curr_delta_gpu, &one, dbiasDesc, db_gpu));
-        //checkCudaErrors(cublasSscal(cublas_handle(), db.size(), &alpha, db_gpu, one));
+        checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle(), &alpha, ddstTensorDesc, curr_delta_gpu, &beta, dbiasDesc, db_gpu));
+        //checkCudaErrors(cublasSscal(cublas_handle(), db.size(), &scale, db_gpu, 1));
 
         checkCudaErrors(cudaDeviceSynchronize());
         cuda_pull_array(db_gpu, &(*db.host_begin()), db.size());
@@ -305,7 +303,11 @@ namespace simpleCNN {
     float_t* prev_delta_gpu = nullptr;
     float_t* curr_delta_gpu = nullptr;
 
-    cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
+    float_t alpha = 1.0f;
+    float_t beta = 0.0f;
+
+
+  cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
     cudnnTensorDescriptor_t dsrcTensorDesc, ddstTensorDesc, dbiasDesc;
     cudnnFilterDescriptor_t weightDesc, dweightDesc;
     cudnnConvolutionDescriptor_t convDesc;

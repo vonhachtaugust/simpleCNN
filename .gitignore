@@ -34,5 +34,6 @@ cmake-build-debug/
 # IDE settings
 .idea/
 
-# third party
+# other
 third_party/
+data/

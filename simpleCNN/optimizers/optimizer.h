@@ -94,9 +94,7 @@ namespace simpleCNN {
         auto& dx_i = dx->host_at_index(i);
         auto& x_i  = x->host_at_index(i);
 
-#ifndef USE_CUDNN
         dx_i /= float_t(batch_size);
-#endif
 
         mt_i = beta1 * mt_i + (float_t(1) - beta1) * dx_i;
         vt_i = beta2 * vt_i + (float_t(1) - beta2) * dx_i * dx_i;

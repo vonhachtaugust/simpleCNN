@@ -53,11 +53,9 @@ namespace simpleCNN {
 
       /** Push to device memory */
       cuda_push_array(input_gpu, &(*in_data.host_begin()), in_data.size());
-      cuda_push_array(output_gpu, &(*out_data.host_begin()), out_data.size());
 
       /** Forward propagate */
-      float_t one = 1;
-      checkCUDNN(cudnnPoolingForward(cudnn_handle(), poolDesc, &one, srcTensorDesc, input_gpu, &one, dstTensorDesc,
+      checkCUDNN(cudnnPoolingForward(cudnn_handle(), poolDesc, &alpha, srcTensorDesc, input_gpu, &beta, dstTensorDesc,
                                      output_gpu));
 
       /** Pull from device memory */
@@ -73,7 +71,11 @@ namespace simpleCNN {
     float_t* input_gpu = nullptr;
     float_t* output_gpu = nullptr;
 
-    cudnnTensorDescriptor_t srcTensorDesc;
+    float_t alpha = 1.0f;
+    float_t beta = 0.0f;
+
+
+  cudnnTensorDescriptor_t srcTensorDesc;
     cudnnTensorDescriptor_t dstTensorDesc;
     cudnnPoolingDescriptor_t poolDesc;
 #endif
@@ -141,12 +143,10 @@ namespace simpleCNN {
       cuda_push_array(input_gpu, &(*in_data.host_begin()), in_data.size());
       cuda_push_array(output_gpu, &(*out_data.host_begin()), out_data.size());
       cuda_push_array(curr_delta_gpu, &(*curr_delta.host_begin()), curr_delta.size());
-      cuda_push_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
 
       /** Backward propagate */
-      float_t one = 1;
-      checkCUDNN(cudnnPoolingBackward(cudnn_handle(), poolDesc, &one, dstTensorDesc, output_gpu, ddstTensorDesc,
-                                      curr_delta_gpu, srcTensorDesc, input_gpu, &one, dsrcTensorDesc,
+      checkCUDNN(cudnnPoolingBackward(cudnn_handle(), poolDesc, &alpha, dstTensorDesc, output_gpu, ddstTensorDesc,
+                                      curr_delta_gpu, srcTensorDesc, input_gpu, &beta, dsrcTensorDesc,
                                       prev_delta_gpu));
 
       /** Pull from device memory*/
@@ -164,7 +164,11 @@ namespace simpleCNN {
     float_t* curr_delta_gpu = nullptr;
     float_t* prev_delta_gpu = nullptr;
 
-    cudnnTensorDescriptor_t srcTensorDesc;
+    float_t alpha = 1.0f;
+    float_t beta = 0.0f;
+
+
+  cudnnTensorDescriptor_t srcTensorDesc;
     cudnnTensorDescriptor_t dstTensorDesc;
     cudnnTensorDescriptor_t dsrcTensorDesc;
     cudnnTensorDescriptor_t ddstTensorDesc;

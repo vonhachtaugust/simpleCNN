@@ -32,7 +32,8 @@ namespace simpleCNN {
       explicit Gaussian(float_t value) : Scalable(value) {}
 
       void fill(tensor_t* weight, size_t fan_in, size_t fan_out) override {
-        const float_t std = std::sqrt(scale_ / (fan_in));
+        //Average version: const float_t std = std::sqrt(2 * scale_ / (fan_in + fan_out));
+        const float_t std = std::sqrt(scale_ / fan_in);
 
         normal_dist(weight->host_begin(), weight->host_end(), float_t(0), std);
       }
@@ -45,7 +46,9 @@ namespace simpleCNN {
       explicit Xavier(float_t value) : Scalable(value) {}
 
       void fill(tensor_t* weight, size_t fan_in, size_t fan_out) override {
-        const float_t weight_base = std::sqrt(scale_ / (fan_in + fan_out));
+        // Average version: const float_t weight_base = std::sqrt(scale_ / (fan_in + fan_out));
+        // Fan in version
+        const float_t weight_base = std::sqrt(3 / (fan_in));
 
         uniform_rand(weight->host_begin(), weight->host_end(), -weight_base, weight_base);
       }

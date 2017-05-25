@@ -64,12 +64,10 @@ class ActivationCudaForwardOp : public core::OpKernel {
 
     /** Push to device memory */
     cuda_push_array(input_gpu, &(*input.host_begin()), input.size());
-    cuda_push_array(output_gpu, &(*output.host_begin()), output.size());
 
     /** Forward propagate */
-    float_t one = 1;
-    checkCUDNN(cudnnActivationForward(cudnn_handle(), Activation, &one,
-                                      srcTensorDesc, input_gpu, &one,
+    checkCUDNN(cudnnActivationForward(cudnn_handle(), Activation, &alpha,
+                                      srcTensorDesc, input_gpu, &beta,
                                       dstTensorDesc, output_gpu));
 
     /** Pull from device memory */
@@ -82,6 +80,9 @@ class ActivationCudaForwardOp : public core::OpKernel {
 #ifdef USE_CUDNN
   float_t* input_gpu = nullptr;
   float_t* output_gpu = nullptr;
+
+  float_t alpha = 1.0f;
+  float_t beta = 0.0f;
 
   cudnnTensorDescriptor_t srcTensorDesc;
   cudnnTensorDescriptor_t dstTensorDesc;
@@ -156,14 +157,12 @@ class ActivationCudaBackwardOp : public core::OpKernel {
     cuda_push_array(input_gpu, &(*input.host_begin()), input.size());
     cuda_push_array(output_gpu, &(*output.host_begin()), output.size());
     cuda_push_array(curr_delta_gpu, &(*curr_delta.host_begin()), curr_delta.size());
-    cuda_push_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
 
     /** Backward propagate */
-    float_t one = 1;
     checkCUDNN(cudnnActivationBackward(
-        cudnn_handle(), Activation, &one, dstTensorDesc,
+        cudnn_handle(), Activation, &alpha, dstTensorDesc,
         output_gpu, ddstTensorDesc, curr_delta_gpu, srcTensorDesc, input_gpu,
-        &one, dsrcTensorDesc, prev_delta_gpu));
+        &beta, dsrcTensorDesc, prev_delta_gpu));
 
     /**  Pull from device memory */
     checkCudaErrors(cudaDeviceSynchronize());
@@ -177,6 +176,9 @@ class ActivationCudaBackwardOp : public core::OpKernel {
   float_t* output_gpu = nullptr;
   float_t* curr_delta_gpu = nullptr;
   float_t* prev_delta_gpu = nullptr;
+
+  float_t alpha = 1.0f;
+  float_t beta = 0.0f;
 
   cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
   cudnnTensorDescriptor_t dsrcTensorDesc, ddstTensorDesc;

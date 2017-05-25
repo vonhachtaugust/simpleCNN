@@ -93,7 +93,10 @@ namespace simpleCNN {
 
     void get_bias(std::vector<tensor_t *> &bias) {
       if (trainable()) {
-        bias.push_back(in_component_data(component_t::BIAS));
+        tensor_t* b = in_component_data(component_t::BIAS);
+        if (b) {
+          bias.push_back(b);
+        }
       }
     }
 

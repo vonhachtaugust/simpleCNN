@@ -81,7 +81,6 @@ namespace simpleCNN {
 
       /** Push to device memory */
       cuda_push_array(input_gpu, &(*in_data.host_begin()), in_data.size());
-      cuda_push_array(output_gpu, &(*out_data.host_begin()), out_data.size());
 
       /** Forward propagate */
       checkCUDNN(cudnnDropoutForward(cudnn_handle(), dropDesc, srcTensorDesc, input_gpu, dstTensorDesc, output_gpu,
@@ -188,7 +187,6 @@ namespace simpleCNN {
 
       /** Push to device memory */
       cuda_push_array(curr_delta_gpu, &(*curr_delta.host_begin()), curr_delta.size());
-      cuda_push_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
 
       /** Forward propagate */
       checkCUDNN(cudnnDropoutForward(cudnn_handle(), dropDesc, ddstTensorDesc, curr_delta_gpu, dsrcTensorDesc,

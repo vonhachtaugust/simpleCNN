@@ -109,7 +109,7 @@ namespace simpleCNN {
         kernel_fwd_.reset(new simpleCNN::ActivationCudaForwardOp(ctx));
         kernel_bwd_.reset(new simpleCNN::ActivationCudaBackwardOp(ctx));
       } else {
-        throw simple_error("No supported engine");
+
       }
 
       backend_initialized = true;

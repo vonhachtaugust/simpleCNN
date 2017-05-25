@@ -349,6 +349,50 @@ namespace simpleCNN {
     ASSERT_EQ(prev_delta.host_at(0, 0, 3, 3), curr_delta_data[3]);
   }
 
+  TEST(Cuda, max_bprop_network) {
+  size_t w       = 4;
+  size_t h      = 4;
+  size_t ich    = 1;
+  size_t och   = ich;
+  size_t bs     = 1;
+  size_t ps_x = 2;
+  size_t ps_y = 2;
+  size_t s_x = 2;
+  size_t s_y = 2;
+
+  using maxpool = Maxpooling_layer;
+
+  //Network<Sequential> net;
+  maxpool m(w, h, ich, bs, ps_x, ps_y, s_x, s_y, core::backend_t::gpu);
+
+
+  vec_t in_data = {1, 1, 2, 4, 5, -1, 7, -1, 3, 5, 1, 0, 1, 2, 3, 4};
+  tensor_t img({bs, ich, h, w});
+  fill(in_data, img);
+
+  tensor_t out({bs, och, 2, 2});
+  vec_t out_data = {5, 7, 5, 4};
+  fill(out_data, out);
+
+  tensor_t curr_delta({bs, och, 2, 2});
+  vec_t curr_data = {1, 2, 3, 4};
+  fill(curr_data, curr_delta);
+
+  tensor_t prev_delta({bs, ich, h, w});
+  m.set_in_data(img, component_t::IN_DATA);
+  m.set_out_data(out, component_t::OUT_DATA);
+  m.set_out_grad(curr_delta, component_t::OUT_GRAD);
+  m.set_in_grad(prev_delta, component_t::IN_GRAD);
+
+  m.backward();
+
+  //print(out);
+  //print(prev_delta);
+  //net << m;
+
+}
+
+
   TEST(Cuda, forward_prop_connected) {
     size_t in_dim     = 4;
     size_t out_dim    = 2;
@@ -532,6 +576,121 @@ namespace simpleCNN {
 
   //print(input, "Input");
   //print(output, "Output");
+}
+
+  TEST(Cuda, networks_output) {
+  Network<Sequential> net1;
+  Network<Sequential> net2;
+  using dropout = Dropout_layer;
+  using conv    = Convolutional_layer;
+  using maxpool = Maxpooling_layer;
+  using fully   = Connected_layer;
+  using network = Network<Sequential>;
+  using adam    = Adam<float_t>;
+  using relu    = Activation_layer;
+  using softmax = loss::Softmax;
+  size_t bs = 1;
+
+  net1 << conv(28, 28, 1, bs, 5, 32, 1, 2, true, core::backend_t::gpu) << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(28, 28, 32, bs, 2, 2, 2, 2, core::backend_t::gpu)
+      << conv(14, 14, 32, bs, 5, 64, 1, 2, true, core::backend_t::gpu) << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(14, 14, 64, bs, 2, 2, 2, 2, core::backend_t::gpu)
+      << fully(7 * 7 * 64, 1024, bs, true, core::backend_t::gpu) << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(0.75, core::backend_t::gpu)
+      << fully(1024, 10, bs, true, core::backend_t::gpu) << softmax();
+
+
+  net2 << conv(28, 28, 1, bs, 5, 32, 1, 2, true) << relu(core::activation_t::relu)
+      << maxpool(28, 28, 32, bs)
+      << conv(14, 14, 32, bs, 5, 64, 1, 2, true) << relu(core::activation_t::relu)
+      << maxpool(14, 14, 64, bs)
+      << fully(7 * 7 * 64, 1024, bs, true) << relu(core::activation_t::relu)
+      << dropout(0.75)
+      << fully(1024, 10, bs, true) << softmax();
+
+  tensor_t in({bs, 1, 28, 28});
+  uniform_rand(in.host_begin(), in.host_end(), -1.0f, 1.0f);
+
+  tensor_t labels({bs, 1, 1, 1});
+  labels.fill(0.0f);
+
+  adam a;
+  //net1.test_onbatch(a, in, labels, bs);
+  //net2.test_onbatch(a, in, labels, bs);
+}
+
+  TEST(Cuda, gradient_check) {
+  Network<Sequential> net;
+  Network<Sequential> net2;
+  using dropout = Dropout_layer;
+  using conv    = Convolutional_layer;
+  using maxpool = Maxpooling_layer;
+  using fully   = Connected_layer;
+  using network = Network<Sequential>;
+  using adam    = Adam<float_t>;
+  using relu    = Activation_layer;
+  using softmax = loss::Softmax;
+  size_t bs = 1;
+  bool has_bias = true;
+
+  net << conv(10, 10, 1, bs, 5, 1, 1, 0, has_bias, core::backend_t::gpu)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(6, 6, 1, bs, 2, 2, 2, 2, core::backend_t::gpu)
+      << fully(3 * 3 * 1, 3, bs, has_bias, core::backend_t::gpu)
+      << softmax();
+
+  net2 << conv(10, 10, 1, bs, 5, 1, 1, 0, has_bias, core::backend_t::internal)
+      << relu(core::activation_t::relu)
+      << maxpool(6, 6, 1, bs)
+      << fully(3 * 3 * 1, 3, bs, has_bias)
+      << softmax();
+
+  tensor_t input({bs, 1, 10, 10});
+  //input.fill(1.0f);
+  uniform_rand(input.host_begin(), input.host_end(), -1, 1);
+
+  tensor_t label({bs, 1, 1, 1});
+  auto erg = net.gradient_check(input, label, has_bias);
+
+  auto erc = net2.gradient_check(input, label, has_bias);
+
+  for (auto e : erg) {
+    print(e, "Error gpu");
+  }
+
+  for (auto ec : erc) {
+    print(ec, "Error cpu");
+  }
+
+}
+
+  TEST(Cuda, convolution) {
+  Network<Sequential> net;
+  Network<Sequential> net2;
+  using dropout = Dropout_layer;
+  using conv    = Convolutional_layer;
+  using maxpool = Maxpooling_layer;
+  using fully   = Connected_layer;
+  using network = Network<Sequential>;
+  using adam    = Adam<float_t>;
+  using relu    = Activation_layer;
+  using softmax = loss::Softmax;
+  size_t bs = 10;
+  bool has_bias = true;
+
+  net << fully(9, 3, bs, has_bias, core::backend_t::gpu) << softmax();
+  net2 << fully(9, 3, bs, has_bias) << softmax();
+
+  tensor_t input({bs, 1, 9, 1});
+  //input.fill(1.0f);
+  uniform_rand(input.host_begin(), input.host_end(), -1, 1);
+  tensor_t label({bs, 1, 1, 1});
+
+  print("GPU");
+  net.gradient_manual_check(input, label, has_bias);
+
+  print("CPU");
+  net2.gradient_manual_check(input, label, has_bias);
 
 }
 

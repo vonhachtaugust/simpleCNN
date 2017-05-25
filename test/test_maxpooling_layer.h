@@ -84,11 +84,11 @@ namespace simpleCNN {
 
     tensor_t prev_delta({batch_size, in_channels, in_height, in_width});
     data_ptrs_t input_grad  = {&prev_delta};
-    data_ptrs_t output_grad = {&curr_delta, &curr_delta};
+    data_ptrs_t output_grad = {&curr_delta};
     maxpool.back_propagation(input, output, input_grad, output_grad);
     // simple_info("Prev delta:");
     // std::cout << prev_delta << std::endl;
-
+    
     ASSERT_EQ(prev_delta.host_at(0, 0, 1, 0), curr_delta_data[0]);
     ASSERT_EQ(prev_delta.host_at(0, 0, 1, 2), curr_delta_data[1]);
     ASSERT_EQ(prev_delta.host_at(0, 0, 2, 1), curr_delta_data[2]);
