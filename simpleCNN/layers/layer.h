@@ -93,7 +93,7 @@ namespace simpleCNN {
 
     void get_bias(std::vector<tensor_t *> &bias) {
       if (trainable()) {
-        tensor_t* b = in_component_data(component_t::BIAS);
+        tensor_t *b = in_component_data(component_t::BIAS);
         if (b) {
           bias.push_back(b);
         }
@@ -203,9 +203,9 @@ namespace simpleCNN {
 
     void set_out_data(const tensor_t &data, component_t ct) { *out_component_data(ct) = data; }
 
-    void set_in_grad(const tensor_t& data, component_t ct) { *ith_in_node(0)->get_gradient() = data; }
+    void set_in_grad(const tensor_t &data, component_t ct) { *ith_in_node(0)->get_gradient() = data; }
 
-    void set_out_grad(const tensor_t& data, component_t ct) { *ith_out_node(0)->get_gradient() = data; }
+    void set_out_grad(const tensor_t &data, component_t ct) { *ith_out_node(0)->get_gradient() = data; }
 
     void set_out_data(const tensor_t &data, const size_t index) { *ith_out_node(index)->get_data() = data; }
 

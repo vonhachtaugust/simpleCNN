@@ -6,6 +6,7 @@
 
 #include <iomanip>
 #include "../util/simple_error.h"
+#include "../util/util.h"
 
 namespace simpleCNN {
 

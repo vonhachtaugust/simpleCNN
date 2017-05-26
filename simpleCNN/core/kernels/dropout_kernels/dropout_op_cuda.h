@@ -91,9 +91,10 @@ namespace simpleCNN {
       cuda_pull_array(output_gpu, &(*out_data.host_begin()), out_data.size());
 #endif
     }
+
    private:
 #ifdef USE_CUDNN
-    float_t* input_gpu = nullptr;
+    float_t* input_gpu  = nullptr;
     float_t* output_gpu = nullptr;
 
     cudnnTensorDescriptor_t srcTensorDesc;
@@ -197,6 +198,7 @@ namespace simpleCNN {
       cuda_pull_array(prev_delta_gpu, &(*prev_delta.host_begin()), prev_delta.size());
 #endif
     }
+
    private:
 #ifdef USE_CUDNN
     float_t* curr_delta_gpu;

@@ -4,16 +4,18 @@
 
 #pragma once
 
-#include "../network.h"
-#include "../core/params/dropout_params.h"
 #include "../core/kernels/dropout_kernels/dropout_op.h"
 #include "../core/kernels/dropout_kernels/dropout_op_cuda.h"
+#include "../core/params/dropout_params.h"
+#include "../network.h"
 
 namespace simpleCNN {
 
   class Dropout_layer : public Layer {
    public:
-    Dropout_layer(float_t prob, core::backend_t backend_type = core::default_engine(), net_phase phase = net_phase::train)
+    Dropout_layer(float_t prob,
+                  core::backend_t backend_type = core::default_engine(),
+                  net_phase phase              = net_phase::train)
       : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
       dropout_set_params(prob, phase);
       Layer::set_backend_type(backend_type);
@@ -26,9 +28,9 @@ namespace simpleCNN {
 
     /** Initialization is made through inferring the shape from the layer with this layer connects to */
     void set_in_shape(const shape4d& shape) override {
-      params_.shape = shape;
+      params_.shape   = shape;
       params_.in_size = product(shape);
-      params_.mask = tensor_t(shape);
+      params_.mask    = tensor_t(shape);
     }
 
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
@@ -67,9 +69,8 @@ namespace simpleCNN {
     std::string layer_type() const override { return "dropout"; }
 
    private:
-    void dropout_set_params(float_t prob,
-                            net_phase phase) {
-      params_.prob = prob;
+    void dropout_set_params(float_t prob, net_phase phase) {
+      params_.prob  = prob;
       params_.phase = phase;
     }
 

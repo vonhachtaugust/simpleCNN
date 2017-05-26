@@ -64,7 +64,7 @@ namespace simpleCNN {
     float_t error(const tensor_t& output,
                   const tensor_t& target,
                   const std::vector<tensor_t*>& weights) const override {
-      return loss(output, target);// + Hyperparameters::regularization_constant * regularization<float_t>(weights);
+      return loss(output, target) + Hyperparameters::regularization_constant * regularization<float_t>(weights);
     }
 
     float_t accuracy(const tensor_t& output, const tensor_t& target) const override {

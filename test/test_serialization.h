@@ -23,13 +23,13 @@ namespace simpleCNN {
 
     net1 << conv(32, 32, 1, minibatch_size, 5, 6) << relu() << maxpool(28, 28, 6, minibatch_size)
          << conv(14, 14, 6, minibatch_size, 5, 16) << relu() << maxpool(10, 10, 16, minibatch_size)
-         << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout(0.5)
-         << fully(120, 10, minibatch_size) << softmax();
+         << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout(0.5) << fully(120, 10, minibatch_size)
+         << softmax();
 
     net2 << conv(32, 32, 1, minibatch_size, 5, 6) << relu() << maxpool(28, 28, 6, minibatch_size)
          << conv(14, 14, 6, minibatch_size, 5, 16) << relu() << maxpool(10, 10, 16, minibatch_size)
-         << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout(0.5)
-         << fully(120, 10, minibatch_size) << softmax();
+         << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout(0.5) << fully(120, 10, minibatch_size)
+         << softmax();
 
     net1.init_network();
 

@@ -5,12 +5,12 @@
 #pragma once
 
 #include <fstream>
+#include "io/serialize.h"
 #include "loss/loss_functions.h"
+#include "network_types.h"
 #include "optimizers/optimizer.h"
 #include "util/math_functions.h"
-#include "network_types.h"
 #include "util/util.h"
-#include "io/serialize.h"
 
 namespace simpleCNN {
 
@@ -100,25 +100,24 @@ namespace simpleCNN {
 
       if (has_bias) {
         auto nb = computeNumericalGradient_bias(input, labels);
-        //printvt(nb, "Numerical gradient dB");
+        // printvt(nb, "Numerical gradient dB");
       }
 
       auto output = net_.forward(input);
-      //print(output, "output");
+      // print(output, "output");
       net_.backward(labels);
       auto dW = net_.get_dW();
 
       if (has_bias) {
         auto dB = net_.get_dB();
-        //printvt_ptr(dB, "dB");
+        // printvt_ptr(dB, "dB");
       }
 
-
-      //printvt(ng, "Numerical gradient dW");
-      //printvt_ptr(dW, "dW");
+      // printvt(ng, "Numerical gradient dW");
+      // printvt_ptr(dW, "dW");
 
       return relative_error(dW, ng);
-      //return {1.0f};
+      // return {1.0f};
     }
 
     std::vector<float_t> gradient_check_bias(const tensor_t& input, const tensor_t& labels) {
@@ -126,12 +125,12 @@ namespace simpleCNN {
       auto ng = computeNumericalGradient_bias(input, labels);
 
       auto output = net_.forward(input);
-      //print(output, "output");
+      // print(output, "output");
       net_.backward(labels);
       auto dB = net_.get_dB();
 
-      //printvt(ng, "Numerical gradient");
-      //printvt_ptr(dB, "Backprop gradient");
+      // printvt(ng, "Numerical gradient");
+      // printvt_ptr(dB, "Backprop gradient");
 
       return relative_error(dB, ng);
     }
@@ -159,7 +158,7 @@ namespace simpleCNN {
           weights[i]->host_at_index(j) -= 2 * e;
           auto loss2 = net_.forward_loss(input, labels);
 
-          numerical_weight_gradient.host_at_index(j) = (loss1 - loss2) / (2 *  e);
+          numerical_weight_gradient.host_at_index(j) = (loss1 - loss2) / (2 * e);
           weights[i]->host_at_index(j) += e;
         }
         num_grads.push_back(numerical_weight_gradient);
@@ -302,7 +301,9 @@ namespace simpleCNN {
           auto minilabels = train_labels.subView({j}, {batch_size, 1, 1, 1});
           train_once(opt, minibatch, minilabels, store_result, batch_size);
 
-          auto minivi = training_images.subView({index}, {batch_size, validation_images.dimension(dim_t::depth), validation_images.dimension(dim_t::height), validation_images.dimension(dim_t::width)});
+          auto minivi = training_images.subView(
+            {index}, {batch_size, validation_images.dimension(dim_t::depth), validation_images.dimension(dim_t::height),
+                      validation_images.dimension(dim_t::width)});
           auto minivl = train_labels.subView({index}, {batch_size, 1, 1, 1});
           valid_once(minibatch, minilabels, store_result);
 

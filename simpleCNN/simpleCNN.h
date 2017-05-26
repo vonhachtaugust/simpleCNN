@@ -8,7 +8,6 @@
 #include "network_types.h"
 #include "node.h"
 
-
 #include "layers/layer.h"
 
 #include "activations/activation_layer.h"
@@ -24,11 +23,11 @@
 #include "layers/dropout_layer.h"
 #include "layers/maxpooling_layer.h"
 
+#include "core/params/activation_params.h"
 #include "core/params/con_params.h"
 #include "core/params/conv_params.h"
 #include "core/params/max_params.h"
 #include "core/params/params.h"
-#include "core/params/activation_params.h"
 
 #include "core/kernels/activation_kernels/activation_op.h"
 #include "core/kernels/activation_kernels/activation_op_cuda.h"
@@ -40,18 +39,18 @@
 
 #include "core/kernels/connected_kernels/con_grad_op.h"
 #include "core/kernels/connected_kernels/con_op.h"
-#include "core/kernels/connected_kernels/con_op_openblas.h"
 #include "core/kernels/connected_kernels/con_op_cuda.h"
+#include "core/kernels/connected_kernels/con_op_openblas.h"
 
 #include "core/kernels/convolution_kernels/conv_grad_op.h"
 #include "core/kernels/convolution_kernels/conv_op.h"
-#include "core/kernels/convolution_kernels/conv_op_openblas.h"
 #include "core/kernels/convolution_kernels/conv_op_cuda.h"
+#include "core/kernels/convolution_kernels/conv_op_openblas.h"
 
 #include "core/kernels/maxpooling_kernels/max_grad_op.h"
 #include "core/kernels/maxpooling_kernels/max_op.h"
-#include "core/kernels/maxpooling_kernels/max_op_internal.h"
 #include "core/kernels/maxpooling_kernels/max_op_cuda.h"
+#include "core/kernels/maxpooling_kernels/max_op_internal.h"
 
 #include "core/kernels/cuda_util_kernels.h"
 

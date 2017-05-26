@@ -11,19 +11,16 @@
 namespace simpleCNN {
   namespace kernels {
 
-    inline void relu_forward(const tensor_t& in_data,
-                             tensor_t& out_data) {
+    inline void relu_forward(const tensor_t& in_data, tensor_t& out_data) {
       for (size_t i = 0; i < in_data.size(); ++i) {
-          float_t val = *(in_data.host_begin() + i);
-          out_data.host_at_index(i) = std::max(float_t(0), val);
+        float_t val               = *(in_data.host_begin() + i);
+        out_data.host_at_index(i) = std::max(float_t(0), val);
       }
     }
 
-    inline void relu_backward(const tensor_t& in_data,
-                              const tensor_t& curr_delta,
-                              tensor_t& prev_delta) {
+    inline void relu_backward(const tensor_t& in_data, const tensor_t& curr_delta, tensor_t& prev_delta) {
       for (size_t i = 0; i < in_data.size(); ++i) {
-        auto value = in_data.host_at_index(i) > float_t(0) ? float_t(1) : float_t(0);
+        auto value                  = in_data.host_at_index(i) > float_t(0) ? float_t(1) : float_t(0);
         prev_delta.host_at_index(i) = value * curr_delta.host_at_index(i);
       }
     }
@@ -39,14 +36,12 @@ namespace simpleCNN {
       }
     }
 
-    inline void activation_op_internal(const tensor_t& in_data,
-                                       tensor_t& out_data,
-                                       const core::activation_t h) {
+    inline void activation_op_internal(const tensor_t& in_data, tensor_t& out_data, const core::activation_t h) {
       if (h == core::activation_t::relu) {
         relu_forward(in_data, out_data);
       } else {
         throw simple_error("Not a supported activation function");
       }
     }
-  } // namespace kernels
-} // namespace simpleCNN
+  }  // namespace kernels
+}  // namespace simpleCNN

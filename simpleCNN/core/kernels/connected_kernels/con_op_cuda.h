@@ -71,7 +71,7 @@ namespace simpleCNN {
       if (params.has_bias) {
         cuda_push_array(bias_gpu, &(*bias.host_begin()), bias.size());
         checkCudaErrors(cublasSgemm(cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N, params.out_dim, params.batch_size, 1,
-                                  &alpha, bias_gpu, params.out_dim, onevec, 1, &alpha, output_gpu, params.out_dim));
+                                    &alpha, bias_gpu, params.out_dim, onevec, 1, &alpha, output_gpu, params.out_dim));
       }
 
       /** Pull from device memory */
@@ -84,15 +84,15 @@ namespace simpleCNN {
 
    private:
 #ifdef USE_CUDNN
-    float_t* input_gpu = nullptr;
+    float_t* input_gpu  = nullptr;
     float_t* output_gpu = nullptr;
     float_t* weight_gpu = nullptr;
-    float_t* bias_gpu = nullptr;
+    float_t* bias_gpu   = nullptr;
 
     float_t alpha = 1.0f;
-    float_t beta = 0.0f;
+    float_t beta  = 0.0f;
 
-  float_t* onevec = nullptr;
+    float_t* onevec = nullptr;
 #endif
   };
 
@@ -158,18 +158,18 @@ namespace simpleCNN {
                                   &beta, dW_gpu, params.in_dim));
 
       // scale due to batch size
-      //float_t alpha = float_t(1) / static_cast<float_t>(params.batch_size);
-      //checkCudaErrors(cublasSscal(cublas_handle(), dW.size(), &alpha, dW_gpu, one));
+      // float_t alpha = float_t(1) / static_cast<float_t>(params.batch_size);
+      // checkCudaErrors(cublasSscal(cublas_handle(), dW.size(), &alpha, dW_gpu, one));
 
       // Data
       checkCudaErrors(cublasSgemm(cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N, params.in_dim, params.batch_size,
-                                  params.out_dim, &alpha, weight_gpu, params.in_dim, curr_delta_gpu, params.out_dim, &beta,
-                                  prev_delta_gpu, params.in_dim));
+                                  params.out_dim, &alpha, weight_gpu, params.in_dim, curr_delta_gpu, params.out_dim,
+                                  &beta, prev_delta_gpu, params.in_dim));
 
       if (params.has_bias) {
         checkCudaErrors(cublasSgemv(cublas_handle(), CUBLAS_OP_N, params.out_dim, params.batch_size, &alpha,
                                     curr_delta_gpu, params.out_dim, onevec, 1, &beta, db_gpu, 1));
-        //checkCudaErrors(cublasSscal(cublas_handle(), db.size(), &alpha, db_gpu, one));
+        // checkCudaErrors(cublasSscal(cublas_handle(), db.size(), &alpha, db_gpu, one));
         checkCudaErrors(cudaDeviceSynchronize());
         cuda_pull_array(db_gpu, &(*db.host_begin()), db.size());
       }
@@ -185,18 +185,17 @@ namespace simpleCNN {
 
    private:
 #ifdef USE_CUDNN
-  float_t* prev_in_gpu    = nullptr;
-  float_t* weight_gpu     = nullptr;
-  float_t* dW_gpu         = nullptr;
-  float_t* db_gpu         = nullptr;
-  float_t* prev_delta_gpu = nullptr;
-  float_t* curr_delta_gpu = nullptr;
+    float_t* prev_in_gpu    = nullptr;
+    float_t* weight_gpu     = nullptr;
+    float_t* dW_gpu         = nullptr;
+    float_t* db_gpu         = nullptr;
+    float_t* prev_delta_gpu = nullptr;
+    float_t* curr_delta_gpu = nullptr;
 
-  float_t alpha = 1.0f;
-  float_t beta = 0.0f;
+    float_t alpha = 1.0f;
+    float_t beta  = 0.0f;
 
-
-  float_t* onevec = nullptr;
+    float_t* onevec = nullptr;
 #endif
   };
 }  // namespace simpleCNN

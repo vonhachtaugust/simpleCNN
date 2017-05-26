@@ -162,24 +162,21 @@ namespace simpleCNN {
 
     con.back_propagation(input, output, in_grad, out_grad);
 
-    //print(prev_grad, "Prev delta");
-    //print(dW, "dW");
-    //print(db, "db");
+    // print(prev_grad, "Prev delta");
+    // print(dW, "dW");
+    // print(db, "db");
 
-
-  // print(*in_grad[0], "Previous gradients");
+    // print(*in_grad[0], "Previous gradients");
     // print(*in_grad[1], "dW");
     // print(*in_grad[2], "db");
 
     // print(dW, "dW");
     // print(db, "dB");
 
-
-//      1    2
-//     -2   -1
-//     -1   -2
-//      2	   1
-
+    //      1    2
+    //     -2   -1
+    //     -1   -2
+    //      2	   1
 
     vec_t cdw = {1, 2, -2, -1, -1, -2, 2, 1};
     auto iter = dW.host_begin();

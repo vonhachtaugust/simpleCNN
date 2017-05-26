@@ -45,15 +45,19 @@ namespace simpleCNN {
         checkCudaErrors(cudaMalloc(&workspace, workspace_size));
       }
 
-      checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
-      checkCudaErrors(cudaMalloc((void**)&weight_gpu, sizeof(float_t) * params.out_channels * params.in_channels * params.filter_height * params.filter_width));
-      checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * params.batch_size * params.out_channels * params.output_height * params.output_width));
+      checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * params.batch_size * params.in_channels *
+                                                       params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&weight_gpu, sizeof(float_t) * params.out_channels * params.in_channels *
+                                                        params.filter_height * params.filter_width));
+      checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * params.batch_size * params.out_channels *
+                                                        params.output_height * params.output_width));
 
       /** Bias */
       if (params.has_bias) {
         checkCudaErrors(cudaMalloc((void**)&bias_gpu, sizeof(float_t) * params.out_channels));
         checkCUDNN(cudnnCreateTensorDescriptor(&biasDesc));
-        checkCUDNN(cudnnSetTensor4dDescriptor(biasDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, params.out_channels, 1, 1));
+        checkCUDNN(
+          cudnnSetTensor4dDescriptor(biasDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, params.out_channels, 1, 1));
       }
 #endif
     }
@@ -116,14 +120,13 @@ namespace simpleCNN {
 
    private:
 #ifdef USE_CUDNN
-    float_t* input_gpu = nullptr;
+    float_t* input_gpu  = nullptr;
     float_t* output_gpu = nullptr;
     float_t* weight_gpu = nullptr;
-    float_t* bias_gpu = nullptr;
+    float_t* bias_gpu   = nullptr;
 
     float_t alpha = 1.0f;
-    float_t beta = 0.0f;
-
+    float_t beta  = 0.0f;
 
     cudnnTensorDescriptor_t srcTensorDesc;
     cudnnTensorDescriptor_t dstTensorDesc;
@@ -184,7 +187,8 @@ namespace simpleCNN {
       /** Convolution specification */
       checkCUDNN(cudnnCreateConvolutionDescriptor(&convDesc));
       checkCUDNN(cudnnSetConvolution2dDescriptor_v5(convDesc, params.padding, params.padding, params.vertical_stride,
-                                                 params.horizontal_stride, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+                                                    params.horizontal_stride, 1, 1, CUDNN_CROSS_CORRELATION,
+                                                    CUDNN_DATA_FLOAT));
 
       /** Backward data specification */
       checkCUDNN(cudnnGetConvolutionBackwardDataAlgorithm(cudnn_handle(), weightDesc, ddstTensorDesc, convDesc,
@@ -203,11 +207,16 @@ namespace simpleCNN {
         checkCudaErrors(cudaMalloc(&workspace, workspace_size));
       }
 
-      checkCudaErrors(cudaMalloc((void**)&prev_in_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
-      checkCudaErrors(cudaMalloc((void**)&weight_gpu, sizeof(float_t) * params.out_channels * params.in_channels * params.filter_height * params.filter_width));
-      checkCudaErrors(cudaMalloc((void**)&dW_gpu, sizeof(float_t) * params.out_channels * params.in_channels * params.filter_height * params.filter_width));
-      checkCudaErrors(cudaMalloc((void**)&curr_delta_gpu, sizeof(float_t) * params.batch_size * params.out_channels * params.output_height * params.output_width));
-      checkCudaErrors(cudaMalloc((void**)&prev_delta_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&prev_in_gpu, sizeof(float_t) * params.batch_size * params.in_channels *
+                                                         params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&weight_gpu, sizeof(float_t) * params.out_channels * params.in_channels *
+                                                        params.filter_height * params.filter_width));
+      checkCudaErrors(cudaMalloc((void**)&dW_gpu, sizeof(float_t) * params.out_channels * params.in_channels *
+                                                    params.filter_height * params.filter_width));
+      checkCudaErrors(cudaMalloc((void**)&curr_delta_gpu, sizeof(float_t) * params.batch_size * params.out_channels *
+                                                            params.output_height * params.output_width));
+      checkCudaErrors(cudaMalloc((void**)&prev_delta_gpu, sizeof(float_t) * params.batch_size * params.in_channels *
+                                                            params.input_height * params.input_width));
 
       if (params.has_bias) {
         checkCudaErrors(cudaMalloc((void**)&db_gpu, sizeof(float_t) * params.out_channels));
@@ -258,19 +267,18 @@ namespace simpleCNN {
       tensor_t& prev_delta    = context.input_grad(0);
       tensor_t& curr_delta    = context.output_grad(0);
 
-      /** Psuh to device memory */
+      /** Push to device memory */
       cuda_push_array(prev_in_gpu, &(*prev_in.host_begin()), prev_in.size());
       cuda_push_array(weight_gpu, &(*weight.host_begin()), weight.size());
       cuda_push_array(curr_delta_gpu, &(*curr_delta.host_begin()), curr_delta.size());
-
 
       /** Backward propagate */
       checkCUDNN(cudnnConvolutionBackwardFilter(cudnn_handle(), &alpha, srcTensorDesc, prev_in_gpu, ddstTensorDesc,
                                                 curr_delta_gpu, convDesc, bf_algo, workspace, workspace_size, &beta,
                                                 dweightDesc, dW_gpu));
 
-      //float_t scale = float_t(1) / static_cast<float_t>(params.batch_size);
-      //checkCudaErrors(cublasSscal(cublas_handle(), dW.size(), &scale, dW_gpu, 1));
+      // float_t scale = float_t(1) / static_cast<float_t>(params.batch_size);
+      // checkCudaErrors(cublasSscal(cublas_handle(), dW.size(), &scale, dW_gpu, 1));
 
       checkCUDNN(cudnnConvolutionBackwardData(cudnn_handle(), &alpha, weightDesc, weight_gpu, ddstTensorDesc,
                                               curr_delta_gpu, convDesc, bd_algo, workspace, workspace_size, &beta,
@@ -278,8 +286,9 @@ namespace simpleCNN {
 
       /** Backprop bias */
       if (params.has_bias) {
-        checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle(), &alpha, ddstTensorDesc, curr_delta_gpu, &beta, dbiasDesc, db_gpu));
-        //checkCudaErrors(cublasSscal(cublas_handle(), db.size(), &scale, db_gpu, 1));
+        checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle(), &alpha, ddstTensorDesc, curr_delta_gpu, &beta,
+                                                dbiasDesc, db_gpu));
+        // checkCudaErrors(cublasSscal(cublas_handle(), db.size(), &scale, db_gpu, 1));
 
         checkCudaErrors(cudaDeviceSynchronize());
         cuda_pull_array(db_gpu, &(*db.host_begin()), db.size());
@@ -304,10 +313,9 @@ namespace simpleCNN {
     float_t* curr_delta_gpu = nullptr;
 
     float_t alpha = 1.0f;
-    float_t beta = 0.0f;
+    float_t beta  = 0.0f;
 
-
-  cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
+    cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
     cudnnTensorDescriptor_t dsrcTensorDesc, ddstTensorDesc, dbiasDesc;
     cudnnFilterDescriptor_t weightDesc, dweightDesc;
     cudnnConvolutionDescriptor_t convDesc;

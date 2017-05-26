@@ -93,13 +93,12 @@ namespace simpleCNN {
 
     // w, h, in_c, batch
 
-
     net << conv(in_w, in_h, in_ch, bs, fs, out_ch) << maxpool(6, 6, out_ch, bs) << fully(3 * 3 * out_ch, out_ch, bs)
         << softmax();
 
     auto error = net.gradient_check_bias(input, labels);
     for (auto e : error) {
-    //  print(e, "Error");
+      //  print(e, "Error");
       ASSERT_NEAR(e, 1E-2, 1E-2);
     }
   }

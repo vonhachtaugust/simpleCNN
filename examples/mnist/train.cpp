@@ -133,12 +133,14 @@ static bool train_mnist(const size_t batch_size, const size_t epoch) {
   float_t dropout_rate = 0.75;
 
   /* GPU - 21.56s */
-  net << conv(28, 28, 1, minibatch_size, 5, 32, 1, 2, true, core::backend_t::gpu) << relu(core::activation_t::relu, core::backend_t::gpu)
+  net << conv(28, 28, 1, minibatch_size, 5, 32, 1, 2, true, core::backend_t::gpu)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
       << maxpool(28, 28, 32, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
-      << conv(14, 14, 32, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu) << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(14, 14, 32, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
       << maxpool(14, 14, 64, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
-      << fully(7 * 7 * 64, 1024, minibatch_size, true, core::backend_t::gpu) << relu(core::activation_t::relu, core::backend_t::gpu)
-      << dropout(dropout_rate)
+      << fully(7 * 7 * 64, 1024, minibatch_size, true, core::backend_t::gpu)
+      << relu(core::activation_t::relu, core::backend_t::gpu) << dropout(dropout_rate)
       << fully(1024, 10, minibatch_size, true, core::backend_t::gpu) << softmax();
 
   /* CPU - 902.74s
@@ -150,7 +152,6 @@ static bool train_mnist(const size_t batch_size, const size_t epoch) {
    << dropout(dropout_rate)
    << fully(1024, 10, minibatch_size, true) << softmax();
    */
-
 
   adam a;
   /** Train and save results */

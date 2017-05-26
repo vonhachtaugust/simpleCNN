@@ -10,16 +10,16 @@
 namespace simpleCNN {
   namespace core {
 
-  class Dropout_params : public Params {
-   public:
-    shape4d shape;
-    size_t in_size;
-    net_phase phase;
-    float_t prob;
-    tensor_t mask;
+    class Dropout_params : public Params {
+     public:
+      shape4d shape;
+      size_t in_size;
+      net_phase phase;
+      float_t prob;
+      tensor_t mask;
 
-    const Dropout_params &dropout_params() const { return *this; }
-  };
+      const Dropout_params &dropout_params() const { return *this; }
+    };
 
-  } // namespace core
-} // namespace simpleCNNM
+  }  // namespace core
+}  // namespace simpleCNNM

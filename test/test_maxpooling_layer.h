@@ -40,8 +40,8 @@ namespace simpleCNN {
     maxpool.forward_propagation(input, output);
     // simple_info("Out data: ");
     // std::cout << out << std::endl;
-    //print(img, "Image");
-    //print(out, "Output");
+    // print(img, "Image");
+    // print(out, "Output");
 
     auto outIter        = out.host_begin();
     vec_t correctOutput = {6, 8, 3, 4, 6, 8, 3, 4, 6, 8, 3, 4, 6, 8, 3, 4};
@@ -88,7 +88,7 @@ namespace simpleCNN {
     maxpool.back_propagation(input, output, input_grad, output_grad);
     // simple_info("Prev delta:");
     // std::cout << prev_delta << std::endl;
-    
+
     ASSERT_EQ(prev_delta.host_at(0, 0, 1, 0), curr_delta_data[0]);
     ASSERT_EQ(prev_delta.host_at(0, 0, 1, 2), curr_delta_data[1]);
     ASSERT_EQ(prev_delta.host_at(0, 0, 2, 1), curr_delta_data[2]);

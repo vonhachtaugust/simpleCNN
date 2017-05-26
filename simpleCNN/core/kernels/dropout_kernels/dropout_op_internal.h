@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "../../../util/util.h"
 #include "../../../util/random.h"
+#include "../../../util/util.h"
 #include "../../params/dropout_params.h"
 
 namespace simpleCNN {

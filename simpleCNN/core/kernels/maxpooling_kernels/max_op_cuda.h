@@ -27,8 +27,10 @@ namespace simpleCNN {
       checkCUDNN(cudnnSetPooling2dDescriptor(poolDesc, CUDNN_POOLING_MAX, CUDNN_PROPAGATE_NAN, params.pooling_size_y,
                                              params.pooling_size_x, 0, 0, params.stride_y, params.stride_x));
 
-      checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
-      checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * params.batch_size * params.out_channels * params.output_height * params.output_width));
+      checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * params.batch_size * params.in_channels *
+                                                       params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * params.batch_size * params.out_channels *
+                                                        params.output_height * params.output_width));
 #endif
     }
 
@@ -68,14 +70,13 @@ namespace simpleCNN {
 
    private:
 #ifdef USE_CUDNN
-    float_t* input_gpu = nullptr;
+    float_t* input_gpu  = nullptr;
     float_t* output_gpu = nullptr;
 
     float_t alpha = 1.0f;
-    float_t beta = 0.0f;
+    float_t beta  = 0.0f;
 
-
-  cudnnTensorDescriptor_t srcTensorDesc;
+    cudnnTensorDescriptor_t srcTensorDesc;
     cudnnTensorDescriptor_t dstTensorDesc;
     cudnnPoolingDescriptor_t poolDesc;
 #endif
@@ -107,10 +108,14 @@ namespace simpleCNN {
       checkCUDNN(cudnnSetPooling2dDescriptor(poolDesc, CUDNN_POOLING_MAX, CUDNN_PROPAGATE_NAN, params.pooling_size_y,
                                              params.pooling_size_x, 0, 0, params.stride_y, params.stride_x));
 
-      checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
-      checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * params.batch_size * params.out_channels * params.output_height * params.output_width));
-      checkCudaErrors(cudaMalloc((void**)&prev_delta_gpu, sizeof(float_t) * params.batch_size * params.in_channels * params.input_height * params.input_width));
-      checkCudaErrors(cudaMalloc((void**)&curr_delta_gpu, sizeof(float_t) * params.batch_size * params.out_channels * params.output_height * params.output_width));
+      checkCudaErrors(cudaMalloc((void**)&input_gpu, sizeof(float_t) * params.batch_size * params.in_channels *
+                                                       params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&output_gpu, sizeof(float_t) * params.batch_size * params.out_channels *
+                                                        params.output_height * params.output_width));
+      checkCudaErrors(cudaMalloc((void**)&prev_delta_gpu, sizeof(float_t) * params.batch_size * params.in_channels *
+                                                            params.input_height * params.input_width));
+      checkCudaErrors(cudaMalloc((void**)&curr_delta_gpu, sizeof(float_t) * params.batch_size * params.out_channels *
+                                                            params.output_height * params.output_width));
 #endif
     }
 
@@ -146,8 +151,7 @@ namespace simpleCNN {
 
       /** Backward propagate */
       checkCUDNN(cudnnPoolingBackward(cudnn_handle(), poolDesc, &alpha, dstTensorDesc, output_gpu, ddstTensorDesc,
-                                      curr_delta_gpu, srcTensorDesc, input_gpu, &beta, dsrcTensorDesc,
-                                      prev_delta_gpu));
+                                      curr_delta_gpu, srcTensorDesc, input_gpu, &beta, dsrcTensorDesc, prev_delta_gpu));
 
       /** Pull from device memory*/
       checkCudaErrors(cudaDeviceSynchronize());
@@ -159,16 +163,15 @@ namespace simpleCNN {
 
    private:
 #ifdef USE_CUDNN
-    float_t* input_gpu = nullptr;
-    float_t* output_gpu = nullptr;
+    float_t* input_gpu      = nullptr;
+    float_t* output_gpu     = nullptr;
     float_t* curr_delta_gpu = nullptr;
     float_t* prev_delta_gpu = nullptr;
 
     float_t alpha = 1.0f;
-    float_t beta = 0.0f;
+    float_t beta  = 0.0f;
 
-
-  cudnnTensorDescriptor_t srcTensorDesc;
+    cudnnTensorDescriptor_t srcTensorDesc;
     cudnnTensorDescriptor_t dstTensorDesc;
     cudnnTensorDescriptor_t dsrcTensorDesc;
     cudnnTensorDescriptor_t ddstTensorDesc;

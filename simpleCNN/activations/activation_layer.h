@@ -41,9 +41,7 @@ namespace simpleCNN {
 
     shape_t out_shape() const override { return {params_.shape}; }
 
-    void set_in_shape(const shape4d& shape) override {
-      params_.shape = shape;
-    }
+    void set_in_shape(const shape4d& shape) override { params_.shape = shape; }
 
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {
       auto ctx = core::OpKernelContext(in_data, out_data);
@@ -55,7 +53,7 @@ namespace simpleCNN {
         init_backend(Layer::engine());
         kernel_fwd_->compute(ctx);
       } else {
-          throw simple_error("No backend initialized");
+        throw simple_error("No backend initialized");
       };
     }
 
@@ -87,9 +85,7 @@ namespace simpleCNN {
         case core::activation_t::tanh: {
           return "tanh";
         }
-        default: {
-          throw simple_error("No known activation function in use");
-        }
+        default: { throw simple_error("No known activation function in use"); }
       }
     }
 
@@ -109,7 +105,6 @@ namespace simpleCNN {
         kernel_fwd_.reset(new simpleCNN::ActivationCudaForwardOp(ctx));
         kernel_bwd_.reset(new simpleCNN::ActivationCudaBackwardOp(ctx));
       } else {
-
       }
 
       backend_initialized = true;
