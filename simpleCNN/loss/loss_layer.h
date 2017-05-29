@@ -30,10 +30,7 @@ namespace simpleCNN {
 
     virtual void set_shape(const shape4d& shape) { shape_ = shape; }
 
-    void set_targets(const tensor_t& labels) override {
-      //*Layer::out_component_data(component_t::TARGET) = labels;
-      Layer::set_out_data(labels, 1);
-    }
+    void set_targets(const tensor_t& labels) override { Layer::set_out_data(labels, 1); }
 
     /**
      * Applies the loss function onto the input data. (aka. output data of the network)
@@ -74,7 +71,7 @@ namespace simpleCNN {
       float_t acc = float_t(0);
       for (size_t b = 0; b < batch_size; ++b) {
         size_t max_index    = -1;
-        float_t max         = float_t(-1);  // sometimes max is zero...
+        float_t max         = float_t(-1);
         size_t target_index = *(target.host_begin() + b);
 
         for (size_t j = 0; j < batch_length; ++j) {
@@ -88,15 +85,13 @@ namespace simpleCNN {
         }
 
         if (max_index == -1) {
-          continue;
-          // throw simple_error("Error: No max index was found");
+          throw simple_error("Error: No max index was found");
         }
 
         if (max_index == target_index) {
           acc += float_t(1);
         }
       }
-      // print(acc, "Accuracy");
       return acc / static_cast<float_t>(batch_size);
     }
 

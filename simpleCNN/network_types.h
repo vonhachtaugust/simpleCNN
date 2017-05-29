@@ -177,7 +177,10 @@ namespace simpleCNN {
         l->get_weights(weights);
       }
 
-      training_loss.push_back(nodes_.back()->error(weights));
+      auto val = nodes_.back()->error(weights);
+      std::cout << "Training Loss: " << val << std::endl;
+
+      training_loss.push_back(val);
       training_accuracy.push_back(nodes_.back()->accuracy());
     }
 
@@ -193,7 +196,10 @@ namespace simpleCNN {
         l->get_weights(weights);
       }
 
-      validation_loss.push_back(nodes_.back()->error(weights));
+      auto val = nodes_.back()->error(weights);
+      std::cout << "Valid Loss: " << val << std::endl;
+
+      validation_loss.push_back(val);
       validation_accuracy.push_back(nodes_.back()->accuracy());
     }
 

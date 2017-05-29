@@ -70,5 +70,6 @@
 #include "util/util.h"
 #include "util/weight_init.h"
 
+#include "io/parse_cifar10.h"
 #include "io/parse_mnist.h"
 #include "io/serialize.h"
