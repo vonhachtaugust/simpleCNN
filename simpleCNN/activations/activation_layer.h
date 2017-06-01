@@ -24,7 +24,7 @@ namespace simpleCNN {
       : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
       activation_set_params({0, 0, 0, 0}, h);
       Layer::set_backend_type(backend_type);
-      Layer::set_trainable(false);
+      Layer::set_trainable(false, false);
     }
 
     Activation_layer(shape4d shape,
@@ -34,7 +34,7 @@ namespace simpleCNN {
       activation_set_params(shape, h);
       init_backend(backend_type);
       Layer::set_backend_type(backend_type);
-      Layer::set_trainable(false);
+      Layer::set_trainable(false, false);
     }
 
     shape_t in_shape() const override { return {params_.shape}; }

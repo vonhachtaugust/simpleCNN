@@ -46,7 +46,9 @@ namespace simpleCNN {
                         size_t stride,
                         size_t padding,
                         bool has_bias,
-                        core::backend_t backend_t)
+                        core::backend_t backend_t,
+                        bool save_weights = false
+    )
       : Convolutional_layer(input_width,
                             input_height,
                             in_channels,
@@ -58,7 +60,9 @@ namespace simpleCNN {
                             stride,
                             padding,
                             has_bias,
-                            backend_t) {}
+                            backend_t,
+                            save_weights
+    ) {}
     /**
     * Constructing a convolutional layer.
     *
@@ -88,13 +92,14 @@ namespace simpleCNN {
                         size_t vertical_stride,
                         size_t padding,
                         bool has_bias,
-                        core::backend_t backend_type = core::default_engine())
+                        core::backend_t backend_type = core::default_engine(),
+                        bool save_weights = true)
       : Layer(std_input_order(has_bias), {tensor_t(component_t::OUT_DATA)}) {
       conv_set_params(input_width, input_height, in_channels, batch_size, filter_width, filter_height, out_channels,
                       horizontal_stride, vertical_stride, padding, has_bias);
       init_backend(backend_type);
       Layer::set_backend_type(backend_type);
-      Layer::set_trainable(true);
+      Layer::set_trainable(true, save_weights);
     }
 
     size_t fan_in_size() const override { return params_.filter_width * params_.filter_height * params_.in_channels; }

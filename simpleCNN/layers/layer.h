@@ -72,7 +72,12 @@ namespace simpleCNN {
 
     Device *device() const { return device_ptr_.get(); }
 
-    void set_trainable(bool trainable) { trainable_ = trainable; }
+    void set_trainable(bool trainable,
+                       bool save_weigths
+    ) {
+      trainable_ = trainable;
+      save_weights_ = save_weigths;
+    }
 
     bool trainable() const { return trainable_; }
 
@@ -139,7 +144,7 @@ namespace simpleCNN {
 
     template <typename OutputArchive>
     void save(OutputArchive &os, const int precision = std::numeric_limits<float_t>::digits10 + 2) {
-      if (!trainable()) {
+      if (!trainable() || !save_weights_) {
         return;
       }
       os << std::setprecision(precision);
@@ -610,6 +615,7 @@ namespace simpleCNN {
      * Flag indicating whether the layer/node parameters are trainable
      */
     bool trainable_;
+    bool save_weights_;
 
     /**
      * Pointer to the function for weights initialization

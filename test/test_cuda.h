@@ -162,7 +162,7 @@ namespace simpleCNN {
 
     using conv = Convolutional_layer;
 
-    conv c(w, h, ch, bs, fs, o_ch, stride, padding, true, core::backend_t::gpu);
+    conv c(w, h, ch, bs, fs, o_ch, stride, padding, true, core::backend_t::gpu, false);
 
     tensor_t in_cpu({bs, ch, h, w});
     vec_t in_data = {0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 2, 1, 0, 1, 1, 1, 1, 2, 2, 1, 0, 2, 0, 1,
@@ -207,7 +207,7 @@ namespace simpleCNN {
     size_t padding = 2;
 
     using conv = Convolutional_layer;
-    conv c(w, h, ich, bs, fs, och, stride, padding, true, core::backend_t::gpu);
+    conv c(w, h, ich, bs, fs, och, stride, padding, true, core::backend_t::gpu, false);
 
     tensor_t in({bs, ich, h, w});
     tensor_t out({bs, och, h, w});
@@ -675,11 +675,11 @@ namespace simpleCNN {
     uniform_rand(input.host_begin(), input.host_end(), -1, 1);
     tensor_t label({bs, 1, 1, 1});
 
-    print("GPU");
-    net.gradient_manual_check(input, label, has_bias);
+    //print("GPU");
+    //net.gradient_manual_check(input, label, has_bias);
 
-    print("CPU");
-    net2.gradient_manual_check(input, label, has_bias);
+    //print("CPU");
+    //net2.gradient_manual_check(input, label, has_bias);
   }
 
 #endif

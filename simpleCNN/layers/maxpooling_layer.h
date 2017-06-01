@@ -55,7 +55,7 @@ namespace simpleCNN {
                             stride_y, backend_type);
       init_backend(backend_type);
       Layer::set_backend_type(backend_type);
-      Layer::set_trainable(false);
+      Layer::set_trainable(false, false);
     }
 
     void forward_propagation(const data_ptrs_t& in_data, data_ptrs_t& out_data) override {

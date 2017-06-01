@@ -64,7 +64,7 @@ static bool train_cifar(const size_t batch_size, const size_t epoch) {
 
   for (size_t i = 1; i <= 5; ++i) {
     parse_cifar10(path_to_data + "data_batch_" + std::to_string(i) + ".bin", &images, &labels, min, max, 0, 0,
-                  (i - 1) * cifar_image_ch * cifar_image_row * cifar_image_col, (i - 1) * cifar_batch_size, subset);
+                  (i - 1) * cifar_batch_size * cifar_image_ch * cifar_image_row * cifar_image_col, (i - 1) * cifar_batch_size, subset);
   }
 
   /** Pre-processing */
@@ -86,15 +86,40 @@ static bool train_cifar(const size_t batch_size, const size_t epoch) {
 
   split_training_validation(images, train_images, validation_images, training_validation_split_ratio);
   split_training_validation(labels, train_labels, validation_labels, training_validation_split_ratio);
+
+  /*
+  std::vector<size_t> tl = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  for (size_t i = 0; i < train_labels.size(); ++i) {
+    tl[train_labels.host_at_index(i)]++;
+  }
+
+  std::cout << "Training" << std::endl;
+  for (auto iter = tl.begin(); iter != tl.end(); ++iter) {
+    float_t val = *iter;
+    print(val / sum(tl));
+  }
+
+  std::vector<size_t> vl = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  for (size_t i = 0; i < train_labels.size(); ++i) {
+    vl[train_labels.host_at_index(i)]++;
+  }
+
+  std::cout << "Validation" << std::endl;
+  for (auto iter = vl.begin(); iter != vl.end(); ++iter) {
+    float_t val = *iter;
+    print(val / sum(vl));
+  }
+  */
+
   /** Display ----------------------------------------------------- */
 
   // Remember to remove zero mean unit variance
-
+  
   /*
   namedWindow("Display window", WINDOW_AUTOSIZE);
-  Mat image(in_height, in_width, CV_8UC3);
+  Mat image(in_height, in_width, CV_8UC3); // blue, green, red
 
-  for (size_t sample = 0; sample < training_set_size; ++sample) {
+  for (size_t sample = 32942; sample < training_set_size; ++sample) {
     for (size_t ch = 0; ch < in_ch; ++ch) {
       for (size_t i = 0; i < in_height; ++i) {
         for (size_t j = 0; j < in_width; ++j) {
@@ -125,6 +150,7 @@ static bool train_cifar(const size_t batch_size, const size_t epoch) {
   }
   */
 
+
   /** -------------------------------------------------------------- */
 
   /** Call-back for clocking */
@@ -135,24 +161,24 @@ static bool train_cifar(const size_t batch_size, const size_t epoch) {
   auto on_enumerate_epoch = [&](size_t epoch) { std::cout << epoch + 1 << std::endl; };
   /** Define network architecture and optimizer */
   network net;
-  float_t dropout_rate = 0.75;
+  float_t dropout_rate = 0.5;
 
   /* GPU - 21.56s */
-  net << conv(32, 32, 3, minibatch_size, 5, 32, 1, 2, true, core::backend_t::gpu)
+  net << conv(32, 32, 3, minibatch_size, 5, 32, 1, 2, true, core::backend_t::gpu, true)
       << relu(core::activation_t::relu, core::backend_t::gpu)
       << maxpool(32, 32, 32, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
-      << conv(16, 16, 32, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu)
+      << conv(16, 16, 32, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu, true)
       << relu(core::activation_t::relu, core::backend_t::gpu)
       << maxpool(16, 16, 64, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
-      << fully(8 * 8 * 64, 1024, minibatch_size, true, core::backend_t::gpu)
+      << fully(8 * 8 * 64, 1024, minibatch_size, true, core::backend_t::gpu, true)
       << relu(core::activation_t::relu, core::backend_t::gpu) << dropout(dropout_rate)
-      << fully(1024, 10, minibatch_size, true, core::backend_t::gpu) << softmax();
+      << fully(1024, 10, minibatch_size, true, core::backend_t::gpu, true) << softmax();
 
   adam a;
   /** Train and save results */
   net.train<adam>(a, train_images, train_labels, validation_images, validation_labels, minibatch_size, epochs,
                   on_enumerate_minibatch, on_enumerate_epoch, true);
-  // net.save_results(mean_and_std);
+  net.save_results(mean_and_std);
 
   return true;
 }

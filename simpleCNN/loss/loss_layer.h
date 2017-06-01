@@ -13,13 +13,13 @@ namespace simpleCNN {
    public:
     Loss_layer()
       : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA), tensor_t(component_t::TARGET)}) {
-      Layer::set_trainable(false);
+      Layer::set_trainable(false, false);
     }
 
     Loss_layer(shape4d shape)
       : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA), tensor_t(component_t::TARGET)}) {
       shape_ = shape;
-      Layer::set_trainable(false);
+      Layer::set_trainable(false, false);
     }
 
     shape_t in_shape() const override { return {shape_}; }

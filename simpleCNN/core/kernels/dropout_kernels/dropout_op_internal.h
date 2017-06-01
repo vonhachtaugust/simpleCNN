@@ -21,7 +21,7 @@ namespace simpleCNN {
       } else {
         for (size_t i = 0; i < n; ++i) {
           // Approximate the output by expected input value.
-          out_data.host_at_index(i) = in_data.host_at_index(i) * (float_t(1) - params.prob);
+          out_data.host_at_index(i) = in_data.host_at_index(i) * params.prob;
         }
       }
     }

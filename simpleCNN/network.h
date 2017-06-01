@@ -82,15 +82,15 @@ namespace simpleCNN {
       net_.setup(true);
 
       auto output = net_.forward_loss(input, labels);
-      print(output, "Output");
+      //print(output, "Output");
       net_.backward(labels);
 
       auto dW = net_.get_dW();
-      printvt_ptr(dW, "dW");
+      //printvt_ptr(dW, "dW");
 
       if (has_bias) {
         auto dB = net_.get_dB();
-        printvt_ptr(dB, "dB");
+        //printvt_ptr(dB, "dB");
       }
     }
 
@@ -292,31 +292,23 @@ namespace simpleCNN {
       std::vector<float_t> accuracy;
 
       for (size_t i = 0; i < epoch && !stop_training_; ++i) {
-        size_t index = 0;
-
         for (size_t j = 0; j < training_images.shape()[0] && !stop_training_; j += batch_size) {
+          size_t index = uniform_random(float_t(0), float_t(validation_images.shape()[0] - batch_size));
+          auto minivi = validation_images.subView(
+              {index}, {batch_size, validation_images.dimension(dim_t::depth), validation_images.dimension(dim_t::height),
+                        validation_images.dimension(dim_t::width)});
+          auto minivl = validation_labels.subView({index}, {batch_size, 1, 1, 1});
+          valid_once(minivi, minivl, store_result);
+
           auto minibatch = training_images.subView(
-            {j}, {batch_size, training_images.dimension(dim_t::depth), training_images.dimension(dim_t::height),
-                  training_images.dimension(dim_t::width)});
+              {j}, {batch_size, training_images.dimension(dim_t::depth), training_images.dimension(dim_t::height),
+                    training_images.dimension(dim_t::width)});
           auto minilabels = train_labels.subView({j}, {batch_size, 1, 1, 1});
           train_once(opt, minibatch, minilabels, store_result, batch_size);
-
-          auto minivi = training_images.subView(
-            {index}, {batch_size, validation_images.dimension(dim_t::depth), validation_images.dimension(dim_t::height),
-                      validation_images.dimension(dim_t::width)});
-          auto minivl = train_labels.subView({index}, {batch_size, 1, 1, 1});
-          valid_once(minibatch, minilabels, store_result);
-
-          if (index >= validation_images.shape()[0] - batch_size) {
-            index = 0;
-          } else {
-            index += batch_size;
           }
-        }
         on_batch_enumerate(t);
         on_epoch_enumerate(i);
       }
-
       return true;
     }
 
@@ -329,7 +321,7 @@ namespace simpleCNN {
    private:
     void valid_once(const tensor_t& validation_batch, const tensor_t& validation_labels, const bool store_results) {
       set_netphase(net_phase::test);
-      net_.forward_pass(validation_batch);
+      net_.forward_pass(validation_batch, validation_labels);
       net_.record_validation_progress(validation_loss_, validation_accuracy_, store_results);
     }
 
@@ -347,8 +339,8 @@ namespace simpleCNN {
                     const bool store_results,
                     const size_t batch_size) {
       set_netphase(net_phase::train);
-      net_.forward_pass(minibatch);
-      net_.backward(labels);
+      net_.forward_pass(minibatch, labels);
+      net_.backward();
       net_.record_training_progress(training_loss_, training_accuracy_, store_results);
       net_.update(opt, batch_size);
     }

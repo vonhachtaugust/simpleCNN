@@ -17,6 +17,11 @@ namespace simpleCNN {
     return std::accumulate(std::begin(c), std::end(c), size_t(1), std::multiplies<size_t>());
   }
 
+  template<typename Container>
+  static inline size_t sum(Container& c) {
+    return std::accumulate(std::begin(c), std::end(c), size_t(0));
+  }
+
   template <typename C1, typename C2>
   static inline size_t compute_offset(const C1& start, const C2& shape) {
     size_t res = 0;

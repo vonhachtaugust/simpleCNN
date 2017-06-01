@@ -25,7 +25,7 @@ namespace simpleCNN {
      *
      * @param input
      */
-    virtual void forward_pass(const tensor_t& input) = 0;
+    virtual void forward_pass(const tensor_t& input, const tensor_t& labels) = 0;
 
     /**
      * If recording the loss is required, e.g. gradient check.
@@ -36,7 +36,8 @@ namespace simpleCNN {
      */
     virtual float_t forward_loss(const tensor_t& input, const tensor_t& labels) = 0;
 
-    virtual void backward(const tensor_t& labels) = 0;
+    //virtual void backward(const tensor_t& labels) = 0;
+    virtual void backward() = 0;
 
     /**
      * Method for storing the training loss, validation loss and accuracy.
@@ -157,8 +158,8 @@ namespace simpleCNN {
 
   class Sequential : public Network_type {
    public:
-    void backward(const tensor_t& labels) override {
-      nodes_.back()->set_targets(labels);
+    void backward() override {
+      //nodes_.back()->set_targets(labels);
 
       for (auto l = nodes_.rbegin(); l != nodes_.rend(); ++l) {
         (*l)->backward();
@@ -178,7 +179,7 @@ namespace simpleCNN {
       }
 
       auto val = nodes_.back()->error(weights);
-      std::cout << "Training Loss: " << val << std::endl;
+      //std::cout << "Training Loss: " << val << std::endl;
 
       training_loss.push_back(val);
       training_accuracy.push_back(nodes_.back()->accuracy());
@@ -197,7 +198,7 @@ namespace simpleCNN {
       }
 
       auto val = nodes_.back()->error(weights);
-      std::cout << "Valid Loss: " << val << std::endl;
+      //std::cout << "Valid Loss: " << val << std::endl;
 
       validation_loss.push_back(val);
       validation_accuracy.push_back(nodes_.back()->accuracy());
@@ -228,8 +229,9 @@ namespace simpleCNN {
       return nodes_.back()->error(weights);
     }
 
-    void forward_pass(const tensor_t& input) override {
+    void forward_pass(const tensor_t& input, const tensor_t& labels) override {
       nodes_.front()->set_in_data(input, component_t::IN_DATA);
+      nodes_.back()->set_targets(labels);
 
       for (auto l : nodes_) {
         l->forward();

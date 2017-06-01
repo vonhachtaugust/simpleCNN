@@ -19,7 +19,7 @@ namespace simpleCNN {
       : Layer({tensor_t(component_t::IN_DATA)}, {tensor_t(component_t::OUT_DATA)}) {
       dropout_set_params(prob, phase);
       Layer::set_backend_type(backend_type);
-      Layer::set_trainable(false);
+      Layer::set_trainable(false, false);
     }
 
     shape_t in_shape() const override { return {params_.shape}; }
