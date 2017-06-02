@@ -114,7 +114,7 @@ static bool train_cifar(const size_t batch_size, const size_t epoch) {
   /** Display ----------------------------------------------------- */
 
   // Remember to remove zero mean unit variance
-  
+
   /*
   namedWindow("Display window", WINDOW_AUTOSIZE);
   Mat image(in_height, in_width, CV_8UC3); // blue, green, red

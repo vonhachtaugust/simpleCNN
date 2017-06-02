@@ -47,9 +47,7 @@ namespace simpleCNN {
       static_assert(index < N, "Index out of range");
 
       if (!state[index][key]) {
-        std::vector<size_t> shape(key->shape().size());
-        std::copy(key->shape().begin(), key->shape().end(), shape.begin());
-        keys.push_back(std::make_shared<tensor_t>(shape));
+        keys.push_back(std::make_shared<tensor_t>(key->shape_v()));
         state[index][key] = keys.back().get();
       }
       return state[index][key];
@@ -72,8 +70,8 @@ namespace simpleCNN {
     void update(const tensor_t* dW, const tensor_t* dB, tensor_t* W, tensor_t* B, const size_t batch_size) {
       tensor_t* mt_w = get<0>(W);
       tensor_t* vt_w = get<1>(W);
-      tensor_t* mt_b = get<2>(W);
-      tensor_t* vt_b = get<3>(W);
+      tensor_t* mt_b = get<0>(B);
+      tensor_t* vt_b = get<1>(B);
 
       beta1_t *= beta1;
       beta2_t *= beta2;

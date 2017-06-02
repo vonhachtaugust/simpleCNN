@@ -17,7 +17,7 @@ namespace simpleCNN {
 
   struct Hyperparameters {
     constexpr static float_t regularization_constant = 1E-3;
-    constexpr static float_t learning_rate           = 1E-4;
+    constexpr static float_t learning_rate           = 2E-4;
   };
 
   template <typename T = float_t, typename Allocator = aligned_allocator<T, 64>>
