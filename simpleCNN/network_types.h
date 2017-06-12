@@ -185,6 +185,10 @@ namespace simpleCNN {
       training_accuracy.push_back(nodes_.back()->accuracy());
     }
 
+    float_t accuracy() {
+      return nodes_.back()->accuracy();
+    }
+
     void record_validation_progress(std::vector<float_t>& validation_loss,
                                     std::vector<float_t>& validation_accuracy,
                                     const bool store_results) const override {
@@ -198,10 +202,11 @@ namespace simpleCNN {
       }
 
       auto val = nodes_.back()->error(weights);
-      //std::cout << "Valid Loss: " << val << std::endl;
+      auto accuracy = nodes_.back()->accuracy();
+      //std::cout << "loss: " << val << " accuracy: " << accuracy << std::endl;
 
       validation_loss.push_back(val);
-      validation_accuracy.push_back(nodes_.back()->accuracy());
+      validation_accuracy.push_back(accuracy);
     }
 
     tensor_t forward(const tensor_t& input) override {

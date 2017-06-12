@@ -69,6 +69,52 @@ namespace simpleCNN {
     return means;
   }
 
+  void zero_mean(tensor_t& x, const float_t mean) {
+    size_t batch_size   = x.shape()[0];
+    size_t batch_length = x.size() / batch_size;
+
+    for (size_t b = 0; b < batch_size; ++b) {
+      for (size_t i = 0; i < batch_length; ++i) {
+        size_t index = b * batch_length + i;
+
+        x.host_at_index(index) -= mean;
+      }
+    }
+  }
+
+  std::vector<float_t> zero_mean(tensor_t& x) {
+    std::vector<float_t> result;
+    auto m = means(x);
+    float_t mean = std::accumulate(m.begin(), m.end(), float_t(0)) / static_cast<float_t>(m.size());
+
+    size_t batch_size   = x.shape()[0];
+    size_t batch_length = x.size() / batch_size;
+
+    for (size_t b = 0; b < batch_size; ++b) {
+      for (size_t i = 0; i < batch_length; ++i) {
+        size_t index = b * batch_length + i;
+
+        x.host_at_index(index) -= mean;
+      }
+    }
+    result.push_back(mean);
+    return result;
+  }
+
+  void zero_mean_unit_variance(tensor_t& x, const float_t& mean, const float_t& std) {
+    size_t batch_size   = x.shape()[0];
+    size_t batch_length = x.size() / batch_size;
+
+    for (size_t b = 0; b < batch_size; ++b) {
+      for (size_t i = 0; i < batch_length; ++i) {
+        size_t index = b * batch_length + i;
+
+        x.host_at_index(index) -= mean;
+        x.host_at_index(index) /= std;
+      }
+    }
+  }
+
   std::vector<float_t> zero_mean_unit_variance(tensor_t& x) {
     std::vector<float_t> result;
     auto m = means(x);

@@ -69,8 +69,6 @@ namespace simpleCNN {
       }
 
       float_t loss(const tensor_t &output, const tensor_t &target) const override {
-        // print(output, "output");
-        // print(target, "target");
         float_t loss_tot  = float_t(0);
         size_t batch_size = output.shape()[0];
         size_t n          = output.size() / batch_size;
