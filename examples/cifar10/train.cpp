@@ -4,11 +4,8 @@
 
 #include <iostream>
 #include "../../simpleCNN/simpleCNN.h"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui.hpp"
 
 using namespace simpleCNN;
-using namespace cv;
 
 using dropout = Dropout_layer;
 using conv    = Convolutional_layer;
@@ -19,63 +16,52 @@ using adam    = Adam<float_t>;
 using relu    = Activation_layer;
 using softmax = loss::Softmax;
 
-void display_filtermaps(const tensor_t& output, const size_t in_height, const size_t in_width) {
-  namedWindow("Display window", WINDOW_AUTOSIZE);
-  Mat image(in_height, in_width, CV_8UC1);
 
-  for (size_t batch = 0; batch < output.shape()[0]; ++batch) {
-    for (size_t filter = 0; filter < output.shape()[1]; ++filter) {
-      uchar* p = image.data;
-      for (size_t i = 0; i < in_height; ++i) {
-        for (size_t j = 0; j < in_width; ++j) {
-          auto val            = output.host_at(batch, filter, i, j);
-          p[i * in_width + j] = val;
-        }
-      }
-
-      imshow("Display window", image);
-      waitKey(0);
-    }
-  }
-}
-
-static bool train_cifar(const size_t batch_size, const size_t epoch) {
+static bool train_cifar(const size_t batch_size, const size_t epoch, const std::string data, const std::string result) {
   /** Cifar10 specific parameters  */
   size_t cifar_image_row  = 32;
   size_t cifar_image_col  = 32;
   size_t cifar_image_ch   = 3;
   size_t cifar_image_num  = 50000;
   size_t cifar_batch_size = 10000;
+  size_t cifar_test_num   = 10000;
   size_t in_width         = 32;
   size_t in_height        = 32;
   size_t in_ch            = 3;
   size_t subset           = 1;
 
-  /** Path to the mnist data files */
-  std::string path_to_data("/c3se/NOBACKUP/users/hacht/data/cifar-10-batches-bin/");
+  /** Path to the cifar data files */
+  //std::string path_to_data("/c3se/NOBACKUP/users/hacht/data/cifar-10-batches-bin/");
 
-  /** Parse mnist */
+  /** Parse cifar */
   tensor_t labels({cifar_image_num / subset, 1, 1, 1});
   tensor_t images({cifar_image_num / subset, in_ch, in_height, in_width});
+  tensor_t test_images({cifar_test_num, in_ch, in_height, in_width});
+  tensor_t test_labels({cifar_test_num, 1, 1, 1});
+
 
   float_t min = -1.0f;  // 0
   float_t max = 1.0f;   // 255
   images.fill(min);
 
   for (size_t i = 1; i <= 5; ++i) {
-    parse_cifar10(path_to_data + "data_batch_" + std::to_string(i) + ".bin", &images, &labels, min, max, 0, 0,
+    parse_cifar10(data + "/data_batch_" + std::to_string(i) + ".bin", &images, &labels, min, max, 0, 0,
                   (i - 1) * cifar_batch_size * cifar_image_ch * cifar_image_row * cifar_image_col, (i - 1) * cifar_batch_size, subset);
   }
 
+  parse_cifar10(data + "/test_batch.bin", &test_images, &test_labels, min, max, 0, 0);
+
   /** Pre-processing */
-  std::vector<float_t> mean_and_std = zero_mean_unit_variance(images);
+  std::vector<float_t> mean = zero_mean(images);
   size_t minibatch_size             = batch_size;
   size_t epochs                     = epoch;
-  mean_and_std.push_back(float_t(batch_size));
-  mean_and_std.push_back(float_t(epoch));
+  mean.push_back(float_t(batch_size));
+  mean.push_back(float_t(epoch));
+
+  zero_mean(test_images, mean[0]);
 
   /** Split data into a training and validation set */
-  float_t training_validation_split_ratio = 0.75;
+  float_t training_validation_split_ratio = 0.9;
   size_t training_set_size                = (cifar_image_num / subset) * training_validation_split_ratio;
   size_t validation_set_size = std::floor((cifar_image_num / subset) * (1 - training_validation_split_ratio) + 0.5);
 
@@ -87,70 +73,6 @@ static bool train_cifar(const size_t batch_size, const size_t epoch) {
   split_training_validation(images, train_images, validation_images, training_validation_split_ratio);
   split_training_validation(labels, train_labels, validation_labels, training_validation_split_ratio);
 
-  /*
-  std::vector<size_t> tl = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  for (size_t i = 0; i < train_labels.size(); ++i) {
-    tl[train_labels.host_at_index(i)]++;
-  }
-
-  std::cout << "Training" << std::endl;
-  for (auto iter = tl.begin(); iter != tl.end(); ++iter) {
-    float_t val = *iter;
-    print(val / sum(tl));
-  }
-
-  std::vector<size_t> vl = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  for (size_t i = 0; i < train_labels.size(); ++i) {
-    vl[train_labels.host_at_index(i)]++;
-  }
-
-  std::cout << "Validation" << std::endl;
-  for (auto iter = vl.begin(); iter != vl.end(); ++iter) {
-    float_t val = *iter;
-    print(val / sum(vl));
-  }
-  */
-
-  /** Display ----------------------------------------------------- */
-
-  // Remember to remove zero mean unit variance
-
-  /*
-  namedWindow("Display window", WINDOW_AUTOSIZE);
-  Mat image(in_height, in_width, CV_8UC3); // blue, green, red
-
-  for (size_t sample = 32942; sample < training_set_size; ++sample) {
-    for (size_t ch = 0; ch < in_ch; ++ch) {
-      for (size_t i = 0; i < in_height; ++i) {
-        for (size_t j = 0; j < in_width; ++j) {
-          auto val = train_images.host_at(sample, ch, i, j);
-          image.at<cv::Vec3b>(i,j)[in_ch - ch - 1] = val;
-        }
-      }
-    }
-
-    print(train_labels.host_at_index(sample), "train: " + std::to_string(sample));
-    imshow("Display window", image);
-    waitKey(0);
-  }
-
-  for (size_t sample = 0; sample < training_set_size; ++sample) {
-    for (size_t ch = 0; ch < in_ch; ++ch) {
-      for (size_t i = 0; i < in_height; ++i) {
-        for (size_t j = 0; j < in_width; ++j) {
-          auto val = validation_images.host_at(sample, ch, i, j);
-          image.at<cv::Vec3b>(i,j)[in_ch - ch - 1] = val;
-        }
-      }
-    }
-
-    print(validation_labels.host_at_index(sample), "train: " + std::to_string(sample));
-    imshow("Display window", image);
-    waitKey(0);
-  }
-  */
-
-
   /** -------------------------------------------------------------- */
 
   /** Call-back for clocking */
@@ -159,32 +81,241 @@ static bool train_cifar(const size_t batch_size, const size_t epoch) {
   };
 
   auto on_enumerate_epoch = [&](size_t epoch) { std::cout << epoch + 1 << std::endl; };
-  /** Define network architecture and optimizer */
+
+/** Define network architecture and optimizer */
   network net;
   float_t dropout_rate = 0.5;
 
-  /* GPU - 21.56s */
+  /* GPU - 21.56s 670MiB / 2475MiB */
+  /*
+  net << conv(32, 32, 3, minibatch_size, 5, 3*32, 1, 2, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(32, 32, 3*32, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+      << conv(16, 16, 3*32, minibatch_size, 5, 3*64, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(16, 16, 3*64, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+      << fully(8 * 8 * 3*64, 2*1024, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2*1024, 2*1024, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2*1024, 10, minibatch_size, true, core::backend_t::gpu, false)
+      << softmax();
+  */
+
+  /*
+  net << conv(32, 32, 3, minibatch_size, 5, 160, 1, 2, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(32, 32, 160, minibatch_size, 5, 160, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(32, 32, 160, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+
+      << conv(16, 16, 160, minibatch_size, 5, 160, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(16, 16, 160, minibatch_size, 5, 160, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(16, 16, 160, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+
+      << fully(8 * 8 * 160, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 10, minibatch_size, true, core::backend_t::gpu, false)
+      << softmax();
+  */
+
+  net << conv(32, 32, 3, minibatch_size, 3, 96, 1, 1, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(32, 32, 96, minibatch_size, 3, 96, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(32, 32, 96, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+
+      << conv(16, 16, 96, minibatch_size, 3, 192, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(16, 16, 192, minibatch_size, 3, 192, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(16, 16, 192, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+
+      << fully(8 * 8 * 192, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 10, minibatch_size, true, core::backend_t::gpu, false)
+      << softmax();
+
+  /*
+  net << conv(32, 32, 3, minibatch_size, 5, 32, 1, 2, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(32, 32, 32, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(31, 31, 32, minibatch_size, 5, 32, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(31, 31, 32, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(30, 30, 32, minibatch_size, 5, 32, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(30, 30, 32, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(29, 29, 32, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(29, 29, 64, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(28, 28, 64, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(28, 28, 64, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(27, 27, 64, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(27, 27, 64, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(26, 26, 96, minibatch_size, 5, 96, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(26, 26, 96, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(25, 25, 96, minibatch_size, 5, 96, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(25, 25, 96, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(24, 24, 96, minibatch_size, 5, 96, 1, 2, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(24, 24, 96, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+
+      << fully(12 * 12 * 96, 2046, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2046, 2046, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2046, 10, minibatch_size, true, core::backend_t::gpu, false)
+      << softmax();
+  */
+
+
+  /* GPU - 670 MiB */
+  /*
   net << conv(32, 32, 3, minibatch_size, 5, 32, 1, 2, true, core::backend_t::gpu, true)
       << relu(core::activation_t::relu, core::backend_t::gpu)
       << maxpool(32, 32, 32, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
-      << conv(16, 16, 32, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu, true)
+      << conv(16, 16, 32, minibatch_size, 5, 64, 1, 2, true, core::backend_t::gpu, false)
       << relu(core::activation_t::relu, core::backend_t::gpu)
       << maxpool(16, 16, 64, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
-      << fully(8 * 8 * 64, 1024, minibatch_size, true, core::backend_t::gpu, true)
-      << relu(core::activation_t::relu, core::backend_t::gpu) << dropout(dropout_rate)
-      << fully(1024, 10, minibatch_size, true, core::backend_t::gpu, true) << softmax();
+      << fully(8 * 8 * 64, 1024, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(1024, 10, minibatch_size, true, core::backend_t::gpu, false)
+      << softmax();
+      */
+
+
+  // 3852MiB
+  /*
+  net << conv(32, 32, 3, minibatch_size, 3, 64, 1, 1, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(32, 32, 64, minibatch_size, 3, 64, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(32, 32, 64, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(31, 31, 64, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(31, 31, 128, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(31, 31, 128, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(30, 30, 128, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(30, 30, 128, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+
+      << fully(15 * 15 * 128, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      //<< dropout(dropout_rate)
+      << fully(2048, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 10, minibatch_size, true, core::backend_t::gpu, false)
+      << softmax();
+  */
+
+  /*
+  net << conv(32, 32, 3, minibatch_size, 3, 64, 1, 1, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(32, 32, 64, minibatch_size, 3, 64, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(32, 32, 64, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(31, 31, 64, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(31, 31, 128, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(31, 31, 128, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(30, 30, 128, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(30, 30, 128, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+
+      << fully(15 * 15 * 128, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 2048, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(2048, 10, minibatch_size, true, core::backend_t::gpu, false)
+      << softmax();
+  */
+
+   /*
+  net << conv(32, 32, 3, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(32, 32, 128, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(32, 32, 128, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(31, 31, 128, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, true)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << conv(31, 31, 128, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(31, 31, 128, minibatch_size, 2, 2, 1, 1, core::backend_t::gpu)
+
+      << conv(30, 30, 128, minibatch_size, 3, 128, 1, 1, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << maxpool(30, 30, 128, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
+
+      << fully(15 * 15 * 128, 4096, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(4096, 4096, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(4096, 4096, minibatch_size, true, core::backend_t::gpu, false)
+      << relu(core::activation_t::relu, core::backend_t::gpu)
+      << dropout(dropout_rate)
+      << fully(4096, 10, minibatch_size, true, core::backend_t::gpu, false)
+      << softmax();
+      */
 
   adam a;
   /** Train and save results */
   net.train<adam>(a, train_images, train_labels, validation_images, validation_labels, minibatch_size, epochs,
                   on_enumerate_minibatch, on_enumerate_epoch, true);
-  net.save_results(mean_and_std);
+  //net.test_network(test_images, test_labels, minibatch_size, 10, result, true, mean_and_std[0], mean_and_std[1]);
+  net.save_results(mean, result);
+  net.test_network(test_images, test_labels, minibatch_size, 10, result);
 
   return true;
 }
 
 int main(int argc, char* argv[]) {
-  size_t expect = 3;
+  size_t expect = 5;
   if (argc < expect) {
     print("To few arguments, expected " + std::to_string(expect));
     return -1;
@@ -193,9 +324,11 @@ int main(int argc, char* argv[]) {
   /** program expects a batch size and an epoch size as command line argument */
   size_t batch_size = atoi(argv[1]);
   size_t epoch      = atoi(argv[2]);
+  std::string data  = argv[3];
+  std::string result = argv[4];
 
   /** Let's go! */
-  if (train_cifar(batch_size, epoch)) {
+  if (train_cifar(batch_size, epoch, data, result)) {
     return 0;
   }
 
