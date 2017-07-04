@@ -26,9 +26,6 @@ static bool train_mnist(const size_t batch_size, const size_t epoch, const std::
   size_t in_height       = 28;
   size_t subset          = 1;
 
-  /** Path to the mnist data files */
-  // std::string path_to_data("/c3se/NOBACKUP/users/hacht/data/");
-
   /** Parse mnist */
   tensor_t labels({mnist_image_num / subset, 1, 1, 1});
   tensor_t images({mnist_image_num / subset, 1, in_height, in_width});
@@ -43,7 +40,6 @@ static bool train_mnist(const size_t batch_size, const size_t epoch, const std::
   parse_mnist_labels(data + "/train-labels.idx1-ubyte", &labels, subset);
   parse_mnist_images(data + "/t10k-images.idx3-ubyte", &test_images, min, max, 0, 0, subset);
   parse_mnist_labels(data + "/t10k-labels.idx1-ubyte", &test_labels);
-
 
   /** Pre-processing */
   std::vector<float_t> mean_and_std = zero_mean_unit_variance(images);
@@ -67,8 +63,6 @@ static bool train_mnist(const size_t batch_size, const size_t epoch, const std::
   split_training_validation(images, train_images, validation_images, training_validation_split_ratio);
   split_training_validation(labels, train_labels, validation_labels, training_validation_split_ratio);
 
-  
-  
   /*
   for (size_t sample = 0; sample < 100; sample++) {
     auto img = test_images.subView({sample}, {1, 1, in_height, in_width});
@@ -86,10 +80,6 @@ static bool train_mnist(const size_t batch_size, const size_t epoch, const std::
 
   /** Define network architecture and optimizer */
   network net;
-  // net << conv(32, 32, 1, minibatch_size, 5, 6) << relu() << maxpool(28, 28, 6, minibatch_size)
-  //    << conv(14, 14, 6, minibatch_size, 5, 16) << relu() << maxpool(10, 10, 16, minibatch_size)
-  //    << conv(5, 5, 16, minibatch_size, 5, 120) << relu() << dropout({minibatch_size, 120, 1, 1}, 0.5)
-  //    << fully(120, 10, minibatch_size) << softmax();
   float_t dropout_rate = 0.75;
 
   /* GPU - 21.56s 429MiB */
@@ -100,10 +90,8 @@ static bool train_mnist(const size_t batch_size, const size_t epoch, const std::
       << relu(core::activation_t::relu, core::backend_t::gpu)
       << maxpool(14, 14, 64, minibatch_size, 2, 2, 2, 2, core::backend_t::gpu)
       << fully(7 * 7 * 64, 1024, minibatch_size, true, core::backend_t::gpu, true)
-      << relu(core::activation_t::relu, core::backend_t::gpu)
-      << dropout(dropout_rate)
-      << fully(1024, 10, minibatch_size, true, core::backend_t::gpu, true)
-      << softmax();
+      << relu(core::activation_t::relu, core::backend_t::gpu) << dropout(dropout_rate)
+      << fully(1024, 10, minibatch_size, true, core::backend_t::gpu, true) << softmax();
 
   /* CPU - 902.74s
   net << conv(28, 28, 1, minibatch_size, 5, 32, 1, 2, true) << relu(core::activation_t::relu)
@@ -117,10 +105,10 @@ static bool train_mnist(const size_t batch_size, const size_t epoch, const std::
 
   adam a;
   /** Train and save results */
-  //net.train<adam>(a, train_images, train_labels, validation_images, validation_labels, minibatch_size, epochs,
-  //                on_enumerate_minibatch, on_enumerate_epoch, true);
+  net.train<adam>(a, train_images, train_labels, validation_images, validation_labels, minibatch_size, epochs,
+                  on_enumerate_minibatch, on_enumerate_epoch, true);
   net.save_results(mean_and_std, result);
-  //net.test_network(test_images, test_labels, minibatch_size, 10, result);
+  net.test_network(test_images, test_labels, minibatch_size, 10, result);
 
   return true;
 }
@@ -133,9 +121,9 @@ int main(int argc, char* argv[]) {
   }
 
   /** program expects a batch size and an epoch size as command line argument */
-  size_t batch_size = atoi(argv[1]);
-  size_t epoch      = atoi(argv[2]);
-  std::string data  = argv[3];
+  size_t batch_size  = atoi(argv[1]);  // use 50 or 100 etc
+  size_t epoch       = atoi(argv[2]);
+  std::string data   = argv[3];
   std::string result = argv[4];
 
   /** Let's go! */

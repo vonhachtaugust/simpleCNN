@@ -16,7 +16,6 @@
 #include "opencv2/highgui.hpp"
 #endif
 
-
 namespace simpleCNN {
 
   enum class net_phase { train, test };
@@ -25,8 +24,8 @@ namespace simpleCNN {
     constexpr static float_t regularization_constant = 1E-3;
     constexpr static float_t learning_rate           = 5E-4;
 
-    //constexpr static float_t regularization_constant = 1E-3;
-    //constexpr static float_t learning_rate           = 1E-4;
+    // constexpr static float_t regularization_constant = 1E-3;
+    // constexpr static float_t learning_rate           = 1E-4;
   };
 
   template <typename T = float_t, typename Allocator = aligned_allocator<T, 64>>
@@ -51,7 +50,7 @@ namespace simpleCNN {
   using default_matrix_t = Tensor<T, 2, kConst, Allocator>;
   using matrix_t         = default_matrix_t<>;  // no more <> yey
   using matrix_data_t    = std::vector<matrix_t>;
-  using vec_matrix_ptr_t = std::vector<matrix_t *>;
+  using vec_matrix_ptr_t = std::vector<matrix_t*>;
 
   /* ------------------------------------------------------------------- //
    *
@@ -68,7 +67,7 @@ namespace simpleCNN {
   // using vec_tensor_ptr_t = std::vector<tensor_t *>;
 
   using data_t      = std::vector<tensor_t>;
-  using data_ptrs_t = std::vector<tensor_t *>;
+  using data_ptrs_t = std::vector<tensor_t*>;
   // ------------------------------------------------------------------- //
 
   using shape4d = std::vector<size_t>;
@@ -130,48 +129,51 @@ namespace simpleCNN {
   }
 
 #ifdef USE_OPENCV
-static void display_image(const tensor_t& test_image, const size_t label, const float_t mean, const float_t std) {
-  cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
+  static void display_image(const tensor_t& test_image, const size_t label, const float_t mean, const float_t std) {
+    cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
 
-  size_t in_ch = test_image.dimension(dim_t::depth);
-  size_t in_height = test_image.dimension(dim_t::height);
-  size_t in_width = test_image.dimension(dim_t::width);
+    size_t in_ch     = test_image.dimension(dim_t::depth);
+    size_t in_height = test_image.dimension(dim_t::height);
+    size_t in_width  = test_image.dimension(dim_t::width);
 
-  cv::Mat image(in_height, in_width, CV_8UC3);  // rgb
+    cv::Mat image(in_height, in_width, CV_8UC3);  // rgb
 
-  for (size_t ch = 0; ch < in_ch; ++ch) {
-    for (size_t i = 0; i < in_height; ++i) {
-      for (size_t j = 0; j < in_width; ++j) {
-        auto val = test_image.host_at(0, ch, i, j);
-        val = (val*std + mean + 1) * (255.0f / 2.0f);
-        image.at<cv::Vec3b>(i, j)[in_ch - ch - 1] = val;
+    for (size_t ch = 0; ch < in_ch; ++ch) {
+      for (size_t i = 0; i < in_height; ++i) {
+        for (size_t j = 0; j < in_width; ++j) {
+          auto val = test_image.host_at(0, ch, i, j);
+          val      = (val * std + mean + 1) * (255.0f / 2.0f);
+          image.at<cv::Vec3b>(i, j)[in_ch - ch - 1] = val;
+        }
       }
     }
+    std::cout << "Label: " << label << std::endl;
+    cv::imshow("Display window", image);
+    cv::waitKey(0);
   }
-  std::cout << "Label: " << label << std::endl;
-  cv::imshow("Display window", image);
-  cv::waitKey(0);
-}
 
-static void display_gray_image(const tensor_t& test_image, const size_t label, const float_t mean, const float_t std) {
-  cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
+  static void display_gray_image(const tensor_t& test_image,
+                                 const size_t label,
+                                 const float_t mean,
+                                 const float_t std) {
+    cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
 
-  size_t in_height = test_image.dimension(dim_t::height);
-  size_t in_width = test_image.dimension(dim_t::width);
+    size_t in_height = test_image.dimension(dim_t::height);
+    size_t in_width  = test_image.dimension(dim_t::width);
 
-  cv::Mat image(in_height, in_width, CV_8UC1);  // gray
-  uchar* p = image.data;
+    cv::Mat image(in_height, in_width, CV_8UC1);  // gray
+    uchar* p = image.data;
     for (size_t i = 0; i < in_height; ++i) {
       for (size_t j = 0; j < in_width; ++j) {
-        auto val = test_image.host_at(0, 0, i, j);
-        val = (val*std + mean + 1) * (255.0f / 2.0f);
+        auto val            = test_image.host_at(0, 0, i, j);
+        val                 = (val * std + mean + 1) * (255.0f / 2.0f);
         p[i * in_width + j] = val;
       }
     }
-  std::cout << "Label: " << label << std::endl;
-  cv::imshow("Display window", image);
-  cv::waitKey(0);
-}
+    std::cout << "Label: " << label << std::endl;
+    cv::imshow("Display window", image);
+    cv::waitKey(0);
+  }
 #endif
 
 }  // namespace simpleCNN

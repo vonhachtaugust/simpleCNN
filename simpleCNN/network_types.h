@@ -36,7 +36,7 @@ namespace simpleCNN {
      */
     virtual float_t forward_loss(const tensor_t& input, const tensor_t& labels) = 0;
 
-    //virtual void backward(const tensor_t& labels) = 0;
+    // virtual void backward(const tensor_t& labels) = 0;
     virtual void backward() = 0;
 
     /**
@@ -159,7 +159,7 @@ namespace simpleCNN {
   class Sequential : public Network_type {
    public:
     void backward() override {
-      //nodes_.back()->set_targets(labels);
+      // nodes_.back()->set_targets(labels);
 
       for (auto l = nodes_.rbegin(); l != nodes_.rend(); ++l) {
         (*l)->backward();
@@ -179,15 +179,13 @@ namespace simpleCNN {
       }
 
       auto val = nodes_.back()->error(weights);
-      //std::cout << "Training Loss: " << val << std::endl;
+      // std::cout << "Training Loss: " << val << std::endl;
 
       training_loss.push_back(val);
       training_accuracy.push_back(nodes_.back()->accuracy());
     }
 
-    float_t accuracy() {
-      return nodes_.back()->accuracy();
-    }
+    float_t accuracy() { return nodes_.back()->accuracy(); }
 
     void record_validation_progress(std::vector<float_t>& validation_loss,
                                     std::vector<float_t>& validation_accuracy,
@@ -201,9 +199,9 @@ namespace simpleCNN {
         l->get_weights(weights);
       }
 
-      auto val = nodes_.back()->error(weights);
+      auto val      = nodes_.back()->error(weights);
       auto accuracy = nodes_.back()->accuracy();
-      //std::cout << "loss: " << val << " accuracy: " << accuracy << std::endl;
+      // std::cout << "loss: " << val << " accuracy: " << accuracy << std::endl;
 
       validation_loss.push_back(val);
       validation_accuracy.push_back(accuracy);

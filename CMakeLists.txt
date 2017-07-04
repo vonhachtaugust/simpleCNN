@@ -38,7 +38,7 @@ endif()
 # Set the default build type to Release.
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "No build type specified: defaulting to release.")
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Release)
 else(NOT CMAKE_BUILD_TYPE)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_BUILD_TYPE Release)
@@ -54,6 +54,7 @@ find_package(BLAS REQUIRED)
 if(BLAS_FOUND)
     message(STATUS "Found BLAS!")
     message(STATUS "Linking: ${BLAS_LIBRARIES}\n")
+    add_definitions(-DUSE_OPENBLAS)
     list(APPEND REQUIRED_LIBRARIES ${BLAS_LIBRARIES})
 else()
     message(FATAL_ERROR "Cannot find required package OpenBLAS. Please set BLAS_INCLUDE_DIR")
@@ -81,7 +82,7 @@ if(CUDA_FOUND)
     # Cuda files
     file(GLOB_RECURSE simpleCNN_cuda "${CMAKE_SOURCE_DIR}/simpleCNN/*.cu")
     message(STATUS "Cuda files to include: ${simpleCNN_cuda}")
-
+    add_definitions(-DUSE_CUDA)
     list(APPEND REQUIRED_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 else()
     message(STATUS "Cannot find required package CUDA. Please set CUDA_INCLUDE_DIR")
@@ -113,7 +114,8 @@ endif()
 
 #####
 # Define user options (To be implemented when source is build as library)
-option(BUILDS_TEST      "Set to ON to build tests"      ON)
+option(BUILDS_TEST      "Set to ON to build tests"      OFF)
+option(BUILDS_EXAMPLE    "Set to ON to build examples"  ON)
 
 ####
 # Source files
@@ -125,7 +127,7 @@ if(BUILDS_TEST)
     add_subdirectory(test)
 endif()
 
-#if(NOT BUILDS_TEST)
-add_subdirectory(examples)
-#endif()
+if(BUILDS_EXAMPLE)
+    add_subdirectory(examples)
+endif()
 

@@ -14,7 +14,7 @@ if(CLANG_FORMAT)
     message(STATUS "${clang-format} was found!")
     add_custom_target(
             clang-format
-            COMMAND /apps/Hebbe/software/MPI/GCC/5.4.0-2.26/OpenMPI/1.10.3/Clang/3.8.1/bin/clang-format
+            ${CLANG_FORMAT}
             -i
             ${ALL_CXX_SOURCE_FILES}
     )

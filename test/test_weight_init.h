@@ -21,36 +21,36 @@ namespace simpleCNN {
   }
 
   TEST(Weight_init, bernoulli_randomess) {
-  float_t a = 0;
-  float_t b = 0;
-  float_t p = 0.75;
+    float_t a = 0;
+    float_t b = 0;
+    float_t p = 0.75;
 
-  for (size_t i = 0; i < 100000; ++i) {
-    auto val = bernoulli(p);
+    for (size_t i = 0; i < 100000; ++i) {
+      auto val = bernoulli(p);
 
-    if (val) {
-     a += 1.0f;
-    } else {
-      b += 1.0f;
+      if (val) {
+        a += 1.0f;
+      } else {
+        b += 1.0f;
+      }
     }
-  }
 
-  ASSERT_NEAR(a / (a+b), p, 1E-2);
-  ASSERT_NEAR(b / (a+b), 1 - p, 1E-2);
+    ASSERT_NEAR(a / (a + b), p, 1E-2);
+    ASSERT_NEAR(b / (a + b), 1 - p, 1E-2);
   }
 
   TEST(Weight_init, random_between_min_max) {
-  float_t min = 0;
-  float_t max = 100;
+    float_t min = 0;
+    float_t max = 100;
 
-  std::vector<size_t> occurrence(100);
-  std::fill(occurrence.begin(), occurrence.end(), 0);
+    std::vector<size_t> occurrence(100);
+    std::fill(occurrence.begin(), occurrence.end(), 0);
 
-  for (size_t i = 0; i < 100000; ++i) {
-    size_t val = uniform_random(min, max);
-    occurrence[val]++;
+    for (size_t i = 0; i < 100000; ++i) {
+      size_t val = uniform_random(min, max);
+      occurrence[val]++;
+    }
   }
-}
 
   TEST(Weight_init, Zero_mean_unit_variance) {
     /**

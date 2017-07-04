@@ -4,7 +4,6 @@
 
 #pragma once
 
-
 #include <fstream>
 #include "io/serialize.h"
 #include "loss/loss_functions.h"
@@ -95,6 +94,7 @@ namespace simpleCNN {
       }
     }
 
+    /* TODO: use newer forward and backward functions.
     std::vector<float_t> gradient_check(const tensor_t& input, const tensor_t& labels, bool has_bias = true) {
       net_.setup(true);
       auto ng = computeNumericalGradient(input, labels);
@@ -119,22 +119,26 @@ namespace simpleCNN {
 
       return relative_error(dW, ng);
       // return {1.0f};
-    }
+    }*/
 
+    /* TODO: use newer forward and backward functions.
     std::vector<float_t> gradient_check_bias(const tensor_t& input, const tensor_t& labels) {
       net_.setup(true);
       auto ng = computeNumericalGradient_bias(input, labels);
 
       auto output = net_.forward(input);
       // print(output, "output");
-      net_.backward(labels);
+
+
+      //net_.backward(labels);
+
       auto dB = net_.get_dB();
 
       // printvt(ng, "Numerical gradient");
       // printvt_ptr(dB, "Backprop gradient");
 
       return relative_error(dB, ng);
-    }
+    }*/
 
     /**
      * Perturb each weight by +epsilon / -epsilon and compute loss.
@@ -317,116 +321,123 @@ namespace simpleCNN {
       return true;
     }
 
-      void test_network(const tensor_t& test_images, const tensor_t& test_labels, const size_t batch_size, const size_t num_classes,
-                        const std::string result, const bool display = false, const float_t mean = 0, const float_t std = 0) {
-        size_t num_success = 0;
-        size_t num_total   = 0;
+    void test_network(const tensor_t& test_images,
+                      const tensor_t& test_labels,
+                      const size_t batch_size,
+                      const size_t num_classes,
+                      const std::string result,
+                      const bool display = false,
+                      const float_t mean = 0,
+                      const float_t std  = 0) {
+      size_t num_success = 0;
+      size_t num_total   = 0;
 
-        std::vector<float_t> confusion_matrix(num_classes * num_classes, 0.0);
-        std::vector<float_t> accuracy;
+      std::vector<float_t> confusion_matrix(num_classes * num_classes, 0.0);
+      std::vector<float_t> accuracy;
 
-        set_netphase(net_phase::test);
-        size_t num_images = test_images.shape()[0];
-        size_t image_size = test_images.size() / num_images;
+      set_netphase(net_phase::test);
+      size_t num_images = test_images.shape()[0];
+      size_t image_size = test_images.size() / num_images;
 
-        for (size_t j = 0; j < num_images; j += batch_size) {
-          auto image =
-              test_images.subView({j},
-                                  {batch_size, test_images.dimension(dim_t::depth),
-                                   test_images.dimension(dim_t::height),
-                                   test_images.dimension(dim_t::width)});
-          auto label = test_labels.subView({j}, {batch_size, 1, 1, 1});
-          tensor_t output = net_.forward(image);
-          size_t start_index = 0;
+      for (size_t j = 0; j < num_images; j += batch_size) {
+        auto image =
+          test_images.subView({j}, {batch_size, test_images.dimension(dim_t::depth),
+                                    test_images.dimension(dim_t::height), test_images.dimension(dim_t::width)});
+        auto label         = test_labels.subView({j}, {batch_size, 1, 1, 1});
+        tensor_t output    = net_.forward(image);
+        size_t start_index = 0;
 
-          for (size_t i = 0; i < batch_size; ++i) {
-            tensor_t current_output = output.subView({i}, {1, 1, 10, 1});
+        for (size_t i = 0; i < batch_size; ++i) {
+          tensor_t current_output = output.subView({i}, {1, 1, 10, 1});
 
-            size_t max_index    = -1;
-            float_t max         = float_t(-1);
-            for (size_t n = 0; n < current_output.size(); ++n) {
-              float_t value = *(current_output.host_begin() + n);
-                if (value > max) {
-                  max       = value;
-                  max_index = n;
-                }
+          size_t max_index = -1;
+          float_t max      = float_t(-1);
+          for (size_t n = 0; n < current_output.size(); ++n) {
+            float_t value = *(current_output.host_begin() + n);
+            if (value > max) {
+              max       = value;
+              max_index = n;
             }
-
-            size_t actual = *(label.host_begin() + i);
-            size_t predicted = max_index;
-#ifdef USE_OPENCV
-            if (display) {
-              auto currImage = image.subView({i}, {1, test_images.dimension(dim_t::depth),
-                                                   test_images.dimension(dim_t::height),
-                                                   test_images.dimension(dim_t::width)});
-              display_image(currImage, actual, mean, std);
-            }
-#endif
-            if (predicted == actual) {
-              num_success++;
-            }
-            num_total++;
-            confusion_matrix.at(actual * num_classes + predicted)++;
-            start_index += num_classes;
           }
+
+          size_t actual    = *(label.host_begin() + i);
+          size_t predicted = max_index;
+#ifdef USE_OPENCV
+          if (display) {
+            auto currImage =
+              image.subView({i}, {1, test_images.dimension(dim_t::depth), test_images.dimension(dim_t::height),
+                                  test_images.dimension(dim_t::width)});
+            display_image(currImage, actual, mean, std);
+          }
+#endif
+          if (predicted == actual) {
+            num_success++;
+          }
+          num_total++;
+          confusion_matrix.at(actual * num_classes + predicted)++;
+          start_index += num_classes;
         }
-
-        accuracy.push_back(float_t(num_success) / float_t(num_total));
-        accuracy.push_back(float_t(num_total));
-
-        std::string acc  = result + "/accuracy.txt";
-        std::string conf = result + "/confusionmatrix.txt";
-
-        save_data_to_file<float_t>(acc, accuracy);
-        save_data_to_file<float_t>(conf, confusion_matrix);
       }
 
-      void set_netphase(net_phase phase) {
-        for (auto n : net_) {
-          n->set_netphase(phase);
-        }
+      accuracy.push_back(float_t(num_success) / float_t(num_total));
+      accuracy.push_back(float_t(num_total));
+
+      std::string acc  = result + "/accuracy.txt";
+      std::string conf = result + "/confusionmatrix.txt";
+
+      save_data_to_file<float_t>(acc, accuracy);
+      save_data_to_file<float_t>(conf, confusion_matrix);
+    }
+
+    void set_netphase(net_phase phase) {
+      for (auto n : net_) {
+        n->set_netphase(phase);
       }
+    }
 
-     private:
-      void valid_once(const tensor_t& validation_batch, const tensor_t& validation_labels, const bool store_results) {
-        set_netphase(net_phase::test);
-        net_.forward_pass(validation_batch, validation_labels);
-        net_.record_validation_progress(validation_loss_, validation_accuracy_, store_results);
-      }
+   private:
+    void valid_once(const tensor_t& validation_batch, const tensor_t& validation_labels, const bool store_results) {
+      set_netphase(net_phase::test);
+      net_.forward_pass(validation_batch, validation_labels);
+      net_.record_validation_progress(validation_loss_, validation_accuracy_, store_results);
+    }
 
-      /**
-       * Trains on one minibatch, i.e. runs forward and backward propagation to
-       * calculate
-       * the gradient of the loss function with respect to the network parameters,
-       * then calls the optimizer algorithm to update the weights
-       *
-       */
-      template <typename optimizer>
-      void train_once(optimizer & opt, const tensor_t& minibatch, const tensor_t& labels, const bool store_results,
-                      const size_t batch_size) {
-        set_netphase(net_phase::train);
-        net_.forward_pass(minibatch, labels);
-        net_.backward();
-        net_.record_training_progress(training_loss_, training_accuracy_, store_results);
-        net_.update(opt, batch_size);
-      }
-
-      template <typename layer>
-      friend Network<Sequential>& operator<<(Network<Sequential>& n, layer&& l);
-
-      NetType net_;
-      net_phase phase_;
-      bool stop_training_;
-
-      std::vector<float_t> training_loss_;
-      std::vector<float_t> validation_loss_;
-      std::vector<float_t> training_accuracy_;
-      std::vector<float_t> validation_accuracy_;
-    };
+    /**
+     * Trains on one minibatch, i.e. runs forward and backward propagation to
+     * calculate
+     * the gradient of the loss function with respect to the network parameters,
+     * then calls the optimizer algorithm to update the weights
+     *
+     */
+    template <typename optimizer>
+    void train_once(optimizer& opt,
+                    const tensor_t& minibatch,
+                    const tensor_t& labels,
+                    const bool store_results,
+                    const size_t batch_size) {
+      set_netphase(net_phase::train);
+      net_.forward_pass(minibatch, labels);
+      net_.backward();
+      net_.record_training_progress(training_loss_, training_accuracy_, store_results);
+      net_.update(opt, batch_size);
+    }
 
     template <typename layer>
-    Network<Sequential>& operator<<(Network<Sequential>& n, layer&& l) {
-      n.net_.add(std::forward<layer>(l));
-      return n;
-    }
+    friend Network<Sequential>& operator<<(Network<Sequential>& n, layer&& l);
+
+    NetType net_;
+    net_phase phase_;
+    bool stop_training_;
+
+    std::vector<float_t> training_loss_;
+    std::vector<float_t> validation_loss_;
+    std::vector<float_t> training_accuracy_;
+    std::vector<float_t> validation_accuracy_;
+  };
+
+  template <typename layer>
+  Network<Sequential>& operator<<(Network<Sequential>& n, layer&& l) {
+    n.net_.add(std::forward<layer>(l));
+    return n;
+  }
 }  // namespace simpleCNN

@@ -47,8 +47,7 @@ namespace simpleCNN {
                         size_t padding,
                         bool has_bias,
                         core::backend_t backend_t,
-                        bool save_weights = false
-    )
+                        bool save_weights = true)
       : Convolutional_layer(input_width,
                             input_height,
                             in_channels,
@@ -61,8 +60,7 @@ namespace simpleCNN {
                             padding,
                             has_bias,
                             backend_t,
-                            save_weights
-    ) {}
+                            save_weights) {}
     /**
     * Constructing a convolutional layer.
     *
@@ -93,7 +91,7 @@ namespace simpleCNN {
                         size_t padding,
                         bool has_bias,
                         core::backend_t backend_type = core::default_engine(),
-                        bool save_weights = true)
+                        bool save_weights            = true)
       : Layer(std_input_order(has_bias), {tensor_t(component_t::OUT_DATA)}) {
       conv_set_params(input_width, input_height, in_channels, batch_size, filter_width, filter_height, out_channels,
                       horizontal_stride, vertical_stride, padding, has_bias);

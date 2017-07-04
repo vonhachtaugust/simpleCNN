@@ -84,7 +84,7 @@ namespace simpleCNN {
 
   std::vector<float_t> zero_mean(tensor_t& x) {
     std::vector<float_t> result;
-    auto m = means(x);
+    auto m       = means(x);
     float_t mean = std::accumulate(m.begin(), m.end(), float_t(0)) / static_cast<float_t>(m.size());
 
     size_t batch_size   = x.shape()[0];

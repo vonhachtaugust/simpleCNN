@@ -72,10 +72,8 @@ namespace simpleCNN {
 
     Device *device() const { return device_ptr_.get(); }
 
-    void set_trainable(bool trainable,
-                       bool save_weigths
-    ) {
-      trainable_ = trainable;
+    void set_trainable(bool trainable, bool save_weigths) {
+      trainable_    = trainable;
       save_weights_ = save_weigths;
     }
 

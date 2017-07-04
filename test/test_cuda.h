@@ -613,45 +613,46 @@ namespace simpleCNN {
     // net2.test_onbatch(a, in, labels, bs);
   }
 
-  TEST(Cuda, gradient_check) {
-    Network<Sequential> net;
-    Network<Sequential> net2;
-    using dropout = Dropout_layer;
-    using conv    = Convolutional_layer;
-    using maxpool = Maxpooling_layer;
-    using fully   = Connected_layer;
-    using network = Network<Sequential>;
-    using adam    = Adam<float_t>;
-    using relu    = Activation_layer;
-    using softmax = loss::Softmax;
-    size_t bs     = 1;
-    bool has_bias = true;
+  /* TODO: update gradient check functions
+    TEST(Cuda, gradient_check) {
+      Network<Sequential> net;
+      Network<Sequential> net2;
+      using dropout = Dropout_layer;
+      using conv    = Convolutional_layer;
+      using maxpool = Maxpooling_layer;
+      using fully   = Connected_layer;
+      using network = Network<Sequential>;
+      using adam    = Adam<float_t>;
+      using relu    = Activation_layer;
+      using softmax = loss::Softmax;
+      size_t bs     = 1;
+      bool has_bias = true;
 
-    net << conv(10, 10, 1, bs, 5, 1, 1, 0, has_bias, core::backend_t::gpu)
-        << relu(core::activation_t::relu, core::backend_t::gpu)
-        << maxpool(6, 6, 1, bs, 2, 2, 2, 2, core::backend_t::gpu)
-        << fully(3 * 3 * 1, 3, bs, has_bias, core::backend_t::gpu) << softmax();
+      net << conv(10, 10, 1, bs, 5, 1, 1, 0, has_bias, core::backend_t::gpu)
+          << relu(core::activation_t::relu, core::backend_t::gpu)
+          << maxpool(6, 6, 1, bs, 2, 2, 2, 2, core::backend_t::gpu)
+          << fully(3 * 3 * 1, 3, bs, has_bias, core::backend_t::gpu) << softmax();
 
-    net2 << conv(10, 10, 1, bs, 5, 1, 1, 0, has_bias, core::backend_t::internal) << relu(core::activation_t::relu)
-         << maxpool(6, 6, 1, bs) << fully(3 * 3 * 1, 3, bs, has_bias) << softmax();
+      net2 << conv(10, 10, 1, bs, 5, 1, 1, 0, has_bias, core::backend_t::internal) << relu(core::activation_t::relu)
+           << maxpool(6, 6, 1, bs) << fully(3 * 3 * 1, 3, bs, has_bias) << softmax();
 
-    tensor_t input({bs, 1, 10, 10});
-    // input.fill(1.0f);
-    uniform_rand(input.host_begin(), input.host_end(), -1, 1);
+      tensor_t input({bs, 1, 10, 10});
+      // input.fill(1.0f);
+      uniform_rand(input.host_begin(), input.host_end(), -1, 1);
 
-    tensor_t label({bs, 1, 1, 1});
-    auto erg = net.gradient_check(input, label, has_bias);
+      tensor_t label({bs, 1, 1, 1});
+      auto erg = net.gradient_check(input, label, has_bias);
 
-    auto erc = net2.gradient_check(input, label, has_bias);
+      auto erc = net2.gradient_check(input, label, has_bias);
 
-    for (auto e : erg) {
-      print(e, "Error gpu");
-    }
+      for (auto e : erg) {
+        print(e, "Error gpu");
+      }
 
-    for (auto ec : erc) {
-      print(ec, "Error cpu");
-    }
-  }
+      for (auto ec : erc) {
+        print(ec, "Error cpu");
+      }
+    }*/
 
   TEST(Cuda, convolution) {
     Network<Sequential> net;
@@ -675,11 +676,11 @@ namespace simpleCNN {
     uniform_rand(input.host_begin(), input.host_end(), -1, 1);
     tensor_t label({bs, 1, 1, 1});
 
-    //print("GPU");
-    //net.gradient_manual_check(input, label, has_bias);
+    // print("GPU");
+    // net.gradient_manual_check(input, label, has_bias);
 
-    //print("CPU");
-    //net2.gradient_manual_check(input, label, has_bias);
+    // print("CPU");
+    // net2.gradient_manual_check(input, label, has_bias);
   }
 
 #endif

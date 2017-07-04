@@ -18,7 +18,7 @@ namespace simpleCNN {
                     size_t batch_size,
                     bool has_bias                = true,
                     core::backend_t backend_type = core::default_engine(),
-                    bool save_weigths = false)
+                    bool save_weigths            = true)
       : Layer(std_input_order(has_bias), {tensor_t(component_t::OUT_DATA)}) {
       con_set_params(in_dim, out_dim, batch_size, has_bias);
       init_backend(backend_type);

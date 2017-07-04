@@ -17,7 +17,7 @@ namespace simpleCNN {
     return std::accumulate(std::begin(c), std::end(c), size_t(1), std::multiplies<size_t>());
   }
 
-  template<typename Container>
+  template <typename Container>
   static inline size_t sum(Container& c) {
     return std::accumulate(std::begin(c), std::end(c), size_t(0));
   }
