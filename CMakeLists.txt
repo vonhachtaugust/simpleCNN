@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
-project(simpleCNN VERSION 0.0.1)
+#export CC=/usr/local/bin/gcc
+#export CXX=/usr/local/bin/g++
+
+project(simpleCNN VERSION 0.1)
 # Does not build into a library. Has to build activate subdirectory.
 
 # Enables project() command manages VERSION variables.
@@ -8,11 +11,13 @@ if(POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif(POLICY CMP0048)
 
-#add_definitions(
-#        -D_CMAKE_C_COMPILER=gcc-5.4.0
-#        -D_CMAKE_CXX_COMPILER=g++-5.4.0
-#        -D_ENABLE_LOG=1
-#)
+if (CMAKE_COMPILER_IS_GNUCC)
+    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+            OUTPUT_VARIABLE GCC_VERSION)
+    string(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
+    list(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
+    list(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
+endif()
 
 ####
 # Setup the compiler options
@@ -50,55 +55,56 @@ endif (NOT CMAKE_BUILD_TYPE)
 
 #####
 # OpenBLAS
-find_package(BLAS REQUIRED)
+set(CPU False)
+find_package(BLAS QUIET)
 if(BLAS_FOUND)
     message(STATUS "Found BLAS!")
     message(STATUS "Linking: ${BLAS_LIBRARIES}\n")
     add_definitions(-DUSE_OPENBLAS)
+    set(CPU True)
     list(APPEND REQUIRED_LIBRARIES ${BLAS_LIBRARIES})
 else()
-    message(FATAL_ERROR "Cannot find required package OpenBLAS. Please set BLAS_INCLUDE_DIR")
+    message(STATUS "Cannot find OpenBLAS. Please make sure they are available or try setting BLAS_INCLUDE_DIR\n")
+    message(STATUS "CPU computations are unavailable.")
 endif()
 
 #####
 # OpenCV
-find_package(OpenCV REQUIRED)
+find_package(OpenCV QUIET)
 if(OpenCV_FOUND)
     message(STATUS "Found OpenCV!")
     message(STATUS "Linking: ${OpenCV_LIBRARIES}\n")
     add_definitions(-DUSE_OPENCV)
     list(APPEND REQUIRED_LIBRARIES ${OpenCV_LIBRARIES})
 else()
-    message(STATUS "Cannot find required package OpenCV. Please set OPENCV_INCLUDE_DIR")
+    message(STATUS "Cannot find OpenCV. Please make sure it is available or try setting OPENCV_INCLUDE_DIR\n")
 endif()
 
 #####
 # CUDA
-find_package(CUDA REQUIRED)
+set(GPU False)
+find_package(CUDA QUIET)
 if(CUDA_FOUND)
     message(STATUS "Found CUDA!")
-    message(STATUS "Linking: ${CUDA_LIBRARIES} and ${CUDA_CUBLAS_LIBRARIES}\n")
+    message(STATUS "Linking: ${CUDA_LIBRARIES} and ${CUDA_CUBLAS_LIBRARIES}")
 
     # Cuda files
     file(GLOB_RECURSE simpleCNN_cuda "${CMAKE_SOURCE_DIR}/simpleCNN/*.cu")
-    message(STATUS "Cuda files to include: ${simpleCNN_cuda}")
+    message(STATUS "Cuda files to include: ${simpleCNN_cuda}\n")
     add_definitions(-DUSE_CUDA)
     list(APPEND REQUIRED_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 else()
-    message(STATUS "Cannot find required package CUDA. Please set CUDA_INCLUDE_DIR")
+    message(STATUS "Cannot find CUDA. Please make sure it is are available or try setting CUDA_INCLUDE_DIR\n")
+    message(STATUS "GPU computations are unavailable")
 endif()
 
+if (NOT GPU AND NOT CPU)
+    message(FATAL_ERROR "Neither CPU nor GPU computations are available.")
+endif()
 
-set(HAVE_CUDNN_H "/third_party/cudnn/include/cudnn.h")
-set(HAVE_CUDNN_SO "/third_party/cudnn/lib64/libcudnn.so")
-
-if (NOT HAVE_CUDNN_H)
-    message(STATUS "Could not find CUDNN")
-else()
+if(EXISTS "${ROOT}/third_party/cudnn/include/cudnn.h")
     message(STATUS "Found CUDNN!")
-    if (NOT HAVE_CUDNN_SO)
-        message(FATAL_ERROR "Could not find libcudnn.so")
-    else()
+    if(EXISTS "${ROOT}/third_party/cudnn/lib64/libcudnn.so")
         message(STATUS "Linking: ${HAVE_CUDNN_SO}\n")
 
         set(CUDNN_LIBRARY_DIRS "${PROJECT_SOURCE_DIR}/third_party/cudnn/lib64/third_party/cudnn/lib64")
@@ -106,10 +112,15 @@ else()
         set(CUDNN_LIBRARIES "${PROJECT_SOURCE_DIR}/third_party/cudnn/lib64")
 
         add_definitions(-DUSE_CUDNN)
+        set(GPU True)
         include_directories(${CUDNN_INCLUDE_DIRS})
         link_directories(${CUDNN_LIBRARY_DIRS})
         list(APPEND REQUIRED_LIBRARIES ${CUDNN_LIBRARIES}/libcudnn.so)
+    else()
+        message(STATUS "Cannot find libcudnn.so. Please make sure it is available at the right location: ${ROOT}/third_party/cudnn/lib64/libcudnn.so")
     endif()
+else()
+    message(STATUS "Cannot find CUDNN. Please make sure it is available at the right location: ${ROOT}/third_party/cudnn/include/cudnn.h.\n")
 endif()
 
 #####
