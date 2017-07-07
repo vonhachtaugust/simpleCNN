@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
-#export CC=/usr/local/bin/gcc
-#export CXX=/usr/local/bin/g++
-
 project(simpleCNN VERSION 0.1)
 # Does not build into a library. Has to build activate subdirectory.
 
@@ -21,9 +18,6 @@ endif()
 
 ####
 # Setup the compiler options
-#
-# Compiler currently available
-
 # set c++ standard to c++11
 set(CMAKE_CXX_STANDARD 11)
 include(CheckCXXCompilerFlag)
@@ -36,7 +30,9 @@ elseif(COMPILER_SUPPORTS_CXX0X)
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has C++98 support.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    set(ERR_MESSAGE "The compiler ${CMAKE_CXX_COMPILER} has 'NO' C++11 support.")
+    set(EX_MESSAGE "Try to use a newer C++ compiler. If there is a C++11 compatible compiler in use, try to specify it.\n Example:\n export CC=/usr/local/bin/gcc \n export CXX=/usr/local/bin/g++ \n")
+    message(FATAL_ERROR "${ERR_MESSAGE} ${EX_MESSAGE}")
 endif()
 
 #####
@@ -125,8 +121,8 @@ endif()
 
 #####
 # Define user options (To be implemented when source is build as library)
-option(BUILDS_TEST      "Set to ON to build tests"      OFF)
-option(BUILDS_EXAMPLE    "Set to ON to build examples"  ON)
+option(BUILDS_TEST      "Set to ON to build tests"     OFF)
+option(BUILDS_EXAMPLE   "Set to ON to build examples"  OFF)
 
 ####
 # Source files

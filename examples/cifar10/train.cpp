@@ -261,7 +261,9 @@ static bool train_cifar(const size_t batch_size, const size_t epoch, const std::
 int main(int argc, char* argv[]) {
   size_t expect = 5;
   if (argc < expect) {
-    print("To few arguments, expected " + std::to_string(expect));
+    print("To few arguments, expted" + std::to_string(expect) + "\n");
+    print("Usage: ./example_cifar10 batch_size epoch data_path store_results\n");
+    print("Example usage: ./example_cifar10 100 50 ~/data ~/results\n");
     return -1;
   }
 

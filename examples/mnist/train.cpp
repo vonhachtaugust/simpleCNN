@@ -2,8 +2,11 @@
 // Created by hacht on 4/25/17.
 //
 
+#include <cuda_runtime_api.h>
 #include <iostream>
 #include "../../simpleCNN/simpleCNN.h"
+
+#include "cuda.h"
 
 using namespace simpleCNN;
 
@@ -116,11 +119,12 @@ static bool train_mnist(const size_t batch_size, const size_t epoch, const std::
 int main(int argc, char* argv[]) {
   size_t expect = 5;
   if (argc < expect) {
-    print("To few arguments, expected " + std::to_string(expect));
+    print("To few arguments, expted" + std::to_string(expect) + "\n");
+    print("Usage: ./example_mnist batch_size epoch data_path store_results\n");
+    print("Example usage: ./example_mnist 100 50 ~/data ~/results\n");
     return -1;
   }
 
-  /** program expects a batch size and an epoch size as command line argument */
   size_t batch_size  = atoi(argv[1]);  // use 50 or 100 etc
   size_t epoch       = atoi(argv[2]);
   std::string data   = argv[3];

@@ -13,7 +13,7 @@ if (CUDA_FOUND)
                 ${simpleCNN_cuda}
                 ${simpleCNN_headers})
     else()
-        message(STATUS "Currently there is no workaround for letting nvcc use GCC version less than 5 and at the same time build this project.\n")
+        message(STATUS "NOTE: Currently there is no workaround for letting nvcc use GCC version less than 5 and at the same time build this project. The .cu file cannot be built for now. \n")
         add_executable(example_mnist
                 mnist/train.cpp
                 ${simpleCNN_headers})
