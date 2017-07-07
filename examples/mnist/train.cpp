@@ -2,11 +2,8 @@
 // Created by hacht on 4/25/17.
 //
 
-#include <cuda_runtime_api.h>
 #include <iostream>
 #include "../../simpleCNN/simpleCNN.h"
-
-#include "cuda.h"
 
 using namespace simpleCNN;
 
